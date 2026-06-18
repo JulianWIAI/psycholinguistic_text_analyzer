@@ -20,7 +20,9 @@ Endpoints:
     GET    /api/health          — liveness check
 """
 
+import re
 import uuid
+from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -70,6 +72,61 @@ class EntityCreateRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Core pipeline helper
 # ---------------------------------------------------------------------------
+
+_WORD_RE = re.compile(r"[A-Za-z]+")
+
+
+def _compute_window_telemetry(win_text: str, macro_hits: list) -> Dict[str, Any]:
+    """
+    Build raw telemetry for one analysis window.
+    Sections:
+      structural   — total_chars, total_words, avg_word_length
+      micro_freq   — top_micro_chars (top-5 letters by raw count)
+      double_anom  — double_letter_anomalies (XX → count)
+      macro_drivers— {cluster_pole: {lemma: weight}} top-5 per pole
+    """
+    words = _WORD_RE.findall(win_text)
+    total_words = len(words)
+    all_chars   = "".join(w.upper() for w in words)
+    total_chars = len(all_chars)
+
+    # Top-5 characters by raw frequency
+    top_micro_chars: Dict[str, int] = dict(Counter(all_chars).most_common(5))
+
+    # Double-letter anomalies (XX pairs, same algorithm as C++ pass A)
+    dl_counts: Dict[str, int] = {}
+    for word in words:
+        w = word.upper()
+        i = 0
+        while i < len(w) - 1:
+            if w[i] == w[i + 1]:
+                pair = w[i] * 2
+                dl_counts[pair] = dl_counts.get(pair, 0) + 1
+                i += 2
+            else:
+                i += 1
+
+    # Macro drivers: aggregate hit weights per (cluster_pole) → lemma
+    grouped: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    for hit in macro_hits:
+        grouped[f"{hit.cluster}_{hit.pole}"][hit.lemma] += hit.weight
+
+    macro_drivers: Dict[str, Dict[str, float]] = {
+        pole_key: dict(
+            sorted(lemmas.items(), key=lambda x: x[1], reverse=True)[:5]
+        )
+        for pole_key, lemmas in grouped.items()
+    }
+
+    return {
+        "total_chars":             total_chars,
+        "total_words":             total_words,
+        "avg_word_length":         round(total_chars / max(1, total_words), 2),
+        "top_micro_chars":         top_micro_chars,
+        "double_letter_anomalies": dl_counts,
+        "macro_drivers":           macro_drivers,
+    }
+
 
 def _flatten_macro(cluster_scores: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     """Flatten {cluster: {pole: score}} → {"cluster_pole": score}."""
@@ -151,6 +208,7 @@ def _run_pipeline(
                 }
                 for e in dis.dissonance_events
             ],
+            "raw_telemetry": _compute_window_telemetry(win.text, macro_result.hits),
         })
 
     return {

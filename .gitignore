@@ -1,28 +1,34 @@
-# Python
+# Python bytecode & environments
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
 *.pyd
-.Python
-*.egg-info/
-dist/
-build/
-
-# Virtual environment
 .venv/
-venv/
 env/
+venv/
+.pytest_cache/
 
-# spaCy model caches (downloaded separately)
-# Persisted entity database (runtime artefact)
-entity_db.json
-entity_db.json.tmp
+# C++ Build Artifacts
+build/
+bin/
+lib/
+*.so
+*.dll
+*.dylib
+*.out
+.cmake/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
 
-# IDE
-.idea/
+# Local Target Databases
+*.json
+database/*.json
+logs/
+*.log
+
+# IDE Specific
 .vscode/
-*.iml
-
-# OS
+.idea/
 .DS_Store
-Thumbs.db

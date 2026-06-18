@@ -102,6 +102,7 @@ class InteractionEvent:
 class MicroScore:
     """Internal rich result — not the public interface; see MicroResult."""
     raw_score: float = 0.0
+    total_chars: int = 1
     letter_totals: Dict[str, float] = field(default_factory=dict)
     interaction_events: List[InteractionEvent] = field(default_factory=list)
     double_letter_events: List[DoubleLetter] = field(default_factory=list)
@@ -162,6 +163,7 @@ class OrthographicAnalyzer(BaseMicroAnalyzer):
         """Full Latin-script scoring pipeline — returns internal MicroScore."""
         words = self._WORD_RE.findall(text)
         total = 0.0
+        total_chars = 0
         letter_totals: Dict[str, float] = {}
         all_interactions: List[InteractionEvent] = []
         all_doubles: List[DoubleLetter] = []
@@ -169,6 +171,7 @@ class OrthographicAnalyzer(BaseMicroAnalyzer):
 
         for raw_word in words:
             word = raw_word.upper()
+            total_chars += len(word)
             word_score, interactions, doubles, has_visual = self._score_word(word)
             total += word_score
             if has_visual:
@@ -181,6 +184,7 @@ class OrthographicAnalyzer(BaseMicroAnalyzer):
 
         return MicroScore(
             raw_score=total,
+            total_chars=max(1, total_chars),
             letter_totals=letter_totals,
             interaction_events=all_interactions,
             double_letter_events=all_doubles,
@@ -261,7 +265,7 @@ class OrthographicAnalyzer(BaseMicroAnalyzer):
         total_bpv = max(1.0, sum(lt.values()))
 
         vectors = {
-            "intensity":  score.raw_score,
+            "intensity":  score.raw_score / score.total_chars,
             "anxiety":    (lt.get("S", 0.0) + lt.get("N", 0.0)) / total_bpv * 100,
             "attention":  (lt.get("A", 0.0) + lt.get("K", 0.0)) / total_bpv * 100,
             "emotion":    (lt.get("M", 0.0) + lt.get("W", 0.0)) / total_bpv * 100,

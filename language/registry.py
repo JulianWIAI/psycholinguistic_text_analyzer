@@ -41,12 +41,21 @@ class ModelRegistry:
     @staticmethod
     def _install_hint(model_name: str) -> str:
         hints = {
-            "en_core_web_sm": "python -m spacy download en_core_web_sm",
+            "en_core_web_sm":  "python -m spacy download en_core_web_sm",
+            "en_core_web_md":  "python -m spacy download en_core_web_md",
+            "de_core_news_sm": "python -m spacy download de_core_news_sm",
+            "de_core_news_md": "python -m spacy download de_core_news_md",
             "es_core_news_sm": "python -m spacy download es_core_news_sm",
+            "es_core_news_md": "python -m spacy download es_core_news_md",
             "fr_core_news_sm": "python -m spacy download fr_core_news_sm",
+            "fr_core_news_md": "python -m spacy download fr_core_news_md",
             "ja_core_news_sm": (
                 "pip install fugashi ipadic && "
                 "python -m spacy download ja_core_news_sm"
+            ),
+            "ja_core_news_md": (
+                "pip install fugashi ipadic && "
+                "python -m spacy download ja_core_news_md"
             ),
         }
         return hints.get(model_name, f"python -m spacy download {model_name}")

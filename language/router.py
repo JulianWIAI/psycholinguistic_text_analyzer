@@ -5,6 +5,7 @@ micro-layer and macro-layer analyzer instances.
 
 Supported codes:
     "EN"  — English  (Latin BPV, spaCy en_core_web_sm)
+    "DE"  — German   (Latin BPV + umlaut/ß normalisation, de_core_news_sm)
     "ES"  — Spanish  (Latin BPV + RR/LL overrides, es_core_news_sm)
     "FR"  — French   (Latin BPV + silent terminal override, fr_core_news_sm)
     "JA"  — Japanese (Logographic matrix + Keigo, ja_core_news_sm)
@@ -21,6 +22,7 @@ from micro_layer.base_analyzer import BaseMicroAnalyzer
 # Supported language codes and their human-readable names
 SUPPORTED_LANGUAGES: Dict[str, str] = {
     "EN": "English",
+    "DE": "German",
     "ES": "Spanish",
     "FR": "French",
     "JA": "Japanese",
@@ -66,8 +68,17 @@ class LanguageRouter:
 
     def _build_micro(self, code: str) -> BaseMicroAnalyzer:
         if code == "EN":
-            from micro_layer.orthographic_analyzer import OrthographicAnalyzer
-            return OrthographicAnalyzer()
+            from micro_layer.cpp_analyzer import CppOrthographicAnalyzer
+            return CppOrthographicAnalyzer(language_code="EN")
+
+        if code == "DE":
+            from micro_layer.cpp_analyzer import CppOrthographicAnalyzer
+            from micro_layer.de_analyzer import GermanOrthographicAnalyzer, _normalise_german
+            return CppOrthographicAnalyzer(
+                language_code="DE",
+                preprocess=_normalise_german,
+                fallback=GermanOrthographicAnalyzer(),
+            )
 
         if code == "ES":
             from micro_layer.es_analyzer import SpanishOrthographicAnalyzer
@@ -88,15 +99,20 @@ class LanguageRouter:
             from macro_layer.semantic_analyzer import SemanticAnalyzer
             return SemanticAnalyzer()
 
+        if code == "DE":
+            from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
+            from macro_layer.de_clusters import DE_CLUSTERS
+            return MultilingualSemanticAnalyzer("de_core_news_md", DE_CLUSTERS)
+
         if code == "ES":
             from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
             from macro_layer.es_clusters import ES_CLUSTERS
-            return MultilingualSemanticAnalyzer("es_core_news_sm", ES_CLUSTERS)
+            return MultilingualSemanticAnalyzer("es_core_news_md", ES_CLUSTERS)
 
         if code == "FR":
             from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
             from macro_layer.fr_clusters import FR_CLUSTERS
-            return MultilingualSemanticAnalyzer("fr_core_news_sm", FR_CLUSTERS)
+            return MultilingualSemanticAnalyzer("fr_core_news_md", FR_CLUSTERS)
 
         if code == "JA":
             from macro_layer.ja_clusters import JapaneseSemanticAnalyzer

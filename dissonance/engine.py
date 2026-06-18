@@ -104,14 +104,18 @@ class WindowAnalysisResult:
 # JA:       intensity=kanji_ratio, emotion=hiragana_ratio, agitation=katakana_ratio,
 #           complexity=stroke_density; keigo_formal maps to power_submission.
 _COMPARISON_BRIDGE: List[Tuple[str, str]] = [
-    ("intensity",   "power_control"),       # dominant orthographic pressure ↔ power vocab
-    ("anxiety",     "power_submission"),    # nervousness signal ↔ submission framing
-    ("attention",   "visibility_exposure"), # ego/focus signal ↔ exposure framing
-    ("emotion",     "resources_abundance"), # emotional load ↔ abundance framing
-    ("agitation",   "power_control"),       # restlessness/foreignness ↔ control assertion
-    ("complexity",  "visibility_concealment"), # logographic weight ↔ concealment vocab
+    ("intensity",   "power_control"),           # orthographic pressure ↔ power vocab
+    ("anxiety",     "power_submission"),         # nervousness ↔ submission framing
+    ("attention",   "visibility_exposure"),      # ego/focus ↔ exposure framing
+    ("emotion",     "resources_abundance"),      # emotional load ↔ abundance framing
+    ("agitation",   "power_control"),            # restlessness ↔ control assertion
+    ("complexity",  "visibility_concealment"),   # logographic weight ↔ concealment vocab
+    ("attention",   "cognitive_scientific"),     # focused attention ↔ empirical framing
+    ("agitation",   "kinetic_aggression"),       # restlessness ↔ aggression framing
+    ("emotion",     "cognitive_emotional"),      # emotional load ↔ abstract framing
+    ("anxiety",     "kinetic_aggression"),       # threat anxiety ↔ hostile intent
     # Japanese Keigo-specific bridge
-    ("intensity",   "keigo_formal"),        # kanji density ↔ formal register distance
+    ("intensity",   "keigo_formal"),             # kanji density ↔ formal register distance
 ]
 
 

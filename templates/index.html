@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PsychoLinguistic Analysis Engine v2</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg:       #0d0f14;
@@ -16,25 +17,24 @@
       --ok:       #5ce08a;
       --muted:    #6b7394;
       --text:     #dce3f5;
-      --ja:       #f7c87e;   /* Japanese accent */
-      --es:       #e07878;   /* Spanish accent */
-      --fr:       #7eb8f7;   /* French accent */
-      --en:       #5ce08a;   /* English accent */
+      --ja:       #f7c87e;
+      --es:       #e07878;
+      --fr:       #7eb8f7;
+      --en:       #5ce08a;
+      --de:       #c87ef7;
+      --purple:   #b96af7;
+      --cyan:     #5ce0d8;
     }
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
 
     /* ── Header ── */
-    .app-header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: .9rem 2rem;
-      display: flex; align-items: center; gap: 1rem;
-    }
+    .app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: .9rem 2rem; display: flex; align-items: center; gap: 1rem; }
     .app-header h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0; }
-    .badge-risk  { font-size: .6rem; padding: .25em .6em; border-radius: 3px; background: var(--danger); color: #fff; letter-spacing: .08em; }
-    .badge-lang  { font-size: .65rem; padding: .25em .6em; border-radius: 3px; letter-spacing: .06em; font-weight: 700; }
+    .badge-risk { font-size: .6rem; padding: .25em .6em; border-radius: 3px; background: var(--danger); color: #fff; letter-spacing: .08em; }
+    .badge-lang { font-size: .65rem; padding: .25em .6em; border-radius: 3px; letter-spacing: .06em; font-weight: 700; }
     .lang-EN { background: var(--en);  color: #000; }
+    .lang-DE { background: var(--de);  color: #000; }
     .lang-ES { background: var(--es);  color: #fff; }
     .lang-FR { background: var(--fr);  color: #000; }
     .lang-JA { background: var(--ja);  color: #000; }
@@ -51,27 +51,20 @@
       border-radius: 6px; padding: .45rem .7rem; font-size: .85rem; width: 100%;
     }
     textarea { resize: vertical; min-height: 200px; font-family: monospace; font-size: .8rem; }
-    select option { background: var(--surface); }
     input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
-
     .param-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; }
-    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 
-    /* Language selector card */
+    /* ── Language selector ── */
     .lang-selector { border: 1px solid var(--border); border-radius: 8px; padding: .7rem; background: var(--bg); }
     .lang-selector label { font-size: .8rem; color: var(--text); margin-bottom: .4rem; }
     .lang-flags { display: flex; gap: .4rem; flex-wrap: wrap; }
-    .lang-btn {
-      border: 2px solid var(--border); background: var(--bg); color: var(--muted);
-      border-radius: 6px; padding: .3rem .8rem; font-size: .8rem; cursor: pointer;
-      transition: all .15s; font-weight: 600;
-    }
-    .lang-btn:hover  { border-color: var(--accent); color: var(--text); }
+    .lang-btn { border: 2px solid var(--border); background: var(--bg); color: var(--muted); border-radius: 6px; padding: .3rem .8rem; font-size: .8rem; cursor: pointer; transition: all .15s; font-weight: 600; }
+    .lang-btn:hover { border-color: var(--accent); color: var(--text); }
     .lang-btn.active-EN { border-color: var(--en); color: var(--en); background: #1a2a1a; }
+    .lang-btn.active-DE { border-color: var(--de); color: var(--de); background: #26172a; }
     .lang-btn.active-ES { border-color: var(--es); color: var(--es); background: #2a1a1a; }
     .lang-btn.active-FR { border-color: var(--fr); color: var(--fr); background: #1a1e2a; }
     .lang-btn.active-JA { border-color: var(--ja); color: var(--ja); background: #2a261a; }
-
     .lang-note { font-size: .7rem; color: var(--muted); margin-top: .4rem; line-height: 1.4; }
 
     /* ── Buttons ── */
@@ -80,6 +73,9 @@
     .btn-run:disabled { opacity: .4; cursor: not-allowed; }
     .btn-seed { background: transparent; border: 1px solid var(--muted); color: var(--muted); border-radius: 6px; padding: .45rem 1rem; font-size: .78rem; cursor: pointer; width: 100%; transition: all .15s; }
     .btn-seed:hover { border-color: var(--accent); color: var(--accent); }
+    /* Export buttons */
+    .btn-export { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 4px; padding: .2rem .65rem; font-size: .68rem; font-weight: 600; cursor: pointer; letter-spacing: .04em; transition: all .15s; }
+    .btn-export:hover { border-color: var(--cyan); color: var(--cyan); }
 
     /* ── Cards ── */
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .9rem 1.1rem; }
@@ -92,71 +88,65 @@
     #status-bar.info { color: var(--accent); }
 
     /* ── Window pills ── */
-    .window-pill {
-      display: inline-block; padding: .2rem .55rem; border-radius: 16px; font-size: .68rem;
-      cursor: pointer; border: 1px solid var(--border); margin: .12rem;
-      transition: all .12s; user-select: none;
-    }
+    .window-pill { display: inline-block; padding: .2rem .55rem; border-radius: 16px; font-size: .68rem; cursor: pointer; border: 1px solid var(--border); margin: .12rem; transition: all .12s; user-select: none; }
     .window-pill.active  { border-color: var(--accent); color: var(--accent); }
     .window-pill.has-dis { border-color: var(--danger); color: var(--danger); }
     .window-pill.reset   { border-color: var(--warn); }
 
+    /* ── Mode toggle ── */
+    .mode-bar { display: flex; align-items: center; gap: 1rem; }
+    .mode-bar-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .mode-toggle { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+    .mode-btn { background: var(--bg); color: var(--muted); border: none; padding: .35rem 1.1rem; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .15s; flex: 1; }
+    .mode-btn.active { background: var(--accent); color: #fff; }
+
+    /* ── Radar charts ── */
+    .radar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+    .radar-block { display: flex; flex-direction: column; align-items: center; }
+    .radar-label { font-size: .67rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; text-align: center; }
+    .radar-canvas-wrap { width: 100%; max-width: 320px; }
+
+    /* ── JA script panel ── */
+    .script-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: .4rem; margin-bottom: .5rem; }
+    .script-cell { text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .4rem; }
+    .script-name { font-size: .65rem; color: var(--muted); }
+    .script-pct  { font-size: 1.1rem; font-weight: 700; font-family: monospace; }
+    .sc-kanji    { color: var(--ja); }
+    .sc-hiragana { color: var(--ok); }
+    .sc-katakana { color: var(--es); }
+    .sc-stroke   { color: var(--fr); }
+
     /* ── Z-score grid ── */
-    .zscore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: .45rem; }
+    .zscore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px,1fr)); gap: .45rem; }
     .zscore-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .55rem .7rem; }
     .zscore-label { font-size: .67rem; color: var(--muted); }
     .zscore-value { font-size: 1.05rem; font-weight: 700; font-family: monospace; }
+    .zscore-section-hdr { grid-column: 1/-1; font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .35rem; padding-bottom: .2rem; border-bottom: 1px solid var(--border); }
     .z-high { color: var(--danger); }
     .z-mid  { color: var(--warn); }
     .z-low  { color: var(--ok); }
     .z-zero { color: var(--muted); }
 
-    /* ── Micro vector radar (6-bar layout) ── */
-    .vector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
-    .vector-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .65rem; }
-    .vector-name { font-size: .67rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-    .vector-bar-track { height: 6px; background: var(--border); border-radius: 3px; margin: .35rem 0; overflow: hidden; }
-    .vector-bar-fill  { height: 100%; border-radius: 3px; transition: width .4s; }
-    .v-intensity  { background: #b96af7; }
-    .v-anxiety    { background: var(--danger); }
-    .v-attention  { background: var(--accent); }
-    .v-emotion    { background: var(--ok); }
-    .v-agitation  { background: var(--warn); }
-    .v-complexity { background: #7eb8f7; }
-    .vector-value { font-size: .8rem; font-family: monospace; font-weight: 700; }
-
-    /* ── Cluster bars ── */
-    .cluster-row { display: flex; align-items: center; gap: .55rem; margin-bottom: .4rem; }
-    .cluster-label { width: 140px; font-size: .72rem; color: var(--muted); flex-shrink: 0; }
-    .cluster-bar-track { flex: 1; height: 7px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .cluster-bar-fill  { height: 100%; border-radius: 3px; transition: width .4s; }
-    .bar-scarcity          { background: var(--danger); }
-    .bar-abundance         { background: var(--ok); }
-    .bar-control           { background: #b96af7; }
-    .bar-submission        { background: var(--warn); }
-    .bar-concealment       { background: var(--muted); }
-    .bar-exposure          { background: var(--accent); }
-    .bar-past_nostalgic    { background: #7eb8f7; }
-    .bar-future_projective { background: #f7c87e; }
-    .bar-formal            { background: #e07878; }
-    .bar-casual            { background: #78e0b4; }
-    .cluster-score-val { font-size: .72rem; font-family: monospace; width: 52px; text-align: right; }
+    /* ── Reader Profile ── */
+    .reader-trait { border: 1px solid var(--border); border-radius: 7px; padding: .65rem .95rem; margin-bottom: .5rem; transition: border-color .2s, opacity .2s; }
+    .reader-trait.reader-active   { border-color: var(--warn); }
+    .reader-trait.reader-inactive { opacity: .42; }
+    .reader-trait-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .25rem; }
+    .reader-icon       { font-size: 1rem; flex-shrink: 0; }
+    .reader-trait-name { font-size: .82rem; font-weight: 700; flex: 1; color: var(--text); }
+    .reader-level      { font-size: .63rem; font-weight: 700; letter-spacing: .07em; padding: .15em .55em; border-radius: 3px; flex-shrink: 0; }
+    .rl-critical { background: var(--danger);  color: #fff; }
+    .rl-high     { background: #5a1a1a;        color: var(--danger); border: 1px solid var(--danger); }
+    .rl-moderate { background: #4a3a10;        color: var(--warn);   border: 1px solid var(--warn); }
+    .rl-low      { background: var(--border);  color: var(--muted); }
+    .reader-trait-desc { font-size: .76rem; color: var(--text); line-height: 1.45; }
+    .reader-zsource    { font-size: .63rem; color: var(--muted); margin-top: .25rem; font-family: monospace; }
 
     /* ── Dissonance events ── */
     .dis-event { border-left: 3px solid var(--danger); background: var(--bg); border-radius: 4px; padding: .55rem .85rem; margin-bottom: .45rem; font-size: .78rem; }
-    .dis-event .dis-title  { font-weight: 700; color: var(--danger); margin-bottom: .2rem; }
-    .dis-event .dis-meta   { color: var(--muted); font-size: .68rem; }
-    .dis-event .dis-conc   { color: var(--warn); margin-top: .25rem; }
-
-    /* ── JA script indicator ── */
-    .script-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin-bottom: .5rem; }
-    .script-cell { text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .4rem; }
-    .script-name  { font-size: .65rem; color: var(--muted); }
-    .script-pct   { font-size: 1.1rem; font-weight: 700; font-family: monospace; }
-    .sc-kanji    { color: var(--ja); }
-    .sc-hiragana { color: var(--ok); }
-    .sc-katakana { color: var(--es); }
-    .sc-stroke   { color: var(--fr); }
+    .dis-event .dis-title { font-weight: 700; color: var(--danger); margin-bottom: .2rem; }
+    .dis-event .dis-meta  { color: var(--muted); font-size: .68rem; }
+    .dis-event .dis-conc  { color: var(--warn); margin-top: .25rem; }
 
     /* ── Entity card ── */
     .entity-field { font-size: .78rem; margin-bottom: .25rem; }
@@ -165,6 +155,81 @@
     /* ── Spinner ── */
     .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--muted); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .35rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════════════════
+       Raw Telemetry Panel
+    ══════════════════════════════════════════════════════════ */
+
+    /* Section dividers within the telemetry card */
+    .telem-section { margin-bottom: 1.1rem; }
+    .telem-section:last-child { margin-bottom: 0; }
+    .telem-section-hdr {
+      font-size: .66rem; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--cyan); border-bottom: 1px solid var(--border);
+      padding-bottom: .3rem; margin-bottom: .65rem; font-weight: 700;
+    }
+
+    /* Section A: Structural Baseline — three stat boxes in a row */
+    .telem-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+    .telem-stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .6rem .8rem; text-align: center; }
+    .telem-stat-label { font-size: .63rem; color: var(--muted); letter-spacing: .04em; margin-bottom: .2rem; }
+    .telem-stat-value { font-size: 1.25rem; font-weight: 700; font-family: monospace; color: var(--cyan); }
+
+    /* Section B: Frequency Leaders */
+    .telem-freq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .telem-freq-col-title { font-size: .64rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .45rem; }
+
+    /* Horizontal bar for each character */
+    .freq-row   { display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; }
+    .freq-lbl   { font-family: monospace; font-weight: 700; color: var(--accent); width: 1.4rem; text-align: center; font-size: .88rem; }
+    .freq-track { flex: 1; background: var(--border); border-radius: 2px; height: 5px; overflow: hidden; }
+    .freq-fill  { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+    .freq-cnt   { font-size: .7rem; color: var(--muted); font-family: monospace; min-width: 2rem; text-align: right; }
+
+    /* Double-letter anomaly chips */
+    .dl-chip {
+      display: inline-block; background: rgba(224,168,92,.12);
+      border: 1px solid rgba(224,168,92,.35); border-radius: 4px;
+      padding: .12em .55em; font-family: monospace; font-size: .8rem;
+      color: var(--warn); margin: 2px; letter-spacing: .05em;
+    }
+    .dl-none { font-size: .78rem; color: var(--ok); }
+
+    /* Section C: Driver Matrix table */
+    .driver-table { width: 100%; border-collapse: collapse; font-size: .79rem; margin-top: .3rem; }
+    .driver-table th {
+      text-align: left; padding: .35rem .6rem;
+      font-size: .63rem; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .driver-table td { padding: .4rem .6rem; border-bottom: 1px solid rgba(30,35,50,.6); vertical-align: middle; }
+    .driver-table tbody tr:hover td { background: rgba(255,255,255,.02); }
+    .driver-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Axis label column */
+    .driver-axis { font-family: monospace; font-size: .75rem; color: var(--text); white-space: nowrap; }
+    /* Driver chip */
+    .driver-chip {
+      display: inline-block; background: rgba(79,142,247,.1);
+      border: 1px solid rgba(79,142,247,.25); border-radius: 3px;
+      padding: .08em .45em; font-family: monospace; font-size: .73rem;
+      color: var(--accent); margin: 1px;
+    }
+
+    /* Collapsible toggle header */
+    .telem-toggle-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none; margin-bottom: 0;
+    }
+    .telem-toggle-hdr:hover .card-title { color: var(--text); }
+    .telem-caret { font-size: .75rem; color: var(--muted); transition: transform .2s; }
+    .telem-caret.open { transform: rotate(180deg); }
+
+    /* ── Window nav header row (pill strip + export buttons) ── */
+    .win-nav-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: .65rem; }
+    .win-nav-hdr .card-title { margin: 0; }
+    .export-btns { display: flex; gap: .35rem; }
 
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -187,27 +252,23 @@
   <!-- ─────────── LEFT PANEL ─────────── -->
   <aside class="panel-left">
 
-    <!-- Language selector -->
     <div class="lang-selector">
       <label>LANGUAGE</label>
       <div class="lang-flags">
         <button class="lang-btn active-EN" data-lang="EN" onclick="selectLang('EN')">🇬🇧 EN</button>
+        <button class="lang-btn" data-lang="DE" onclick="selectLang('DE')">🇩🇪 DE</button>
         <button class="lang-btn" data-lang="ES" onclick="selectLang('ES')">🇪🇸 ES</button>
         <button class="lang-btn" data-lang="FR" onclick="selectLang('FR')">🇫🇷 FR</button>
         <button class="lang-btn" data-lang="JA" onclick="selectLang('JA')">🇯🇵 JA</button>
       </div>
-      <div class="lang-note" id="lang-note">
-        Latin BPV matrix · en_core_web_sm
-      </div>
+      <div class="lang-note" id="lang-note">Latin BPV matrix · en_core_web_md</div>
     </div>
 
-    <!-- Text input -->
     <div>
       <label>INTERCEPT TEXT</label>
       <textarea id="input-text" placeholder="Paste intercept here…"></textarea>
     </div>
 
-    <!-- Parameters -->
     <div>
       <label>PARAMETERS</label>
       <div class="param-row" style="margin-top:.3rem;">
@@ -217,15 +278,13 @@
       </div>
     </div>
 
-    <!-- Entity -->
     <div><label>ENTITY DESIGNATOR</label><input type="text" id="param-entity" placeholder="Target_Delta" /></div>
 
-    <button class="btn-run" id="btn-run">Run Analysis</button>
+    <button class="btn-run"  id="btn-run">Run Analysis</button>
     <button class="btn-seed" id="btn-seed">Seed Baselines from Text</button>
 
     <div id="status-bar" class="info">Ready. Select language, paste intercept, run analysis.</div>
 
-    <!-- Entity info -->
     <div class="card" id="entity-card" style="display:none;">
       <div class="card-title">Current Entity</div>
       <div id="entity-details"></div>
@@ -236,38 +295,113 @@
   <!-- ─────────── RIGHT PANEL ─────────── -->
   <main class="panel-right">
 
-    <!-- Window Navigator -->
+    <!-- 1. Window Navigator + Export Buttons -->
     <div class="card" id="card-windows" style="display:none;">
-      <div class="card-title">Windows — click to inspect</div>
+      <div class="win-nav-hdr">
+        <span class="card-title">Windows — click to inspect</span>
+        <div class="export-btns">
+          <button class="btn-export" onclick="exportTelemetry('json')" title="Export all windows as JSON">↓ JSON</button>
+          <button class="btn-export" onclick="exportTelemetry('csv')"  title="Export all windows as CSV (SPSS/R)">↓ CSV</button>
+        </div>
+      </div>
       <div id="window-pills"></div>
     </div>
 
-    <!-- Micro vectors (6-vector canonical display) -->
-    <div class="card" id="card-micro" style="display:none;">
-      <div class="card-title">Micro-Layer Vectors — current window</div>
-      <!-- JA script breakdown (shown only for JA) -->
+    <!-- 2. Author / Reader toggle + Radar charts -->
+    <div class="card" id="card-radars" style="display:none;">
+      <div class="mode-bar" style="margin-bottom:.9rem;">
+        <span class="mode-bar-label">Profile Mode</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btn-author" onclick="setMode('author')">Author Profile</button>
+          <button class="mode-btn"        id="btn-reader" onclick="setMode('reader')">Reader Profile</button>
+        </div>
+      </div>
+
       <div id="ja-script-panel" style="display:none;">
         <div class="script-grid" id="ja-script-grid"></div>
       </div>
-      <div class="vector-grid" id="vector-grid"></div>
+
+      <div class="radar-grid">
+        <div class="radar-block">
+          <div class="radar-label">Micro-Vector Fingerprint</div>
+          <div class="radar-canvas-wrap"><canvas id="micro-radar"></canvas></div>
+        </div>
+        <div class="radar-block">
+          <div class="radar-label">Macro-Cluster Fingerprint · 6-Axis</div>
+          <div class="radar-canvas-wrap"><canvas id="macro-radar"></canvas></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Z-Score Dashboard -->
+    <!-- 3. Z-Score Dashboard -->
     <div class="card" id="card-zscores" style="display:none;">
       <div class="card-title">Z-Scores — current window</div>
-      <div style="margin-bottom:.45rem;font-size:.72rem;color:var(--muted);">
-        Micro (subconscious) &nbsp;·&nbsp; Macro (conscious)
-      </div>
       <div class="zscore-grid" id="zscore-grid"></div>
     </div>
 
-    <!-- Semantic Cluster Chart -->
-    <div class="card" id="card-clusters" style="display:none;">
-      <div class="card-title">Semantic Cluster Scores — current window</div>
-      <div id="cluster-chart"></div>
+    <!-- 4. Raw Telemetry & Attribution (collapsible) -->
+    <div class="card" id="card-telemetry" style="display:none;">
+      <div class="telem-toggle-hdr" onclick="toggleTelemetry()">
+        <span class="card-title" style="margin:0;">Raw Telemetry &amp; Attribution</span>
+        <span class="telem-caret" id="telem-caret">▼</span>
+      </div>
+
+      <div id="telem-body" style="margin-top:.9rem;">
+
+        <!-- A: Structural Baseline -->
+        <div class="telem-section">
+          <div class="telem-section-hdr">A — Structural Baseline</div>
+          <div class="telem-stat-row" id="telem-baseline"></div>
+        </div>
+
+        <!-- B: Frequency Leaders -->
+        <div class="telem-section">
+          <div class="telem-section-hdr">B — Frequency Leaders</div>
+          <div class="telem-freq-grid">
+            <div>
+              <div class="telem-freq-col-title">Top Micro Characters (BPV)</div>
+              <div id="telem-top-chars"></div>
+            </div>
+            <div>
+              <div class="telem-freq-col-title">Top Macro Lemmas (weight)</div>
+              <div id="telem-top-lemmas"></div>
+            </div>
+          </div>
+          <div style="margin-top:.75rem;">
+            <div class="telem-freq-col-title">Double-Letter Anomalies</div>
+            <div id="telem-dl-anomalies"></div>
+          </div>
+        </div>
+
+        <!-- C: Driver Matrix -->
+        <div class="telem-section">
+          <div class="telem-section-hdr">C — Driver Matrix</div>
+          <table class="driver-table">
+            <thead>
+              <tr>
+                <th style="width:22%;">Vector Axis</th>
+                <th style="width:14%;">Z-Score</th>
+                <th>Primary Drivers / Contributors</th>
+              </tr>
+            </thead>
+            <tbody id="telem-driver-body"></tbody>
+          </table>
+        </div>
+
+      </div><!-- /telem-body -->
     </div>
 
-    <!-- Dissonance Events -->
+    <!-- 5. Reader Profile -->
+    <div class="card" id="card-reader" style="display:none;">
+      <div class="card-title">Reader Profile — Target Audience Psychology</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:.7rem;">
+        Deficit-filling model: readers seek what the author's framing withholds.
+        Only traits with |Z| &gt; 1.0 are flagged as active.
+      </div>
+      <div id="reader-profile-grid"></div>
+    </div>
+
+    <!-- 6. Dissonance Events -->
     <div class="card" id="card-dissonance" style="display:none;">
       <div class="card-title">Dissonance Events — all windows</div>
       <div id="dissonance-list"></div>
@@ -286,26 +420,45 @@
 /* ════════════════════════════════════════════════════════════
    State
 ════════════════════════════════════════════════════════════ */
-let _lang     = "EN";
-let _results  = null;
+let _lang      = "EN";
+let _results   = null;
 let _activeWin = 0;
+let _mode      = "author";
+
+let _microChart = null;
+let _macroChart = null;
+let _currentZMicro  = {};
+let _currentZMacro  = {};
+let _currentVectors = {};
+let _telemOpen  = true;
 
 /* ════════════════════════════════════════════════════════════
-   Language descriptions
+   Constants
 ════════════════════════════════════════════════════════════ */
 const LANG_NOTES = {
-  EN: "Latin BPV matrix · Interaction coefficients · en_core_web_sm",
-  ES: "Latin BPV + RR×2.0 / LL×1.5 overrides · es_core_news_sm",
-  FR: "Latin BPV + Silent terminal suppression (S/T/X/D→0) · fr_core_news_sm",
-  JA: "Logographic matrix: Kanji/Hiragana/Katakana ratios + Stroke density + Keigo · ja_core_news_sm",
+  EN: "Latin BPV matrix · Interaction coefficients · en_core_web_md",
+  DE: "Latin BPV + Umlaut/ß normalisation (ä→ae ö→oe ü→ue ß→ss) · de_core_news_md",
+  ES: "Latin BPV + RR×2.0 / LL×1.5 overrides · es_core_news_md",
+  FR: "Latin BPV + Silent terminal suppression (S/T/X/D→0) · fr_core_news_md",
+  JA: "Logographic matrix: Kanji/Hiragana/Katakana + Stroke density + Keigo · ja_core_news_md",
 };
+
+const MICRO_KEYS   = ['intensity','anxiety','attention','emotion','agitation','complexity'];
+const MICRO_LABELS = ['Intensity','Anxiety','Attention','Emotion','Agitation','Complexity'];
+
+const MACRO_LABELS  = ['Resources','Power','Visibility','Temporal','Cognitive','Kinetic'];
+const MACRO_PRIMARY = ['resources_scarcity','power_control','visibility_concealment','temporal_future_projective','cognitive_scientific','kinetic_aggression'];
+const MACRO_OPPOSE  = ['resources_abundance','power_submission','visibility_exposure','temporal_past_nostalgic','cognitive_emotional','kinetic_diplomacy'];
+
+// All 12 poles in display order for the Driver Matrix
+const ALL_POLES = [...MACRO_PRIMARY, ...MACRO_OPPOSE];
 
 /* ════════════════════════════════════════════════════════════
    Helpers
 ════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 
-function setStatus(msg, type = 'info') {
+function setStatus(msg, type='info') {
   const el = $('status-bar');
   el.className = type;
   el.innerHTML = msg;
@@ -319,15 +472,8 @@ function zClass(z) {
   return 'z-zero';
 }
 
-function barClass(pole) {
-  const map = {
-    scarcity: 'bar-scarcity', abundance: 'bar-abundance',
-    control: 'bar-control', submission: 'bar-submission',
-    concealment: 'bar-concealment', exposure: 'bar-exposure',
-    past_nostalgic: 'bar-past_nostalgic', future_projective: 'bar-future_projective',
-    formal: 'bar-formal', casual: 'bar-casual',
-  };
-  return map[pole] || 'bar-scarcity';
+function fmtZ(z) {
+  return `${z >= 0 ? '+' : ''}${z.toFixed(2)}`;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -339,12 +485,111 @@ function selectLang(code) {
     b.className = `lang-btn${b.dataset.lang === code ? ` active-${code}` : ''}`;
   });
   $('lang-note').textContent = LANG_NOTES[code] || '';
-
   const badge = $('hdr-lang-badge');
-  const names = { EN: '🇬🇧 English', ES: '🇪🇸 Spanish', FR: '🇫🇷 French', JA: '🇯🇵 Japanese' };
-  badge.textContent = names[code];
-  badge.className   = `badge-lang lang-${code}`;
+  const names = { EN:'🇬🇧 English', DE:'🇩🇪 German', ES:'🇪🇸 Spanish', FR:'🇫🇷 French', JA:'🇯🇵 Japanese' };
+  badge.textContent   = names[code];
+  badge.className     = `badge-lang lang-${code}`;
   badge.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   Mode toggle
+════════════════════════════════════════════════════════════ */
+function setMode(mode) {
+  _mode = mode;
+  $('btn-author').classList.toggle('active', mode === 'author');
+  $('btn-reader').classList.toggle('active', mode === 'reader');
+  $('card-reader').style.display = (mode === 'reader' && _results) ? '' : 'none';
+  if (mode === 'reader' && _results) renderReaderProfile(_results.windows[_activeWin]);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Telemetry collapse toggle
+════════════════════════════════════════════════════════════ */
+function toggleTelemetry() {
+  _telemOpen = !_telemOpen;
+  $('telem-body').style.display  = _telemOpen ? '' : 'none';
+  $('telem-caret').classList.toggle('open', _telemOpen);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Chart.js
+════════════════════════════════════════════════════════════ */
+const RADAR_SCALE = {
+  min: 0,
+  grid:       { color: 'rgba(30,35,50,0.95)' },
+  angleLines: { color: 'rgba(30,35,50,0.95)' },
+  ticks: { color: '#6b7394', backdropColor: 'transparent', font: { size: 9 }, stepSize: 2 },
+  pointLabels: { color: '#dce3f5', font: { size: 10, weight: '600' } },
+};
+
+function buildRadarChart(canvasId, labels, color, maxVal, tooltipCb) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        data: new Array(labels.length).fill(0),
+        borderColor:          color,
+        backgroundColor:      color.replace('1)', '0.12)'),
+        pointBackgroundColor: color,
+        pointBorderColor:     '#0d0f14',
+        pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      scales: { r: { ...RADAR_SCALE, max: maxVal } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e2332', titleColor: '#dce3f5', bodyColor: '#dce3f5',
+          borderColor: '#2e3550', borderWidth: 1, padding: 10,
+          callbacks: { label: tooltipCb },
+        },
+      },
+      animation: { duration: 350 },
+    },
+  });
+}
+
+function initCharts() {
+  if (_microChart) { _microChart.destroy(); _microChart = null; }
+  if (_macroChart) { _macroChart.destroy(); _macroChart = null; }
+
+  _microChart = buildRadarChart('micro-radar', MICRO_LABELS, 'rgba(92,224,138,1)', 100, ctx => {
+    const key = MICRO_KEYS[ctx.dataIndex];
+    const raw = (_currentVectors[key] ?? 0).toFixed(3);
+    const z   = (_currentZMicro[key]  ?? 0).toFixed(2);
+    return [` Raw: ${raw}`, ` Z-Score: ${fmtZ(+z)}`];
+  });
+
+  _macroChart = buildRadarChart('macro-radar', MACRO_LABELS, 'rgba(79,142,247,1)', 10, ctx => {
+    const i    = ctx.dataIndex;
+    const zP   = _currentZMacro[MACRO_PRIMARY[i]] ?? 0;
+    const zO   = _currentZMacro[MACRO_OPPOSE[i]]  ?? 0;
+    const pLbl = MACRO_PRIMARY[i].split('_').slice(1).join(' ');
+    const oLbl = MACRO_OPPOSE[i].split('_').slice(1).join(' ');
+    return [` ${pLbl}: Z ${fmtZ(zP)}`, ` ${oLbl}: Z ${fmtZ(zO)}`];
+  });
+}
+
+function updateCharts(win) {
+  if (!_microChart || !_macroChart) return;
+  _currentVectors = win.micro.vectors;
+  _currentZMicro  = win.z_scores_micro;
+  _currentZMacro  = win.z_scores_macro;
+
+  const rawVals  = MICRO_KEYS.map(k => Math.abs(_currentVectors[k] ?? 0));
+  const microMax = Math.max(1e-9, ...rawVals);
+  _microChart.data.datasets[0].data = rawVals.map(v => Math.min(100, v / microMax * 100));
+  _microChart.update();
+
+  _macroChart.data.datasets[0].data = MACRO_PRIMARY.map(k =>
+    Math.min(10, Math.max(0, (_currentZMacro[k] ?? 0) + 5))
+  );
+  _macroChart.update();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -356,7 +601,7 @@ function renderWindowPills(windows) {
   windows.forEach((win, i) => {
     const hasDis  = win.dissonance_events.length > 0;
     const isReset = win.reset_reason === 'structural_boundary';
-    const pill = document.createElement('span');
+    const pill    = document.createElement('span');
     pill.className = ['window-pill', i === _activeWin ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
     pill.textContent = `W${i}${isReset ? ' ⟳' : ''}${hasDis ? ' ⚡' : ''}`;
     pill.title = `chars ${win.start_char}–${win.end_char} | ${win.reset_reason}`;
@@ -366,44 +611,20 @@ function renderWindowPills(windows) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   Render: Micro Vectors (6-canonical + JA raw)
+   Render: JA Script Panel
 ════════════════════════════════════════════════════════════ */
-const VECTOR_ORDER = ['intensity','anxiety','attention','emotion','agitation','complexity'];
-const VECTOR_CLASS = { intensity:'v-intensity', anxiety:'v-anxiety', attention:'v-attention', emotion:'v-emotion', agitation:'v-agitation', complexity:'v-complexity' };
-
-function renderMicroVectors(win) {
-  const grid  = $('vector-grid');
-  const jaPanel = $('ja-script-panel');
-  grid.innerHTML = '';
-
-  const vectors = win.micro.vectors;
-  const raw     = win.micro.raw;
-  const isJA    = win.language === 'JA';
-
-  // Japanese script breakdown
-  jaPanel.style.display = isJA ? '' : 'none';
-  if (isJA && raw) {
-    $('ja-script-grid').innerHTML = `
-      <div class="script-cell"><div class="script-name">Kanji</div><div class="script-pct sc-kanji">${(+(raw.kanji_ratio||0)*100).toFixed(1)}%</div></div>
-      <div class="script-cell"><div class="script-name">Hiragana</div><div class="script-pct sc-hiragana">${(+(raw.hiragana_ratio||0)*100).toFixed(1)}%</div></div>
-      <div class="script-cell"><div class="script-name">Katakana</div><div class="script-pct sc-katakana">${(+(raw.katakana_ratio||0)*100).toFixed(1)}%</div></div>
-      <div class="script-cell"><div class="script-name">Stroke avg</div><div class="script-pct sc-stroke">${(+(raw.stroke_density||0)).toFixed(1)}</div></div>
-    `;
-  }
-
-  const maxVal = Math.max(1, ...VECTOR_ORDER.map(k => Math.abs(vectors[k] || 0)));
-  VECTOR_ORDER.forEach(key => {
-    const val = vectors[key] ?? 0;
-    const pct = Math.min(100, (Math.abs(val) / maxVal * 100)).toFixed(1);
-    const cell = document.createElement('div');
-    cell.className = 'vector-cell';
-    cell.innerHTML = `
-      <div class="vector-name">${key}</div>
-      <div class="vector-bar-track"><div class="vector-bar-fill ${VECTOR_CLASS[key]}" style="width:${pct}%"></div></div>
-      <div class="vector-value">${val >= 0 ? '' : '−'}${Math.abs(val).toFixed(2)}</div>
-    `;
-    grid.appendChild(cell);
-  });
+function renderJaPanel(win) {
+  const panel = $('ja-script-panel');
+  const isJA  = win.language === 'JA';
+  panel.style.display = isJA ? '' : 'none';
+  if (!isJA) return;
+  const raw = win.micro.raw || {};
+  $('ja-script-grid').innerHTML = `
+    <div class="script-cell"><div class="script-name">Kanji</div><div class="script-pct sc-kanji">${(+(raw.kanji_ratio||0)*100).toFixed(1)}%</div></div>
+    <div class="script-cell"><div class="script-name">Hiragana</div><div class="script-pct sc-hiragana">${(+(raw.hiragana_ratio||0)*100).toFixed(1)}%</div></div>
+    <div class="script-cell"><div class="script-name">Katakana</div><div class="script-pct sc-katakana">${(+(raw.katakana_ratio||0)*100).toFixed(1)}%</div></div>
+    <div class="script-cell"><div class="script-name">Stroke avg</div><div class="script-pct sc-stroke">${(+(raw.stroke_density||0)).toFixed(1)}</div></div>
+  `;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -412,54 +633,192 @@ function renderMicroVectors(win) {
 function renderZScores(win) {
   const grid = $('zscore-grid');
   grid.innerHTML = '';
-
   function addSection(label, scores) {
     const hdr = document.createElement('div');
-    hdr.style.cssText = 'grid-column:1/-1;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.35rem;';
+    hdr.className = 'zscore-section-hdr';
     hdr.textContent = label;
     grid.appendChild(hdr);
     Object.entries(scores).forEach(([key, val]) => {
       const cell = document.createElement('div');
       cell.className = 'zscore-cell';
-      cell.innerHTML = `<div class="zscore-label">${key.replace(/_/g,' ')}</div>
-        <div class="zscore-value ${zClass(val)}">${val >= 0 ? '+' : ''}${val.toFixed(2)}</div>`;
+      cell.innerHTML = `
+        <div class="zscore-label">${key.replace(/_/g,' ')}</div>
+        <div class="zscore-value ${zClass(val)}">${fmtZ(val)}</div>`;
       grid.appendChild(cell);
     });
   }
-
-  addSection('Micro  (subconscious)', win.z_scores_micro);
-  addSection('Macro  (conscious)',    win.z_scores_macro);
+  addSection('Micro — Subconscious Signal', win.z_scores_micro);
+  addSection('Macro — Conscious Framing · 6-Cluster', win.z_scores_macro);
 }
 
 /* ════════════════════════════════════════════════════════════
-   Render: Cluster Chart
+   Render: Raw Telemetry Panel (Tasks 2 A/B/C)
 ════════════════════════════════════════════════════════════ */
-function renderClusters(win) {
-  const chart = $('cluster-chart');
-  chart.innerHTML = '';
+function renderTelemetry(win) {
+  const rt = win.raw_telemetry || {};
+  const zm = win.z_scores_macro || {};
 
-  const clusters = win.macro.cluster_scores;
-  let maxVal = 0;
-  Object.values(clusters).forEach(poles => Object.values(poles).forEach(v => { if (v > maxVal) maxVal = v; }));
-  if (maxVal === 0) maxVal = 1;
+  // ── Section A: Structural Baseline ──────────────────────────────────────
+  $('telem-baseline').innerHTML = `
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">Total Chars</div>
+      <div class="telem-stat-value">${rt.total_chars ?? '—'}</div>
+    </div>
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">Total Words</div>
+      <div class="telem-stat-value">${rt.total_words ?? '—'}</div>
+    </div>
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">Avg Word Len</div>
+      <div class="telem-stat-value">${(rt.avg_word_length ?? 0).toFixed(2)}</div>
+    </div>
+  `;
 
-  Object.entries(clusters).forEach(([cluster, poles]) => {
-    const hdr = document.createElement('div');
-    hdr.style.cssText = 'font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:.55rem 0 .28rem;';
-    hdr.textContent = cluster === 'keigo' ? '⛩  Keigo Register (Japanese)' : cluster;
-    chart.appendChild(hdr);
+  // ── Section B: Top Micro Characters ─────────────────────────────────────
+  const topChars = rt.top_micro_chars || {};
+  const maxCount = Math.max(1, ...Object.values(topChars).map(Number));
+  const charsEl  = $('telem-top-chars');
+  if (Object.keys(topChars).length === 0) {
+    charsEl.innerHTML = '<span style="color:var(--muted);font-size:.78rem;">No data</span>';
+  } else {
+    charsEl.innerHTML = Object.entries(topChars)
+      .map(([ch, cnt]) => `
+        <div class="freq-row">
+          <div class="freq-lbl">${ch}</div>
+          <div class="freq-track"><div class="freq-fill" style="width:${(cnt/maxCount*100).toFixed(0)}%"></div></div>
+          <div class="freq-cnt">${cnt}</div>
+        </div>`)
+      .join('');
+  }
 
-    Object.entries(poles).forEach(([pole, score]) => {
-      const pct = (score / maxVal * 100).toFixed(1);
-      const row = document.createElement('div');
-      row.className = 'cluster-row';
-      row.innerHTML = `
-        <span class="cluster-label">${pole.replace(/_/g,' ')}</span>
-        <div class="cluster-bar-track"><div class="cluster-bar-fill ${barClass(pole)}" style="width:${pct}%"></div></div>
-        <span class="cluster-score-val">${score.toFixed(5)}</span>
-      `;
-      chart.appendChild(row);
+  // ── Section B: Top Macro Lemmas ──────────────────────────────────────────
+  const macroDrivers = rt.macro_drivers || {};
+  // Flatten all (lemma, weight) pairs across all poles, sort by weight, top 5
+  const allLemmas = [];
+  Object.values(macroDrivers).forEach(lemmaMap => {
+    Object.entries(lemmaMap).forEach(([lemma, weight]) => {
+      allLemmas.push({ lemma, weight: parseFloat(weight) });
     });
+  });
+  allLemmas.sort((a, b) => b.weight - a.weight);
+  const top5Lemmas = allLemmas.slice(0, 5);
+  const maxLemW    = Math.max(1e-9, ...top5Lemmas.map(l => l.weight));
+
+  const lemmasEl = $('telem-top-lemmas');
+  if (top5Lemmas.length === 0) {
+    lemmasEl.innerHTML = '<span style="color:var(--muted);font-size:.78rem;">No macro hits</span>';
+  } else {
+    lemmasEl.innerHTML = top5Lemmas
+      .map(({ lemma, weight }) => `
+        <div class="freq-row">
+          <div class="freq-lbl" style="width:6rem;text-align:left;font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${lemma}">${lemma}</div>
+          <div class="freq-track"><div class="freq-fill" style="width:${(weight/maxLemW*100).toFixed(0)}%;background:var(--purple);"></div></div>
+          <div class="freq-cnt">${weight.toFixed(2)}</div>
+        </div>`)
+      .join('');
+  }
+
+  // ── Section B: Double-Letter Anomalies ───────────────────────────────────
+  const dlAnom  = rt.double_letter_anomalies || {};
+  const dlEl    = $('telem-dl-anomalies');
+  const dlPairs = Object.entries(dlAnom);
+  if (dlPairs.length === 0) {
+    dlEl.innerHTML = '<span class="dl-none">None detected in this window</span>';
+  } else {
+    dlEl.innerHTML = dlPairs
+      .sort((a, b) => b[1] - a[1])
+      .map(([pair, cnt]) => `<span class="dl-chip">${pair} ×${cnt}</span>`)
+      .join('');
+  }
+
+  // ── Section C: Driver Matrix ──────────────────────────────────────────────
+  const tbody = $('telem-driver-body');
+  tbody.innerHTML = '';
+
+  ALL_POLES.forEach(poleKey => {
+    const z       = zm[poleKey] ?? 0;
+    const drivers = macroDrivers[poleKey] || {};
+
+    // Format axis label: "kinetic_aggression" → "Kinetic / Aggression"
+    const parts    = poleKey.split('_');
+    const cluster  = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    const pole     = parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const axisLbl  = `${cluster} / ${pole}`;
+
+    // Driver chips: top 5 by weight (already sorted by Python layer)
+    const driverHtml = Object.entries(drivers).length
+      ? Object.entries(drivers)
+          .map(([lemma, w]) => `<span class="driver-chip">${lemma} (${parseFloat(w).toFixed(2)})</span>`)
+          .join('')
+      : '<span style="color:var(--muted);font-size:.75rem;">—</span>';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="driver-axis">${axisLbl}</td>
+      <td><span class="${zClass(z)}" style="font-family:monospace;font-weight:700;font-size:.85rem;">${fmtZ(z)}</span></td>
+      <td>${driverHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   Reader Matrix
+════════════════════════════════════════════════════════════ */
+const READER_RULES = [
+  { key:'power_control',            src:'macro', icon:'⛓', trait:'Real-World Powerlessness / Seeks Structure',
+    desc:'Audience compensates felt powerlessness by craving authoritative frameworks and rigid order.' },
+  { key:'visibility_concealment',   src:'macro', icon:'🕳', trait:'Paranoia / Susceptibility to Conspiracies',
+    desc:'Concealment framing triggers pattern-completion — readers fill informational voids with threat narratives.' },
+  { key:'emotion',                  src:'micro', icon:'💔', trait:'Empathy Seeking / Isolation',
+    desc:'Reader is emotionally under-served and gravitates to content that mirrors or validates personal suffering.' },
+  { key:'cognitive_scientific',     src:'macro', icon:'🔬', trait:'Information Starved / Seeking Certainty',
+    desc:'Empirical density overwhelms the reader — creates dependency on authoritative data to reduce ambient uncertainty.' },
+  { key:'kinetic_aggression',       src:'macro', icon:'🛡', trait:'Fearful / Seeking Protection or Retribution',
+    desc:'Perceived threat signals activate protective and retaliatory impulses in the target audience.' },
+  { key:'resources_scarcity',       src:'macro', icon:'📉', trait:'Scarcity Anxiety / Hoarding Impulse',
+    desc:'Deprivation framing triggers primal resource-acquisition behaviour and zero-sum competitive cognition.' },
+  { key:'temporal_past_nostalgic',  src:'macro', icon:'⏮', trait:'Identity Threat / Nostalgia Vulnerability',
+    desc:'Restoration framing exploits readers whose identity or group is perceived to be under existential threat.' },
+  { key:'temporal_future_projective',src:'macro',icon:'⚠', trait:'Catastrophism / Threat Hypervigilance',
+    desc:'Incoming-threat framing primes catastrophic expectation and compulsive threat-scanning behaviour.' },
+  { key:'power_submission',         src:'macro', icon:'🤝', trait:'Rescue Fantasy / Authority Dependency',
+    desc:'Submission framing attracts readers willing to trade agency for protection from a perceived superior force.' },
+  { key:'kinetic_diplomacy',        src:'macro', icon:'🕊', trait:'War Fatigue / Seeks De-escalation',
+    desc:'Diplomatic framing resonates with audiences exhausted by conflict and actively seeking normalisation.' },
+  { key:'cognitive_emotional',      src:'macro', icon:'🌀', trait:'Rationality Deficit / Seeks Grounding',
+    desc:'Abstract/emotional framing creates resonance with readers who distrust institutions and seek "authentic" feeling.' },
+];
+
+function readerLevelMeta(z) {
+  const a = Math.abs(z);
+  if (a >= 2.5) return { label:'CRITICAL', cls:'rl-critical' };
+  if (a >= 1.5) return { label:'HIGH',     cls:'rl-high'     };
+  if (a >= 1.0) return { label:'MODERATE', cls:'rl-moderate' };
+  return               { label:'LOW',      cls:'rl-low'      };
+}
+
+function renderReaderProfile(win) {
+  const grid   = $('reader-profile-grid');
+  grid.innerHTML = '';
+  const zMicro = win.z_scores_micro;
+  const zMacro = win.z_scores_macro;
+  READER_RULES.forEach(rule => {
+    const z      = rule.src === 'micro' ? (zMicro[rule.key] ?? 0) : (zMacro[rule.key] ?? 0);
+    const active = Math.abs(z) >= 1.0;
+    const { label, cls } = readerLevelMeta(z);
+    const card = document.createElement('div');
+    card.className = `reader-trait ${active ? 'reader-active' : 'reader-inactive'}`;
+    card.innerHTML = `
+      <div class="reader-trait-header">
+        <span class="reader-icon">${rule.icon}</span>
+        <span class="reader-trait-name">${rule.trait}</span>
+        <span class="reader-level ${cls}">${label}</span>
+      </div>
+      <div class="reader-trait-desc">${rule.desc}</div>
+      <div class="reader-zsource">Z = ${fmtZ(z)} · ${rule.src}/${rule.key.replace(/_/g,' ')}</div>
+    `;
+    grid.appendChild(card);
   });
 }
 
@@ -493,11 +852,13 @@ function renderDissonance(windows) {
 ════════════════════════════════════════════════════════════ */
 function selectWindow(idx) {
   _activeWin = idx;
-  const win = _results.windows[idx];
+  const win  = _results.windows[idx];
   renderWindowPills(_results.windows);
-  renderMicroVectors(win);
+  renderJaPanel(win);
   renderZScores(win);
-  renderClusters(win);
+  updateCharts(win);
+  renderTelemetry(win);
+  if (_mode === 'reader') renderReaderProfile(win);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -509,20 +870,126 @@ function renderResults(data) {
 
   $('empty-state').style.display      = 'none';
   $('card-windows').style.display     = '';
-  $('card-micro').style.display       = '';
+  $('card-radars').style.display      = '';
   $('card-zscores').style.display     = '';
-  $('card-clusters').style.display    = '';
+  $('card-telemetry').style.display   = '';
   $('card-dissonance').style.display  = '';
+
+  if (!_microChart) initCharts();
 
   renderWindowPills(data.windows);
   selectWindow(0);
   renderDissonance(data.windows);
 
-  const total = data.windows.reduce((n,w) => n + w.dissonance_events.length, 0);
+  if (_mode === 'reader') {
+    $('card-reader').style.display = '';
+    renderReaderProfile(data.windows[0]);
+  }
+
+  const total = data.windows.reduce((n, w) => n + w.dissonance_events.length, 0);
   setStatus(
     `Analysis complete [${data.language}] — ${data.total_windows} windows, ${total} dissonance event(s).`,
     total > 0 ? 'err' : 'ok'
   );
+}
+
+/* ════════════════════════════════════════════════════════════
+   Task 3 — Bulk Export (JSON + CSV)
+════════════════════════════════════════════════════════════ */
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportTelemetry(format) {
+  if (!_results) { setStatus('No analysis data to export.', 'err'); return; }
+
+  const ts   = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+  const lang = _results.language || _lang;
+
+  if (format === 'json') {
+    // Full telemetry export — all fields, all windows
+    const payload = {
+      exported_at:   new Date().toISOString(),
+      engine:        'PsychoLinguistic Analysis Engine v2',
+      language:      lang,
+      document_id:   _results.document_id,
+      total_windows: _results.total_windows,
+      windows: _results.windows.map(win => ({
+        window_index:    win.window_index,
+        start_char:      win.start_char,
+        end_char:        win.end_char,
+        reset_reason:    win.reset_reason,
+        micro_vectors:   win.micro?.vectors   ?? {},
+        z_scores_micro:  win.z_scores_micro   ?? {},
+        z_scores_macro:  win.z_scores_macro   ?? {},
+        ema_snapshot:    win.ema_snapshot      ?? {},
+        raw_telemetry:   win.raw_telemetry     ?? {},
+        dissonance_events: win.dissonance_events ?? [],
+      })),
+    };
+    triggerDownload(
+      new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+      `psycho_telemetry_${lang}_${ts}.json`
+    );
+
+  } else if (format === 'csv') {
+    // Flat CSV — one row per window; compatible with SPSS, R, Excel
+    const macroPoles = ALL_POLES;
+    const headers = [
+      'window_index','start_char','end_char','reset_reason',
+      ...MICRO_KEYS.map(k => `micro_${k}`),
+      ...MICRO_KEYS.map(k => `z_micro_${k}`),
+      ...macroPoles.map(k => `z_macro_${k}`),
+      'total_chars','total_words','avg_word_length',
+      'dl_anomaly_count','top_char_1','top_char_2',
+      'has_dissonance','n_dissonance_events',
+    ];
+
+    const rows = _results.windows.map(win => {
+      const mv  = win.micro?.vectors   ?? {};
+      const zm  = win.z_scores_micro   ?? {};
+      const zM  = win.z_scores_macro   ?? {};
+      const rt  = win.raw_telemetry    ?? {};
+      const dl  = Object.keys(rt.double_letter_anomalies || {}).length;
+      const tc  = Object.entries(rt.top_micro_chars || {});
+      const top1 = tc[0] ? `${tc[0][0]}:${tc[0][1]}` : '';
+      const top2 = tc[1] ? `${tc[1][0]}:${tc[1][1]}` : '';
+      const nd   = win.dissonance_events?.length ?? 0;
+
+      return [
+        win.window_index,
+        win.start_char,
+        win.end_char,
+        `"${win.reset_reason}"`,
+        ...MICRO_KEYS.map(k => (mv[k] ?? 0).toFixed(6)),
+        ...MICRO_KEYS.map(k => (zm[k] ?? 0).toFixed(6)),
+        ...macroPoles.map(k => (zM[k] ?? 0).toFixed(6)),
+        rt.total_chars    ?? 0,
+        rt.total_words    ?? 0,
+        (rt.avg_word_length ?? 0).toFixed(2),
+        dl,
+        `"${top1}"`,
+        `"${top2}"`,
+        nd > 0 ? 1 : 0,
+        nd,
+      ].join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    triggerDownload(
+      new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
+      `psycho_telemetry_${lang}_${ts}.csv`
+    );
+  }
+
+  setStatus(`Exported ${_results.total_windows} windows as ${format.toUpperCase()}.`, 'ok');
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -560,16 +1027,16 @@ $('btn-run').addEventListener('click', async () => {
     const entity = $('param-entity').value.trim();
     if (entity) {
       await fetch('/api/entity', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ primary_designator: entity }),
       });
     }
 
     const res = await fetch('/api/analyze', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         text,
-        language_code: _lang,
+        language_code:        _lang,
         window_size:          +$('param-window').value,
         stride:               +$('param-stride').value,
         dissonance_threshold: +$('param-threshold').value,
@@ -597,11 +1064,10 @@ $('btn-run').addEventListener('click', async () => {
 $('btn-seed').addEventListener('click', async () => {
   const text = $('input-text').value.trim();
   if (!text) { setStatus('Paste control text first.', 'err'); return; }
-
   setStatus(`<span class="spinner"></span>Seeding [${_lang}] baselines…`, 'info');
   try {
-    const res = await fetch('/api/control', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+    const res  = await fetch('/api/control', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ text, language_code: _lang }),
     });
     const data = await res.json();
