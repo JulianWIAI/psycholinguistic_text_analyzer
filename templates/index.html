@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsychoLinguistic Analysis Engine v2</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #141720;
+      --border:   #1e2332;
+      --accent:   #4f8ef7;
+      --danger:   #e05c5c;
+      --warn:     #e0a85c;
+      --ok:       #5ce08a;
+      --muted:    #6b7394;
+      --text:     #dce3f5;
+      --ja:       #f7c87e;   /* Japanese accent */
+      --es:       #e07878;   /* Spanish accent */
+      --fr:       #7eb8f7;   /* French accent */
+      --en:       #5ce08a;   /* English accent */
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .9rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .app-header h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0; }
+    .badge-risk  { font-size: .6rem; padding: .25em .6em; border-radius: 3px; background: var(--danger); color: #fff; letter-spacing: .08em; }
+    .badge-lang  { font-size: .65rem; padding: .25em .6em; border-radius: 3px; letter-spacing: .06em; font-weight: 700; }
+    .lang-EN { background: var(--en);  color: #000; }
+    .lang-ES { background: var(--es);  color: #fff; }
+    .lang-FR { background: var(--fr);  color: #000; }
+    .lang-JA { background: var(--ja);  color: #000; }
+
+    /* ── Layout ── */
+    .layout { display: grid; grid-template-columns: 420px 1fr; height: calc(100vh - 52px); }
+    .panel-left  { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 1.1rem; display: flex; flex-direction: column; gap: .9rem; }
+    .panel-right { overflow-y: auto; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ── Form ── */
+    label { font-size: .73rem; color: var(--muted); letter-spacing: .04em; display: block; margin-bottom: .2rem; }
+    textarea, input[type=number], input[type=text], select {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: 6px; padding: .45rem .7rem; font-size: .85rem; width: 100%;
+    }
+    textarea { resize: vertical; min-height: 200px; font-family: monospace; font-size: .8rem; }
+    select option { background: var(--surface); }
+    input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+
+    .param-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+
+    /* Language selector card */
+    .lang-selector { border: 1px solid var(--border); border-radius: 8px; padding: .7rem; background: var(--bg); }
+    .lang-selector label { font-size: .8rem; color: var(--text); margin-bottom: .4rem; }
+    .lang-flags { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .lang-btn {
+      border: 2px solid var(--border); background: var(--bg); color: var(--muted);
+      border-radius: 6px; padding: .3rem .8rem; font-size: .8rem; cursor: pointer;
+      transition: all .15s; font-weight: 600;
+    }
+    .lang-btn:hover  { border-color: var(--accent); color: var(--text); }
+    .lang-btn.active-EN { border-color: var(--en); color: var(--en); background: #1a2a1a; }
+    .lang-btn.active-ES { border-color: var(--es); color: var(--es); background: #2a1a1a; }
+    .lang-btn.active-FR { border-color: var(--fr); color: var(--fr); background: #1a1e2a; }
+    .lang-btn.active-JA { border-color: var(--ja); color: var(--ja); background: #2a261a; }
+
+    .lang-note { font-size: .7rem; color: var(--muted); margin-top: .4rem; line-height: 1.4; }
+
+    /* ── Buttons ── */
+    .btn-run  { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: .6rem 1.2rem; font-weight: 600; cursor: pointer; transition: opacity .15s; width: 100%; }
+    .btn-run:hover { opacity: .85; }
+    .btn-run:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-seed { background: transparent; border: 1px solid var(--muted); color: var(--muted); border-radius: 6px; padding: .45rem 1rem; font-size: .78rem; cursor: pointer; width: 100%; transition: all .15s; }
+    .btn-seed:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .9rem 1.1rem; }
+    .card-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .7rem; }
+
+    /* ── Status ── */
+    #status-bar { font-size: .78rem; padding: .4rem .7rem; border-radius: 4px; background: var(--border); min-height: 1.9rem; }
+    #status-bar.ok   { color: var(--ok); }
+    #status-bar.err  { color: var(--danger); }
+    #status-bar.info { color: var(--accent); }
+
+    /* ── Window pills ── */
+    .window-pill {
+      display: inline-block; padding: .2rem .55rem; border-radius: 16px; font-size: .68rem;
+      cursor: pointer; border: 1px solid var(--border); margin: .12rem;
+      transition: all .12s; user-select: none;
+    }
+    .window-pill.active  { border-color: var(--accent); color: var(--accent); }
+    .window-pill.has-dis { border-color: var(--danger); color: var(--danger); }
+    .window-pill.reset   { border-color: var(--warn); }
+
+    /* ── Z-score grid ── */
+    .zscore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: .45rem; }
+    .zscore-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .55rem .7rem; }
+    .zscore-label { font-size: .67rem; color: var(--muted); }
+    .zscore-value { font-size: 1.05rem; font-weight: 700; font-family: monospace; }
+    .z-high { color: var(--danger); }
+    .z-mid  { color: var(--warn); }
+    .z-low  { color: var(--ok); }
+    .z-zero { color: var(--muted); }
+
+    /* ── Micro vector radar (6-bar layout) ── */
+    .vector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+    .vector-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .65rem; }
+    .vector-name { font-size: .67rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .vector-bar-track { height: 6px; background: var(--border); border-radius: 3px; margin: .35rem 0; overflow: hidden; }
+    .vector-bar-fill  { height: 100%; border-radius: 3px; transition: width .4s; }
+    .v-intensity  { background: #b96af7; }
+    .v-anxiety    { background: var(--danger); }
+    .v-attention  { background: var(--accent); }
+    .v-emotion    { background: var(--ok); }
+    .v-agitation  { background: var(--warn); }
+    .v-complexity { background: #7eb8f7; }
+    .vector-value { font-size: .8rem; font-family: monospace; font-weight: 700; }
+
+    /* ── Cluster bars ── */
+    .cluster-row { display: flex; align-items: center; gap: .55rem; margin-bottom: .4rem; }
+    .cluster-label { width: 140px; font-size: .72rem; color: var(--muted); flex-shrink: 0; }
+    .cluster-bar-track { flex: 1; height: 7px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .cluster-bar-fill  { height: 100%; border-radius: 3px; transition: width .4s; }
+    .bar-scarcity          { background: var(--danger); }
+    .bar-abundance         { background: var(--ok); }
+    .bar-control           { background: #b96af7; }
+    .bar-submission        { background: var(--warn); }
+    .bar-concealment       { background: var(--muted); }
+    .bar-exposure          { background: var(--accent); }
+    .bar-past_nostalgic    { background: #7eb8f7; }
+    .bar-future_projective { background: #f7c87e; }
+    .bar-formal            { background: #e07878; }
+    .bar-casual            { background: #78e0b4; }
+    .cluster-score-val { font-size: .72rem; font-family: monospace; width: 52px; text-align: right; }
+
+    /* ── Dissonance events ── */
+    .dis-event { border-left: 3px solid var(--danger); background: var(--bg); border-radius: 4px; padding: .55rem .85rem; margin-bottom: .45rem; font-size: .78rem; }
+    .dis-event .dis-title  { font-weight: 700; color: var(--danger); margin-bottom: .2rem; }
+    .dis-event .dis-meta   { color: var(--muted); font-size: .68rem; }
+    .dis-event .dis-conc   { color: var(--warn); margin-top: .25rem; }
+
+    /* ── JA script indicator ── */
+    .script-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin-bottom: .5rem; }
+    .script-cell { text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .4rem; }
+    .script-name  { font-size: .65rem; color: var(--muted); }
+    .script-pct   { font-size: 1.1rem; font-weight: 700; font-family: monospace; }
+    .sc-kanji    { color: var(--ja); }
+    .sc-hiragana { color: var(--ok); }
+    .sc-katakana { color: var(--es); }
+    .sc-stroke   { color: var(--fr); }
+
+    /* ── Entity card ── */
+    .entity-field { font-size: .78rem; margin-bottom: .25rem; }
+    .entity-field span { color: var(--muted); margin-right: .3rem; }
+
+    /* ── Spinner ── */
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--muted); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .35rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ HEADER ══════════════════════ -->
+<header class="app-header">
+  <h1>PsychoLinguistic Analysis Engine</h1>
+  <span class="badge-risk">STEGANOGRAPHY RISK: HIGH</span>
+  <span id="hdr-lang-badge" class="badge-lang lang-EN" style="display:none;"></span>
+  <span id="entity-name" style="margin-left:auto;font-size:.78rem;color:var(--muted);">entity: —</span>
+</header>
+
+<!-- ══════════════════════ LAYOUT ══════════════════════ -->
+<div class="layout">
+
+  <!-- ─────────── LEFT PANEL ─────────── -->
+  <aside class="panel-left">
+
+    <!-- Language selector -->
+    <div class="lang-selector">
+      <label>LANGUAGE</label>
+      <div class="lang-flags">
+        <button class="lang-btn active-EN" data-lang="EN" onclick="selectLang('EN')">🇬🇧 EN</button>
+        <button class="lang-btn" data-lang="ES" onclick="selectLang('ES')">🇪🇸 ES</button>
+        <button class="lang-btn" data-lang="FR" onclick="selectLang('FR')">🇫🇷 FR</button>
+        <button class="lang-btn" data-lang="JA" onclick="selectLang('JA')">🇯🇵 JA</button>
+      </div>
+      <div class="lang-note" id="lang-note">
+        Latin BPV matrix · en_core_web_sm
+      </div>
+    </div>
+
+    <!-- Text input -->
+    <div>
+      <label>INTERCEPT TEXT</label>
+      <textarea id="input-text" placeholder="Paste intercept here…"></textarea>
+    </div>
+
+    <!-- Parameters -->
+    <div>
+      <label>PARAMETERS</label>
+      <div class="param-row" style="margin-top:.3rem;">
+        <div><label>Window</label><input type="number" id="param-window" value="1000" min="100" /></div>
+        <div><label>Stride</label><input type="number" id="param-stride" value="500"  min="50"  /></div>
+        <div><label>Δ Threshold</label><input type="number" id="param-threshold" value="2.5" step="0.1" min="0.5" /></div>
+      </div>
+    </div>
+
+    <!-- Entity -->
+    <div><label>ENTITY DESIGNATOR</label><input type="text" id="param-entity" placeholder="Target_Delta" /></div>
+
+    <button class="btn-run" id="btn-run">Run Analysis</button>
+    <button class="btn-seed" id="btn-seed">Seed Baselines from Text</button>
+
+    <div id="status-bar" class="info">Ready. Select language, paste intercept, run analysis.</div>
+
+    <!-- Entity info -->
+    <div class="card" id="entity-card" style="display:none;">
+      <div class="card-title">Current Entity</div>
+      <div id="entity-details"></div>
+    </div>
+
+  </aside>
+
+  <!-- ─────────── RIGHT PANEL ─────────── -->
+  <main class="panel-right">
+
+    <!-- Window Navigator -->
+    <div class="card" id="card-windows" style="display:none;">
+      <div class="card-title">Windows — click to inspect</div>
+      <div id="window-pills"></div>
+    </div>
+
+    <!-- Micro vectors (6-vector canonical display) -->
+    <div class="card" id="card-micro" style="display:none;">
+      <div class="card-title">Micro-Layer Vectors — current window</div>
+      <!-- JA script breakdown (shown only for JA) -->
+      <div id="ja-script-panel" style="display:none;">
+        <div class="script-grid" id="ja-script-grid"></div>
+      </div>
+      <div class="vector-grid" id="vector-grid"></div>
+    </div>
+
+    <!-- Z-Score Dashboard -->
+    <div class="card" id="card-zscores" style="display:none;">
+      <div class="card-title">Z-Scores — current window</div>
+      <div style="margin-bottom:.45rem;font-size:.72rem;color:var(--muted);">
+        Micro (subconscious) &nbsp;·&nbsp; Macro (conscious)
+      </div>
+      <div class="zscore-grid" id="zscore-grid"></div>
+    </div>
+
+    <!-- Semantic Cluster Chart -->
+    <div class="card" id="card-clusters" style="display:none;">
+      <div class="card-title">Semantic Cluster Scores — current window</div>
+      <div id="cluster-chart"></div>
+    </div>
+
+    <!-- Dissonance Events -->
+    <div class="card" id="card-dissonance" style="display:none;">
+      <div class="card-title">Dissonance Events — all windows</div>
+      <div id="dissonance-list"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" style="text-align:center;margin-top:4rem;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:.6rem;">⬡</div>
+      <div style="font-size:.88rem;">Select language · paste intercept · run analysis.</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   State
+════════════════════════════════════════════════════════════ */
+let _lang     = "EN";
+let _results  = null;
+let _activeWin = 0;
+
+/* ════════════════════════════════════════════════════════════
+   Language descriptions
+════════════════════════════════════════════════════════════ */
+const LANG_NOTES = {
+  EN: "Latin BPV matrix · Interaction coefficients · en_core_web_sm",
+  ES: "Latin BPV + RR×2.0 / LL×1.5 overrides · es_core_news_sm",
+  FR: "Latin BPV + Silent terminal suppression (S/T/X/D→0) · fr_core_news_sm",
+  JA: "Logographic matrix: Kanji/Hiragana/Katakana ratios + Stroke density + Keigo · ja_core_news_sm",
+};
+
+/* ════════════════════════════════════════════════════════════
+   Helpers
+════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+
+function setStatus(msg, type = 'info') {
+  const el = $('status-bar');
+  el.className = type;
+  el.innerHTML = msg;
+}
+
+function zClass(z) {
+  const a = Math.abs(z);
+  if (a >= 2.5) return 'z-high';
+  if (a >= 1.5) return 'z-mid';
+  if (a >= 0.5) return 'z-low';
+  return 'z-zero';
+}
+
+function barClass(pole) {
+  const map = {
+    scarcity: 'bar-scarcity', abundance: 'bar-abundance',
+    control: 'bar-control', submission: 'bar-submission',
+    concealment: 'bar-concealment', exposure: 'bar-exposure',
+    past_nostalgic: 'bar-past_nostalgic', future_projective: 'bar-future_projective',
+    formal: 'bar-formal', casual: 'bar-casual',
+  };
+  return map[pole] || 'bar-scarcity';
+}
+
+/* ════════════════════════════════════════════════════════════
+   Language selector
+════════════════════════════════════════════════════════════ */
+function selectLang(code) {
+  _lang = code;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.className = `lang-btn${b.dataset.lang === code ? ` active-${code}` : ''}`;
+  });
+  $('lang-note').textContent = LANG_NOTES[code] || '';
+
+  const badge = $('hdr-lang-badge');
+  const names = { EN: '🇬🇧 English', ES: '🇪🇸 Spanish', FR: '🇫🇷 French', JA: '🇯🇵 Japanese' };
+  badge.textContent = names[code];
+  badge.className   = `badge-lang lang-${code}`;
+  badge.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render: Window Pills
+════════════════════════════════════════════════════════════ */
+function renderWindowPills(windows) {
+  const c = $('window-pills');
+  c.innerHTML = '';
+  windows.forEach((win, i) => {
+    const hasDis  = win.dissonance_events.length > 0;
+    const isReset = win.reset_reason === 'structural_boundary';
+    const pill = document.createElement('span');
+    pill.className = ['window-pill', i === _activeWin ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
+    pill.textContent = `W${i}${isReset ? ' ⟳' : ''}${hasDis ? ' ⚡' : ''}`;
+    pill.title = `chars ${win.start_char}–${win.end_char} | ${win.reset_reason}`;
+    pill.addEventListener('click', () => selectWindow(i));
+    c.appendChild(pill);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render: Micro Vectors (6-canonical + JA raw)
+════════════════════════════════════════════════════════════ */
+const VECTOR_ORDER = ['intensity','anxiety','attention','emotion','agitation','complexity'];
+const VECTOR_CLASS = { intensity:'v-intensity', anxiety:'v-anxiety', attention:'v-attention', emotion:'v-emotion', agitation:'v-agitation', complexity:'v-complexity' };
+
+function renderMicroVectors(win) {
+  const grid  = $('vector-grid');
+  const jaPanel = $('ja-script-panel');
+  grid.innerHTML = '';
+
+  const vectors = win.micro.vectors;
+  const raw     = win.micro.raw;
+  const isJA    = win.language === 'JA';
+
+  // Japanese script breakdown
+  jaPanel.style.display = isJA ? '' : 'none';
+  if (isJA && raw) {
+    $('ja-script-grid').innerHTML = `
+      <div class="script-cell"><div class="script-name">Kanji</div><div class="script-pct sc-kanji">${(+(raw.kanji_ratio||0)*100).toFixed(1)}%</div></div>
+      <div class="script-cell"><div class="script-name">Hiragana</div><div class="script-pct sc-hiragana">${(+(raw.hiragana_ratio||0)*100).toFixed(1)}%</div></div>
+      <div class="script-cell"><div class="script-name">Katakana</div><div class="script-pct sc-katakana">${(+(raw.katakana_ratio||0)*100).toFixed(1)}%</div></div>
+      <div class="script-cell"><div class="script-name">Stroke avg</div><div class="script-pct sc-stroke">${(+(raw.stroke_density||0)).toFixed(1)}</div></div>
+    `;
+  }
+
+  const maxVal = Math.max(1, ...VECTOR_ORDER.map(k => Math.abs(vectors[k] || 0)));
+  VECTOR_ORDER.forEach(key => {
+    const val = vectors[key] ?? 0;
+    const pct = Math.min(100, (Math.abs(val) / maxVal * 100)).toFixed(1);
+    const cell = document.createElement('div');
+    cell.className = 'vector-cell';
+    cell.innerHTML = `
+      <div class="vector-name">${key}</div>
+      <div class="vector-bar-track"><div class="vector-bar-fill ${VECTOR_CLASS[key]}" style="width:${pct}%"></div></div>
+      <div class="vector-value">${val >= 0 ? '' : '−'}${Math.abs(val).toFixed(2)}</div>
+    `;
+    grid.appendChild(cell);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render: Z-Scores
+════════════════════════════════════════════════════════════ */
+function renderZScores(win) {
+  const grid = $('zscore-grid');
+  grid.innerHTML = '';
+
+  function addSection(label, scores) {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'grid-column:1/-1;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.35rem;';
+    hdr.textContent = label;
+    grid.appendChild(hdr);
+    Object.entries(scores).forEach(([key, val]) => {
+      const cell = document.createElement('div');
+      cell.className = 'zscore-cell';
+      cell.innerHTML = `<div class="zscore-label">${key.replace(/_/g,' ')}</div>
+        <div class="zscore-value ${zClass(val)}">${val >= 0 ? '+' : ''}${val.toFixed(2)}</div>`;
+      grid.appendChild(cell);
+    });
+  }
+
+  addSection('Micro  (subconscious)', win.z_scores_micro);
+  addSection('Macro  (conscious)',    win.z_scores_macro);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render: Cluster Chart
+════════════════════════════════════════════════════════════ */
+function renderClusters(win) {
+  const chart = $('cluster-chart');
+  chart.innerHTML = '';
+
+  const clusters = win.macro.cluster_scores;
+  let maxVal = 0;
+  Object.values(clusters).forEach(poles => Object.values(poles).forEach(v => { if (v > maxVal) maxVal = v; }));
+  if (maxVal === 0) maxVal = 1;
+
+  Object.entries(clusters).forEach(([cluster, poles]) => {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:.55rem 0 .28rem;';
+    hdr.textContent = cluster === 'keigo' ? '⛩  Keigo Register (Japanese)' : cluster;
+    chart.appendChild(hdr);
+
+    Object.entries(poles).forEach(([pole, score]) => {
+      const pct = (score / maxVal * 100).toFixed(1);
+      const row = document.createElement('div');
+      row.className = 'cluster-row';
+      row.innerHTML = `
+        <span class="cluster-label">${pole.replace(/_/g,' ')}</span>
+        <div class="cluster-bar-track"><div class="cluster-bar-fill ${barClass(pole)}" style="width:${pct}%"></div></div>
+        <span class="cluster-score-val">${score.toFixed(5)}</span>
+      `;
+      chart.appendChild(row);
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render: Dissonance Events
+════════════════════════════════════════════════════════════ */
+function renderDissonance(windows) {
+  const list = $('dissonance-list');
+  list.innerHTML = '';
+  let total = 0;
+  windows.forEach((win, wi) => {
+    win.dissonance_events.forEach(ev => {
+      total++;
+      const div = document.createElement('div');
+      div.className = 'dis-event';
+      div.innerHTML = `
+        <div class="dis-title">⚡ ${ev.trigger_type} &nbsp; Δ = ${ev.delta.toFixed(3)}</div>
+        <div class="dis-meta">Window ${wi} · ${ev.event_id} · Vectors: <strong>${ev.vectors.join(' ↔ ')}</strong></div>
+        <div class="dis-conc">${ev.conclusion}</div>
+      `;
+      list.appendChild(div);
+    });
+  });
+  if (total === 0) {
+    list.innerHTML = '<div style="color:var(--ok);font-size:.83rem;">No dissonance events detected.</div>';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Select Window
+════════════════════════════════════════════════════════════ */
+function selectWindow(idx) {
+  _activeWin = idx;
+  const win = _results.windows[idx];
+  renderWindowPills(_results.windows);
+  renderMicroVectors(win);
+  renderZScores(win);
+  renderClusters(win);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render Full Result
+════════════════════════════════════════════════════════════ */
+function renderResults(data) {
+  _results   = data;
+  _activeWin = 0;
+
+  $('empty-state').style.display      = 'none';
+  $('card-windows').style.display     = '';
+  $('card-micro').style.display       = '';
+  $('card-zscores').style.display     = '';
+  $('card-clusters').style.display    = '';
+  $('card-dissonance').style.display  = '';
+
+  renderWindowPills(data.windows);
+  selectWindow(0);
+  renderDissonance(data.windows);
+
+  const total = data.windows.reduce((n,w) => n + w.dissonance_events.length, 0);
+  setStatus(
+    `Analysis complete [${data.language}] — ${data.total_windows} windows, ${total} dissonance event(s).`,
+    total > 0 ? 'err' : 'ok'
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   Entity loader
+════════════════════════════════════════════════════════════ */
+async function loadEntity() {
+  try {
+    const data = await fetch('/api/entity').then(r => r.json());
+    $('entity-name').textContent = `entity: ${data.identity.primary_designator}`;
+    $('entity-card').style.display = '';
+    $('entity-details').innerHTML = `
+      <div class="entity-field"><span>ID</span>${data.entity_id}</div>
+      <div class="entity-field"><span>Aliases</span>${data.identity.known_aliases.join(', ') || '—'}</div>
+      <div class="entity-field"><span>Agency</span>${data.identity.operational_profile.suspected_agency}</div>
+      <div class="entity-field"><span>Risk</span>${data.identity.operational_profile.steganography_risk}</div>
+      <div class="entity-field"><span>Docs</span>${data.processing_metrics.total_documents_analyzed}</div>
+      <div class="entity-field"><span>Confidence</span>${(data.processing_metrics.baseline_confidence_score*100).toFixed(1)}%</div>
+    `;
+  } catch(_) {}
+}
+
+/* ════════════════════════════════════════════════════════════
+   Run Analysis
+════════════════════════════════════════════════════════════ */
+$('btn-run').addEventListener('click', async () => {
+  const text = $('input-text').value.trim();
+  if (!text) { setStatus('Paste intercept text first.', 'err'); return; }
+
+  const btn = $('btn-run');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span>Analyzing [${_lang}]…`;
+  setStatus(`<span class="spinner"></span>Running ${_lang} pipeline…`, 'info');
+
+  try {
+    const entity = $('param-entity').value.trim();
+    if (entity) {
+      await fetch('/api/entity', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ primary_designator: entity }),
+      });
+    }
+
+    const res = await fetch('/api/analyze', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        text,
+        language_code: _lang,
+        window_size:          +$('param-window').value,
+        stride:               +$('param-stride').value,
+        dissonance_threshold: +$('param-threshold').value,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+
+    renderResults(await res.json());
+    await loadEntity();
+  } catch(e) {
+    setStatus(`Error: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis';
+  }
+});
+
+/* ════════════════════════════════════════════════════════════
+   Seed Baselines
+════════════════════════════════════════════════════════════ */
+$('btn-seed').addEventListener('click', async () => {
+  const text = $('input-text').value.trim();
+  if (!text) { setStatus('Paste control text first.', 'err'); return; }
+
+  setStatus(`<span class="spinner"></span>Seeding [${_lang}] baselines…`, 'info');
+  try {
+    const res = await fetch('/api/control', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, language_code: _lang }),
+    });
+    const data = await res.json();
+    setStatus(`Baselines seeded [${_lang}] from ${data.windows_processed} windows. Now paste target.`, 'ok');
+  } catch(e) {
+    setStatus(`Seed error: ${e.message}`, 'err');
+  }
+});
+
+/* ════════════════════════════════════════════════════════════
+   Init
+════════════════════════════════════════════════════════════ */
+selectLang('EN');
+loadEntity();
+</script>
+</body>
+</html>
