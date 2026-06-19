@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 import database.schema as db
 from dissonance.engine import DissonanceEngine
 from language.router import LanguageRouter, SUPPORTED_LANGUAGES
+from micro_layer.somatic_engine import SomaticEngine
 from tokenizer.rolling_window import RollingWindowTokenizer
 
 router = APIRouter()
@@ -42,6 +43,7 @@ DB_PATH = "entity_db.json"
 # ---------------------------------------------------------------------------
 _lang_router       = LanguageRouter()
 _dissonance_engine = DissonanceEngine()
+_somatic_engine    = SomaticEngine()
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +76,44 @@ class EntityCreateRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 _WORD_RE = re.compile(r"[A-Za-z]+")
+
+
+# ---------------------------------------------------------------------------
+# Localization helpers — line numbers and text snippets from char offsets
+# ---------------------------------------------------------------------------
+
+def _char_to_line(text: str, char_offset: int) -> int:
+    """Return the 1-based line number for *char_offset* inside *text*."""
+    return text[:char_offset].count("\n") + 1
+
+
+def _extract_snippets(text: str, start: int, end: int, max_chars: int = 60):
+    """
+    Return (start_snippet, end_snippet) for the window at [start, end).
+
+    Each snippet is at most *max_chars* characters, trimmed to a word boundary
+    so words are never cut in the middle.
+    """
+    window = text[start:end]
+
+    # Start snippet: first max_chars chars trimmed to last full word
+    raw_start = window.lstrip()[:max_chars]
+    if len(window.lstrip()) > max_chars:
+        last_space = raw_start.rfind(" ")
+        if last_space > 0:
+            raw_start = raw_start[:last_space]
+    start_snippet = raw_start.strip()
+
+    # End snippet: last max_chars chars trimmed to first full word from cut
+    raw_end = window.rstrip()
+    if len(raw_end) > max_chars:
+        raw_end = raw_end[-max_chars:]
+        first_space = raw_end.find(" ")
+        if first_space >= 0:
+            raw_end = raw_end[first_space + 1:]
+    end_snippet = raw_end.strip()
+
+    return start_snippet, end_snippet
 
 
 def _compute_window_telemetry(win_text: str, macro_hits: list) -> Dict[str, Any]:
@@ -160,9 +200,21 @@ def _run_pipeline(
     windows = tokenizer.tokenize(text)
     window_results: List[Dict[str, Any]] = []
 
+    # Compute the global waveform envelope ONCE from the entire document.
+    # This 100-bucket compressed signal is returned at document level so the
+    # UI can display the macro energy flow regardless of which window is active.
+    global_envelope: List[float] = _somatic_engine.compute_global_envelope(
+        text, language=language_code
+    )
+
     for win in windows:
-        micro_result = micro_analyzer.analyze(win.text)
-        macro_result = macro_analyzer.analyze(win.text)
+        micro_result   = micro_analyzer.analyze(win.text)
+        macro_result   = macro_analyzer.analyze(win.text)
+        somatic_result = _somatic_engine.analyze(win.text, language=language_code)
+        # Per-window energy envelope (20 buckets) — computed via C++ _somatic_core
+        win_envelope   = _somatic_engine.compute_global_envelope(
+            win.text, language=language_code, n_buckets=20
+        )
 
         # Standardized six-vector micro dict (works for all languages)
         micro_vectors = micro_result.filled_vectors()
@@ -176,10 +228,19 @@ def _run_pipeline(
             document_id=document_id,
         )
 
+        # Spatial localization — computed once per window from char offsets
+        start_line = _char_to_line(text, win.start_char)
+        end_line   = _char_to_line(text, win.end_char)
+        start_snip, end_snip = _extract_snippets(text, win.start_char, win.end_char)
+
         window_results.append({
             "window_index":  win.index,
             "start_char":    win.start_char,
             "end_char":      win.end_char,
+            "start_line":    start_line,
+            "end_line":      end_line,
+            "start_snippet": start_snip,
+            "end_snippet":   end_snip,
             "reset_reason":  win.reset_reason,
             "language":      language_code,
             "micro": {
@@ -194,17 +255,25 @@ def _run_pipeline(
                 },
                 "semantic_hits": len(macro_result.hits),
             },
+            "somatic": {**somatic_result.to_dict(),
+                        "window_envelope": [round(v, 4) for v in win_envelope]},
             "z_scores_micro": {k: round(v, 4) for k, v in dis.z_scores_micro.items()},
             "z_scores_macro": {k: round(v, 4) for k, v in dis.z_scores_macro.items()},
             "ema_snapshot":   {k: round(v, 4) for k, v in dis.ema_snapshot.items()},
             "dissonance_events": [
                 {
-                    "event_id":   e.event_id,
-                    "timestamp":  e.timestamp,
+                    "event_id":     e.event_id,
+                    "timestamp":    e.timestamp,
                     "trigger_type": e.trigger_type,
-                    "vectors":    e.vectors_involved,
-                    "delta":      e.delta_score,
-                    "conclusion": e.algorithmic_conclusion,
+                    "vectors":      e.vectors_involved,
+                    "delta":        e.delta_score,
+                    "conclusion":   e.algorithmic_conclusion,
+                    # Spatial anchor — locates the anomaly in the source document
+                    "window_index":  win.index,
+                    "start_line":    start_line,
+                    "end_line":      end_line,
+                    "start_snippet": start_snip,
+                    "end_snippet":   end_snip,
                 }
                 for e in dis.dissonance_events
             ],
@@ -212,10 +281,11 @@ def _run_pipeline(
         })
 
     return {
-        "document_id":   document_id,
-        "language":      language_code,
-        "total_windows": len(windows),
-        "windows":       window_results,
+        "document_id":             document_id,
+        "language":                language_code,
+        "total_windows":           len(windows),
+        "global_waveform_envelope": global_envelope,  # 100-float document-level envelope
+        "windows":                 window_results,
     }
 
 

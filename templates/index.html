@@ -234,6 +234,183 @@
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ══════════════════════════════════════════════════════════
+       Layer 3 — Somatic / Archetypal Cipher
+    ══════════════════════════════════════════════════════════ */
+    --gold:   #e0c060;
+    --soma:   #60c0e0;
+
+    .somatic-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.9rem; flex-wrap:wrap; gap:.5rem; }
+    .somatic-card-title { font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0; }
+    .somatic-layer-badge { font-size:.6rem; font-weight:700; letter-spacing:.09em; padding:.2em .65em; border-radius:3px; background: linear-gradient(90deg,#4a1a8a,#1a4a8a); color:#c0a0ff; border:1px solid #6030c0; }
+
+    /* Diagnostic top row */
+    .somatic-diag { display:grid; grid-template-columns:auto 1fr 1fr; gap:.75rem; align-items:center; margin-bottom:1.1rem; }
+    .tier-badge { padding:.35rem .85rem; border-radius:6px; font-weight:800; font-size:.95rem; letter-spacing:.07em; text-align:center; min-width:3.5rem; }
+    .tier-T1 { background:rgba(92,224,138,.15); color:var(--ok);   border:1px solid var(--ok); }
+    .tier-T2 { background:rgba(224,168,92,.15); color:var(--warn); border:1px solid var(--warn); }
+    .tier-T3 { background:rgba(224,92,92,.15);  color:var(--danger); border:1px solid var(--danger); }
+    .tier-label-text { font-size:.78rem; color:var(--text); font-weight:700; }
+    .tier-label-sub  { font-size:.68rem; color:var(--muted); margin-top:.1rem; }
+
+    .qs-block { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:.5rem .75rem; }
+    .qs-label { font-size:.62rem; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+    .qs-num   { font-size:1.6rem; font-weight:800; font-family:monospace; color:#e0c060; line-height:1; }
+    .qs-arch  { font-size:.7rem; color:var(--text); margin-top:.15rem; line-height:1.3; }
+
+    /* Sovereignty vs Somatic bar */
+    .soma-balance { margin-bottom:1rem; }
+    .soma-balance-label { font-size:.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:flex; justify-content:space-between; margin-bottom:.35rem; }
+    .soma-balance-track { height:8px; background:var(--border); border-radius:4px; overflow:hidden; display:flex; }
+    .soma-fill-sov  { background:#b96af7; transition:width .35s; }
+    .soma-fill-orig { background:var(--soma); transition:width .35s; }
+    .soma-fill-kin  { background:var(--ok); transition:width .35s; }
+    .soma-fill-res  { background:var(--accent); transition:width .35s; }
+    .soma-fill-lim  { background:var(--gold); transition:width .35s; }
+    .soma-legend { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.3rem; }
+    .soma-legend-item { display:flex; align-items:center; gap:.3rem; font-size:.65rem; color:var(--muted); }
+    .soma-legend-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+    /* Charts grid: Radar left, Scatter right */
+    .somatic-charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1rem; }
+    .soma-chart-block { display:flex; flex-direction:column; align-items:center; }
+    .soma-chart-label { font-size:.67rem; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.3rem; text-align:center; }
+    .soma-canvas-wrap { width:100%; max-width:280px; }
+
+    /* FFT harmonics panel */
+    .fft-panel { margin-bottom:1rem; }
+    .fft-panel-hdr { font-size:.63rem; text-transform:uppercase; letter-spacing:.08em; color:#b96af7; border-bottom:1px solid var(--border); padding-bottom:.25rem; margin-bottom:.5rem; font-weight:700; }
+    .fft-chips { display:flex; flex-wrap:wrap; gap:.35rem; }
+    .fft-chip { background:rgba(185,106,247,.1); border:1px solid rgba(185,106,247,.35); border-radius:4px; padding:.18em .65em; font-family:monospace; font-size:.78rem; color:#b96af7; }
+    .fft-chip-lbl { font-size:.6rem; color:var(--muted); margin-right:.3em; }
+    .fft-none { font-size:.75rem; color:var(--muted); }
+
+    /* Oscilloscope deck: two stacked waveform charts */
+    .oscillo-deck { display:flex; flex-direction:column; gap:.6rem; }
+    .oscillo-block { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:.5rem .75rem; }
+    .oscillo-chart-wrap { position:relative; height:160px; }
+    /* Window Span Map */
+    .win-span-map { margin-top:.65rem; border-top:1px solid var(--border); padding-top:.5rem; }
+    .wsm-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.22rem; cursor:pointer; }
+    .wsm-row:hover .wsm-bar-fill { opacity:.8; }
+    .wsm-label { font-family:monospace; font-weight:700; font-size:.63rem; width:2.4rem; flex-shrink:0; text-align:right; }
+    .wsm-bar-outer { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; position:relative; }
+    .wsm-bar-fill { position:absolute; height:100%; border-radius:3px; transition:background .15s; }
+    .wsm-range { font-family:monospace; font-size:.59rem; color:var(--muted); white-space:nowrap; min-width:7rem; }
+
+    /* Document Overview card */
+    .overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.7rem; }
+    .overview-stat { background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:.45rem .65rem; }
+    .overview-stat-val { font-size:1.1rem; font-weight:700; color:var(--accent); font-family:monospace; }
+    .overview-stat-lbl { font-size:.6rem; color:var(--muted); margin-top:.08rem; }
+    .overview-section-hdr { font-size:.61rem; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin:.6rem 0 .3rem; border-bottom:1px solid var(--border); padding-bottom:.18rem; }
+    .overview-tier-row { display:flex; gap:.35rem; flex-wrap:wrap; margin-bottom:.4rem; }
+    .overview-tier-pill { padding:.18rem .55rem; border-radius:12px; font-size:.67rem; font-weight:700; }
+    .ov-top-win { font-size:.72rem; padding:.2rem .4rem; border-radius:4px; cursor:pointer; }
+    .ov-top-win:hover { background:rgba(255,255,255,.04); }
+
+    /* Sigma overview pill */
+    .sigma-pill { font-weight:700; letter-spacing:.04em; }
+    .oscillo-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:.3rem; }
+    .oscillo-lbl { font-size:.63rem; text-transform:uppercase; letter-spacing:.07em; font-weight:700; }
+    .oscillo-lbl-global { color:var(--soma); }
+    .oscillo-lbl-micro  { color:var(--accent); }
+    .oscillo-sublbl { font-size:.6rem; color:var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════
+       Wavelength Telemetry Panel
+    ══════════════════════════════════════════════════════════ */
+    .telw-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:.55rem; }
+    .telw-sublbl { font-size:.68rem; color:var(--muted); }
+    .telw-legend { display: flex; gap: 1.1rem; margin: .3rem 0 .15rem; }
+    .telw-legend-item { display: flex; align-items: center; gap: .35rem; font-size: .7rem; font-weight: 700; letter-spacing: .04em; }
+    .telw-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .telw-chunks { display:flex; flex-direction:column; gap:.5rem; margin-top:.4rem; }
+    .telw-chunk-range { font-size:.58rem; color:var(--muted); margin-bottom:.15rem; font-family:monospace; letter-spacing:.02em; }
+    .telw-chunk-wrap { position:relative; height:110px; }
+    .cmp-toggle-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:5px; padding:.28rem .85rem; font-size:.72rem; font-weight:600; cursor:pointer; letter-spacing:.04em; transition:all .15s; width:100%; }
+    .cmp-toggle-btn:hover { border-color:var(--warn); color:var(--warn); }
+    .cmp-toggle-btn.active { background:rgba(224,168,92,.1); border-color:var(--warn); color:var(--warn); }
+
+    /* ── Card title row with controls ── */
+    .card-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
+
+    /* ── Letter Frequency Analysis ── */
+    .lfreq-grid     { display:flex; flex-direction:column; gap:.28rem; }
+    .lfreq-grid-cmp { display:flex; flex-direction:column; gap:.38rem; }
+    .lfreq-row      { display:flex; align-items:center; gap:.5rem; }
+    .lfreq-char     { font-family:monospace; font-weight:700; color:var(--accent); width:1.1rem; font-size:.85rem; flex-shrink:0; }
+    .lfreq-track    { flex:1; background:var(--border); border-radius:2px; height:5px; overflow:hidden; }
+    .lfreq-fill-a   { height:100%; background:#00f0ff; border-radius:2px; transition:width .3s; }
+    .lfreq-cnt      { font-size:.65rem; color:var(--muted); font-family:monospace; min-width:3.8rem; text-align:right; }
+    .lfreq-sort-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:.18rem .55rem; font-size:.67rem; font-weight:600; cursor:pointer; letter-spacing:.04em; transition:all .15s; }
+    .lfreq-sort-btn.active { border-color:var(--accent); color:var(--accent); }
+
+    /* ── Sectional Summary Matrix ── */
+    .sect-spark     { display:flex; align-items:flex-end; gap:3px; }
+    .sect-spark-col { display:flex; flex-direction:column; align-items:center; cursor:pointer; }
+    .sect-spark-col:hover .sect-spark-bar { opacity:1 !important; filter:brightness(1.25); }
+    .sect-spark-bar { width:14px; border-radius:2px 2px 0 0; min-height:2px; flex-shrink:0; }
+    .sect-spark-xlbl { font-size:.46rem; color:var(--muted); margin-top:2px; line-height:1;
+                       writing-mode:vertical-rl; transform:rotate(180deg); height:14px; }
+    .sect-spark-xlbl.active { color:var(--accent); font-weight:700; }
+    .sect-spark-row { display:flex; align-items:flex-end; gap:.6rem; margin-bottom:.35rem; }
+    .sect-spark-lbl { font-size:.61rem; color:var(--muted); width:5.5rem; text-align:right; flex-shrink:0; padding-bottom:16px; }
+    .sect-table     { width:100%; border-collapse:collapse; font-size:.74rem; }
+    .sect-table th  { font-size:.6rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); padding:.28rem .45rem; border-bottom:1px solid var(--border); font-weight:600; text-align:left; white-space:nowrap; }
+    .sect-table td  { padding:.3rem .45rem; border-bottom:1px solid rgba(30,35,50,.5); vertical-align:middle; }
+    .sect-table tbody tr:hover td { background:rgba(255,255,255,.025); }
+    .sect-table tbody tr:last-child td { border-bottom:none; }
+    .sect-win-lbl   { font-family:monospace; font-size:.72rem; font-weight:700; }
+    .sect-row-b     { background:rgba(255,32,64,.04); }
+
+    /* ── Unified Overlay mode ── */
+    .unified-ind { font-size:.6rem; font-weight:700; letter-spacing:.08em; padding:.18em .55em; border-radius:3px;
+      background:linear-gradient(90deg,rgba(0,240,255,.12),rgba(255,32,64,.12));
+      border:1px solid rgba(100,160,200,.3); color:#b0d0ff; }
+
+    /* ══ Dual Window Pills (compare mode) ══ */
+    .win-pills-row  { margin-bottom:.3rem; }
+    .win-pills-label{ font-size:.63rem; text-transform:uppercase; letter-spacing:.07em; margin:.3rem 0 .15rem; display:flex; align-items:center; gap:.4rem; font-weight:700; }
+    .win-pills-lbl-a{ color:rgba(0,240,255,.85); }
+    .win-pills-lbl-b{ color:rgba(255,32,64,.85); }
+    .win-pills-div  { border-top:1px solid var(--border); margin:.4rem 0 .35rem; }
+
+    /* ══ Delta Summary Card ══ */
+    .delta-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:.4rem; }
+    .delta-cell  { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:.45rem .65rem; text-align:center; }
+    .delta-lbl   { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.15rem; }
+    .delta-val   { font-size:.98rem; font-weight:700; font-family:monospace; color:var(--warn); }
+    .delta-pos   { color:var(--danger); }
+    .delta-neg   { color:var(--ok); }
+    .delta-zero  { color:var(--muted); }
+
+    /* ══ Anomaly Locator Alert Boxes ══ */
+    .alert-box          { border-radius:6px; padding:.65rem .9rem; margin-bottom:.55rem; font-size:.8rem; line-height:1.55; }
+    .alert-box strong   { font-size:.82rem; letter-spacing:.04em; display:block; margin-bottom:.3rem; }
+    .alert-box em       { font-style:normal; color:var(--muted); font-size:.72rem; }
+    .alert-box .snip    { font-family:monospace; font-size:.77rem; color:var(--text); background:var(--bg); border-radius:3px; padding:.1em .4em; }
+    .alert-box .loc-tag { font-size:.68rem; font-family:monospace; padding:.08em .45em; border-radius:3px; display:inline-block; margin-right:.3rem; }
+
+    .ai-flatline        { border-left:3px solid #b96af7; background:rgba(185,106,247,.07); }
+    .ai-flatline strong { color:#b96af7; }
+    .ai-flatline .loc-tag { background:rgba(185,106,247,.15); color:#b96af7; }
+
+    .steganographic     { border-left:3px solid var(--danger); background:rgba(224,92,92,.07); }
+    .steganographic strong { color:var(--danger); }
+    .steganographic .loc-tag { background:rgba(224,92,92,.15); color:var(--danger); }
+
+    .macro-micro        { border-left:3px solid var(--warn); background:rgba(224,168,92,.07); }
+    .macro-micro strong { color:var(--warn); }
+    .macro-micro .loc-tag { background:rgba(224,168,92,.15); color:var(--warn); }
+
+    /* Compare side-by-side anomaly grid */
+    .cmp-anomaly-grid   { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    .cmp-anomaly-col    { min-width:0; }
+    .cmp-anomaly-hdr    { font-size:.65rem; text-transform:uppercase; letter-spacing:.07em; font-weight:700; padding-bottom:.3rem; border-bottom:1px solid var(--border); margin-bottom:.5rem; }
+    .cmp-anomaly-hdr-a  { color:rgba(0,240,255,.85); }
+    .cmp-anomaly-hdr-b  { color:rgba(255,32,64,.85); }
   </style>
 </head>
 <body>
@@ -265,8 +442,15 @@
     </div>
 
     <div>
-      <label>INTERCEPT TEXT</label>
+      <label id="label-text-a">INTERCEPT TEXT</label>
       <textarea id="input-text" placeholder="Paste intercept here…"></textarea>
+    </div>
+
+    <button class="cmp-toggle-btn" id="btn-compare-toggle" onclick="toggleCompareMode()">⇄ Compare Mode — Analyse Two Texts</button>
+
+    <div id="compare-text-b" style="display:none;">
+      <label>TEXT B — COMPARISON INTERCEPT</label>
+      <textarea id="input-text-b" placeholder="Paste second intercept here for side-by-side comparison…"></textarea>
     </div>
 
     <div>
@@ -295,6 +479,19 @@
   <!-- ─────────── RIGHT PANEL ─────────── -->
   <main class="panel-right">
 
+
+    <!-- Compare Mode: A/B document selector tabs -->
+    <div class="card" id="ab-tabs" style="display:none; padding:.6rem 1.1rem;">
+      <div style="display:flex; gap:.7rem; align-items:center;">
+        <span style="font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; white-space:nowrap;">Active View</span>
+        <div class="mode-toggle" style="flex:1;">
+          <button class="mode-btn active" id="btn-doc-a" onclick="selectDoc('A')">Text A</button>
+          <button class="mode-btn" id="btn-doc-b" onclick="selectDoc('B')">Text B</button>
+          <button class="mode-btn" id="btn-doc-unified" onclick="selectDoc('unified')">⊕ Unified</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. Window Navigator + Export Buttons -->
     <div class="card" id="card-windows" style="display:none;">
       <div class="win-nav-hdr">
@@ -305,7 +502,50 @@
         </div>
       </div>
       <div id="window-pills"></div>
+      <div id="win-span-map" class="win-span-map" style="display:none;"></div>
     </div>
+
+    <!-- Document Overview — shown when Σ overview pill is selected -->
+    <div class="card" id="card-overview" style="display:none;">
+      <div class="card-title">Σ Document Overview — Full Text Summary</div>
+      <div id="overview-body"></div>
+    </div>
+
+    <!-- Letter Frequency Analysis — per active window -->
+    <div class="card" id="card-letter-freq" style="display:none;">
+      <div class="card-title-row">
+        <span class="card-title" style="margin:0;">Letter Frequency</span>
+        <span id="lfreq-context" style="font-size:.62rem;color:var(--muted);"></span>
+        <div style="display:flex;gap:.3rem;">
+          <button class="lfreq-sort-btn active" id="lfreq-sort-abc"  onclick="setLfreqSort('abc')">A→Z</button>
+          <button class="lfreq-sort-btn"        id="lfreq-sort-freq" onclick="setLfreqSort('freq')">Freq↓</button>
+        </div>
+      </div>
+      <div id="lfreq-body"></div>
+    </div>
+
+    <!-- Delta Summary — compare mode only -->
+    <div class="card" id="card-delta" style="display:none;">
+      <div class="card-title">Δ Delta — Comparison Summary</div>
+      <div id="delta-body"></div>
+    </div>
+    <!-- Sectional Summary Matrix — bird's-eye view across all windows -->
+    <div class="card" id="card-sectional" style="display:none;">
+      <div class="card-title">Sectional Summary — Bird’s Eye View</div>
+      <div id="sect-sparklines" style="margin-bottom:.75rem;"></div>
+      <div style="overflow-x:auto;">
+        <table class="sect-table">
+          <thead>
+            <tr>
+              <th>Win</th><th>Chars</th><th>Tier</th><th>QS</th>
+              <th>σ</th><th>μZ↑</th><th>MZ↑</th><th>Dom</th><th>⚡</th>
+            </tr>
+          </thead>
+          <tbody id="sect-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
 
     <!-- 2. Author / Reader toggle + Radar charts -->
     <div class="card" id="card-radars" style="display:none;">
@@ -391,6 +631,120 @@
       </div><!-- /telem-body -->
     </div>
 
+    <!-- Layer 3: Somatic / Archetypal Cipher -->
+    <div class="card" id="card-somatic" style="display:none;">
+      <div class="somatic-header">
+        <span class="somatic-card-title">Somatic Cipher &amp; Wavelength Physics</span>
+        <span class="somatic-layer-badge">LAYER 3</span>
+      </div>
+
+      <!-- Diagnostic row: tier badge + quersumme -->
+      <div class="somatic-diag">
+        <div id="soma-tier-badge" class="tier-badge tier-T1">T1</div>
+        <div>
+          <div class="tier-label-text" id="soma-tier-label">Somatic / Universal</div>
+          <div class="tier-label-sub" id="soma-sigma-text">avg σ = —</div>
+        </div>
+        <div class="qs-block">
+          <div class="qs-label">Quersumme</div>
+          <div class="qs-num" id="soma-qs-num">—</div>
+          <div class="qs-arch" id="soma-qs-arch">—</div>
+        </div>
+      </div>
+
+      <!-- Category composition bar -->
+      <div class="soma-balance">
+        <div class="soma-balance-label">
+          <span>Archetypal Composition</span>
+          <span id="soma-cat-pct-label" style="font-family:monospace;"></span>
+        </div>
+        <div class="soma-balance-track" id="soma-balance-bar"></div>
+        <div class="soma-legend">
+          <div class="soma-legend-item"><div class="soma-legend-dot" style="background:#b96af7;"></div>Sovereign</div>
+          <div class="soma-legend-item"><div class="soma-legend-dot" style="background:var(--soma);"></div>Origin</div>
+          <div class="soma-legend-item"><div class="soma-legend-dot" style="background:var(--ok);"></div>Kinetic</div>
+          <div class="soma-legend-item"><div class="soma-legend-dot" style="background:var(--accent);"></div>Resonant</div>
+          <div class="soma-legend-item"><div class="soma-legend-dot" style="background:var(--gold);"></div>Liminal</div>
+        </div>
+      </div>
+
+      <!-- Charts row: Archetypal Radar + Complexity Scatter -->
+      <div class="somatic-charts-grid">
+        <div class="soma-chart-block">
+          <div class="soma-chart-label">5-Axis Archetypal Radar</div>
+          <div class="soma-canvas-wrap"><canvas id="soma-radar"></canvas></div>
+        </div>
+        <div class="soma-chart-block">
+          <div class="soma-chart-label">Complexity Scatter (Word Sum × σ)</div>
+          <canvas id="soma-scatter"></canvas>
+        </div>
+      </div>
+
+      <!-- FFT Dominant Harmonics panel -->
+      <div class="fft-panel">
+        <div class="fft-panel-hdr">FFT Dominant Harmonics — steganographic frequency fingerprint</div>
+        <div class="fft-chips" id="soma-fft-chips">
+          <span class="fft-none">No data yet</span>
+        </div>
+      </div>
+
+      <!-- Oscilloscope Deck: two stacked waveform charts -->
+      <div class="oscillo-deck">
+
+        <!-- Chart A: Global Waveform Envelope (100-bucket, smooth) -->
+        <div class="oscillo-block">
+          <div class="oscillo-hdr">
+            <span class="oscillo-lbl oscillo-lbl-global">Global Waveform Envelope</span>
+            <span class="oscillo-sublbl" id="soma-global-sublbl">current window · energy buckets · bezier smooth</span>
+          </div>
+          <div class="oscillo-chart-wrap"><canvas id="soma-wave-global"></canvas></div>
+        </div>
+
+        <!-- Chart B: Micro Oscilloscope (256-point raw, sharp) -->
+        <div class="oscillo-block">
+          <div class="oscillo-hdr">
+            <span class="oscillo-lbl oscillo-lbl-micro">Micro Oscilloscope</span>
+            <span class="oscillo-sublbl" id="soma-micro-sublbl">current window · 256 raw letter values · no smoothing</span>
+          </div>
+          <div class="oscillo-chart-wrap"><canvas id="soma-wave-micro"></canvas></div>
+        </div>
+
+      </div><!-- /oscillo-deck -->
+    </div>
+
+    <!-- Wavelength Telemetry — full-document envelope, split into panels -->
+    <div class="card" id="card-telw">
+
+      <div class="telw-hdr">
+        <span class="card-title" style="margin:0;">Wavelength Telemetry</span>
+        <span class="telw-sublbl" id="telw-sublbl">— run analysis to populate —</span>
+      </div>
+
+      <!-- Legend — compare mode -->
+      <div id="telw-legend" style="display:none;" class="telw-legend">
+        <div class="telw-legend-item">
+          <div class="telw-dot" style="background:#00c8ff;"></div>
+          <span style="color:#00c8ff;">TEXT A</span>
+        </div>
+        <div class="telw-legend-item">
+          <div class="telw-dot" style="background:#a78bfa;"></div>
+          <span style="color:#a78bfa;">TEXT B</span>
+        </div>
+      </div>
+
+      <!-- Full-document panel — shown only in Σ summary mode -->
+      <div id="telw-full-doc-wrap" style="display:none;">
+        <div class="telw-chunk-range" id="telw-full-doc-lbl">full document · energy buckets</div>
+        <div class="telw-chunk-wrap" style="height:130px;"><canvas id="telw-full-doc-canvas"></canvas></div>
+      </div>
+
+      <!-- One panel per window — populated dynamically by TelwModule.buildWindowPanels() -->
+      <div id="telw-chunks-wrap" style="display:none;">
+        <div id="telw-chunks" class="telw-chunks"></div>
+      </div>
+
+    </div>
+
     <!-- 5. Reader Profile -->
     <div class="card" id="card-reader" style="display:none;">
       <div class="card-title">Reader Profile — Target Audience Psychology</div>
@@ -407,6 +761,21 @@
       <div id="dissonance-list"></div>
     </div>
 
+
+    <!-- Compare Mode: Side-by-Side Anomaly Locator -->
+    <div class="card" id="card-cmp-anomalies" style="display:none;">
+      <div class="card-title">Anomaly Locator — A vs B Cross-Reference</div>
+      <div class="cmp-anomaly-grid">
+        <div class="cmp-anomaly-col">
+          <div class="cmp-anomaly-hdr cmp-anomaly-hdr-a">Text A — Anomalies</div>
+          <div id="cmp-anomalies-a"></div>
+        </div>
+        <div class="cmp-anomaly-col">
+          <div class="cmp-anomaly-hdr cmp-anomaly-hdr-b">Text B — Anomalies</div>
+          <div id="cmp-anomalies-b"></div>
+        </div>
+      </div>
+    </div>
     <!-- Empty state -->
     <div id="empty-state" style="text-align:center;margin-top:4rem;color:var(--muted);">
       <div style="font-size:2rem;margin-bottom:.6rem;">⬡</div>
@@ -420,13 +789,31 @@
 /* ════════════════════════════════════════════════════════════
    State
 ════════════════════════════════════════════════════════════ */
-let _lang      = "EN";
-let _results   = null;
-let _activeWin = 0;
-let _mode      = "author";
+let _lang        = "EN";
+let _results     = null;   // currently viewed result
+let _resultsA    = null;   // Text A result (compare mode)
+let _resultsB    = null;   // Text B result (compare mode)
+let _compareMode = false;
+let _activeDoc   = 'A';   // 'A' | 'B' | 'unified'
+let _activeWinA  = 0;         // active window index for Text A in compare mode
+let _activeWinB  = 0;         // active window index for Text B in compare mode
+let _activeWin   = 0;
+let _mode        = "author";
 
 let _microChart = null;
 let _macroChart = null;
+let _somaRadar      = null;
+let _somaScatter    = null;
+let _somaWaveGlobal = null;   // Chart A — per-window slice of 100-bucket envelope
+let _cachedEnvA     = null;   // full global_waveform_envelope for Text A — NEVER overwritten by B
+let _cachedEnvB     = null;   // full global_waveform_envelope for Text B (compare mode)
+let _cachedTotalCharsA = 0;
+let _cachedTotalCharsB = 0;
+let _cachedEnvActive       = null; // active doc's envelope — used for per-window slicing only
+let _cachedTotalCharsActive = 0;
+let _somaWaveMicro  = null;   // Chart B — per-window 256-point raw signal
+let _telwCharts        = [];   // Wavelength Telemetry chunk charts (one per window)
+let _telwFullDocChart  = null; // Single full-document telemetry chart (Σ summary)
 let _currentZMicro  = {};
 let _currentZMacro  = {};
 let _currentVectors = {};
@@ -595,19 +982,182 @@ function updateCharts(win) {
 /* ════════════════════════════════════════════════════════════
    Render: Window Pills
 ════════════════════════════════════════════════════════════ */
-function renderWindowPills(windows) {
+function renderWindowPills(windows, unifiedMode = false) {
   const c = $('window-pills');
   c.innerHTML = '';
+
+  // Σ Overview pill
+  const sigPill = document.createElement('span');
+  sigPill.className = ['window-pill', 'sigma-pill', _activeWin === -1 ? 'active' : ''].filter(Boolean).join(' ');
+  sigPill.textContent = 'Σ';
+  sigPill.title = 'Document Overview — full-text summary';
+  sigPill.addEventListener('click', () => selectWindow(-1));
+  c.appendChild(sigPill);
+
+  if (unifiedMode) {
+    const tag = document.createElement('span');
+    tag.className = 'unified-ind';
+    tag.textContent = 'A+B UNIFIED — showing Text A windows';
+    c.appendChild(tag);
+    c.appendChild(document.createElement('br'));
+  }
   windows.forEach((win, i) => {
     const hasDis  = win.dissonance_events.length > 0;
     const isReset = win.reset_reason === 'structural_boundary';
     const pill    = document.createElement('span');
     pill.className = ['window-pill', i === _activeWin ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
     pill.textContent = `W${i}${isReset ? ' ⟳' : ''}${hasDis ? ' ⚡' : ''}`;
-    pill.title = `chars ${win.start_char}–${win.end_char} | ${win.reset_reason}`;
+    const lineInfo = (win.start_line && win.end_line) ? `Lines ${win.start_line}–${win.end_line}` : `chars ${win.start_char}–${win.end_char}`;
+    const snippetInfo = win.start_snippet ? `\n"${win.start_snippet.slice(0,40)}…"` : '';
+    pill.title = `${lineInfo}${snippetInfo}\n${win.reset_reason}`;
     pill.addEventListener('click', () => selectWindow(i));
     c.appendChild(pill);
   });
+
+  renderWinSpanMap(windows);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Window Span Map — proportional char-range timeline
+════════════════════════════════════════════════════════════ */
+function renderWinSpanMap(windows) {
+  const el = $('win-span-map');
+  if (!el || !windows || !windows.length) return;
+  const totalChars = windows[windows.length - 1].end_char || 1;
+  el.innerHTML = windows.map((win, i) => {
+    const startPct = (win.start_char / totalChars * 100).toFixed(2);
+    const widthPct = Math.max(2, ((win.end_char - win.start_char) / totalChars * 100)).toFixed(2);
+    const hasDis   = win.dissonance_events.length > 0;
+    const isActive = i === _activeWin;
+    const barColor = hasDis ? 'var(--danger)' : isActive ? 'var(--accent)' : '#3a7ca5';
+    const lblColor = isActive ? 'var(--accent)' : 'var(--soma)';
+    const lineInfo = (win.start_line && win.end_line)
+      ? `L${win.start_line}–L${win.end_line}`
+      : `${win.start_char}–${win.end_char}`;
+    return `<div class="wsm-row" onclick="selectWindow(${i})">
+      <span class="wsm-label" style="color:${lblColor};">W${i}</span>
+      <div class="wsm-bar-outer">
+        <div class="wsm-bar-fill" style="left:${startPct}%;width:${widthPct}%;background:${barColor};"></div>
+      </div>
+      <span class="wsm-range">${lineInfo}${hasDis ? ' ⚡' : ''}</span>
+    </div>`;
+  }).join('');
+  el.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   Document Overview — Σ full-text summary
+════════════════════════════════════════════════════════════ */
+function renderDocOverview(data) {
+  const wins       = data.windows || [];
+  const totalChars = wins.length ? wins[wins.length - 1].end_char : 0;
+  const totalDis   = wins.reduce((n, w) => n + w.dissonance_events.length, 0);
+
+  // Tier distribution
+  const tierCount = { T1: 0, T2: 0, T3: 0 };
+  wins.forEach(w => {
+    const t = (w.somatic && w.somatic.tier_code) ? w.somatic.tier_code : 'T1';
+    if (tierCount[t] !== undefined) tierCount[t]++;
+  });
+
+  // Dominant quersumme
+  const qsCounts = {};
+  wins.forEach(w => {
+    const qs = w.somatic && w.somatic.dominant_quersumme;
+    if (qs) qsCounts[qs] = (qsCounts[qs] || 0) + 1;
+  });
+  const domQSEntry = Object.entries(qsCounts).sort((a, b) => b[1] - a[1])[0];
+
+  // Global envelope stats
+  const env    = data.global_waveform_envelope || [];
+  const envMin = env.length ? Math.min(...env).toFixed(1) : '—';
+  const envMax = env.length ? Math.max(...env).toFixed(1) : '—';
+  const envAvg = env.length ? (env.reduce((s, v) => s + v, 0) / env.length).toFixed(1) : '—';
+
+  // Top anomaly windows
+  const disWins = wins
+    .filter(w => w.dissonance_events.length > 0)
+    .sort((a, b) => b.dissonance_events.length - a.dissonance_events.length)
+    .slice(0, 4);
+
+  // Avg Z-scores across all windows
+  const zKeys = wins.length ? Object.keys(wins[0].z_scores_micro || {}) : [];
+  const topZ  = zKeys.map(k => {
+    const avg = wins.reduce((s, w) => s + (w.z_scores_micro && w.z_scores_micro[k] ? w.z_scores_micro[k] : 0), 0) / wins.length;
+    return [k, avg];
+  }).filter(([, v]) => Math.abs(v) > 0.4)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+    .slice(0, 5);
+
+  $('overview-body').innerHTML = `
+    <div class="overview-grid">
+      <div class="overview-stat">
+        <div class="overview-stat-val">${totalChars.toLocaleString()}</div>
+        <div class="overview-stat-lbl">Total Characters</div>
+      </div>
+      <div class="overview-stat">
+        <div class="overview-stat-val">${wins.length}</div>
+        <div class="overview-stat-lbl">Analysis Windows</div>
+      </div>
+      <div class="overview-stat">
+        <div class="overview-stat-val" style="color:${totalDis > 0 ? 'var(--danger)' : 'var(--ok)'};">${totalDis}</div>
+        <div class="overview-stat-lbl">Dissonance Events</div>
+      </div>
+      <div class="overview-stat">
+        <div class="overview-stat-val">${data.language}</div>
+        <div class="overview-stat-lbl">Language</div>
+      </div>
+    </div>
+
+    <div class="overview-section-hdr">Tier Distribution</div>
+    <div class="overview-tier-row">
+      ${Object.entries(tierCount).map(([t, n]) =>
+        `<span class="overview-tier-pill tier-${t}">${t}: ${n}×</span>`
+      ).join('')}
+    </div>
+
+    <div class="overview-section-hdr">Energy Envelope — 100 buckets</div>
+    <div style="display:flex;gap:1.5rem;font-size:.72rem;margin-bottom:.45rem;">
+      <span>min <strong>${envMin}</strong></span>
+      <span>avg <strong>${envAvg}</strong></span>
+      <span>max <strong>${envMax}</strong></span>
+    </div>
+
+    ${domQSEntry ? `
+    <div class="overview-section-hdr">Dominant Quersumme</div>
+    <div style="font-size:.77rem;margin-bottom:.4rem;">
+      <strong style="color:var(--soma);">${domQSEntry[0]}</strong>
+      <span style="color:var(--muted);"> — appears in ${domQSEntry[1]} window(s)</span>
+    </div>` : ''}
+
+    ${topZ.length ? `
+    <div class="overview-section-hdr">Dominant Psycholinguistic Vectors (avg |Z| &gt; 0.4)</div>
+    <div style="display:flex;flex-direction:column;gap:.22rem;margin-bottom:.5rem;">
+      ${topZ.map(([k, v]) => `
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.69rem;">
+          <span style="width:10rem;color:var(--muted);flex-shrink:0;">${k.replace(/_/g, ' ')}</span>
+          <div style="flex:1;background:var(--border);border-radius:2px;height:4px;overflow:hidden;">
+            <div style="height:100%;width:${Math.min(100, Math.abs(v) / 3 * 100).toFixed(0)}%;background:${v > 0 ? 'var(--accent)' : 'var(--danger)'};border-radius:2px;"></div>
+          </div>
+          <span style="font-family:monospace;font-size:.67rem;color:${v > 0 ? 'var(--accent)' : 'var(--danger)'};">${v > 0 ? '+' : ''}${v.toFixed(2)}</span>
+        </div>`).join('')}
+    </div>` : ''}
+
+    ${disWins.length ? `
+    <div class="overview-section-hdr">Anomaly Windows</div>
+    <div style="display:flex;flex-direction:column;gap:.15rem;">
+      ${disWins.map(w => {
+        const wi = w.window_index !== undefined ? w.window_index : wins.indexOf(w);
+        const lineInfo = (w.start_line && w.end_line)
+          ? `Lines ${w.start_line}–${w.end_line}`
+          : `chars ${w.start_char}–${w.end_char}`;
+        return `<div class="ov-top-win" onclick="selectWindow(${wi})">
+          <span style="color:var(--danger);font-weight:700;">W${wi}</span>
+          <span style="color:var(--muted);"> · ${lineInfo} · ${w.dissonance_events.length} event(s) — click to inspect</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+  `;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -763,6 +1313,423 @@ function renderTelemetry(win) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Somatic Layer 3 — constants, chart init, render functions
+════════════════════════════════════════════════════════════ */
+const SOMA_RADAR_LABELS = ['Origin','Kinetic','Sovereign','Liminal','Resonant'];
+const SOMA_RADAR_SCORE_KEYS = ['somatic_score','kinetic_score','sovereignty_score','liminal_score','resonant_score'];
+const SOMA_CAT_KEYS   = ['sovereign','origin','kinetic','resonant','liminal'];
+const SOMA_CAT_FILLS  = ['soma-fill-sov','soma-fill-orig','soma-fill-kin','soma-fill-res','soma-fill-lim'];
+
+const _DARK = '#1e2332';
+
+// ── Shared wave chart factory ─────────────────────────────────────────────────
+const _WAVE_X_OPTS = {
+  type: 'linear',
+  display: true,
+  ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 7, maxRotation: 0,
+           callback: v => `${v}c` },
+  grid: { color: '#1e2332' },
+};
+
+function _buildWaveChart(canvasId, color, tension, fillAlpha) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [{ // no labels array — uses {x,y} point format
+      data: [],
+      borderColor:     color,
+      backgroundColor: color.replace('1)', fillAlpha + ')'),
+      borderWidth: 1.6,
+      fill: true,
+      tension: tension,
+      pointRadius: 0,
+      parsing: false,   // tell Chart.js data is already {x,y}
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ..._WAVE_X_OPTS },
+        y: {
+          grid: { color: _DARK },
+          ticks: { color: '#6b7394', font: { size: 9 }, maxTicksLimit: 5 },
+          min: 0, max: 27,
+        },
+      },
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: _DARK, bodyColor: '#dce3f5',
+        borderColor: '#2e3550', borderWidth: 1,
+        callbacks: {
+          label: pt => ` val = ${(+pt.raw.y).toFixed(1)}`,
+          title: pts => `char ${pts[0].raw.x}`,
+        },
+      }},
+      animation: { duration: 250 },
+    },
+  });
+}
+
+/** Set the linear x-axis bounds shared by all three oscilloscope charts. */
+function _setWaveBounds(chart, startChar, endChar) {
+  if (!chart) return;
+  chart.options.scales.x.min = startChar;
+  chart.options.scales.x.max = endChar;
+}
+
+/** Full-document view of the Global Waveform Envelope (used in Σ summary). */
+function _showGlobalEnvelopeFull() {
+  if (!_somaWaveGlobal || !_cachedEnvA || _cachedEnvA.length === 0) return;
+  const totalA = _cachedTotalCharsA || 1;
+  const totalB = _cachedTotalCharsB || totalA;
+  const xMax   = Math.max(totalA, totalB);
+  _somaWaveGlobal.data.datasets[0].data = _cachedEnvA.map((v, i) => ({
+    x: Math.round(i * totalA / Math.max(1, _cachedEnvA.length - 1)),
+    y: v,
+  }));
+  if (_cachedEnvB && _cachedEnvB.length && _somaWaveGlobal.data.datasets.length > 1) {
+    _somaWaveGlobal.data.datasets[1].data = _cachedEnvB.map((v, i) => ({
+      x: Math.round(i * totalB / Math.max(1, _cachedEnvB.length - 1)),
+      y: v,
+    }));
+  }
+  _setWaveBounds(_somaWaveGlobal, 0, xMax);
+  _somaWaveGlobal.update();
+  const el = $('soma-global-sublbl');
+  if (el) el.textContent = `full document · ${_cachedEnvA.length} energy buckets · bezier smooth`;
+}
+
+/** Full-document Micro Oscilloscope: all windows concatenated (used in Σ summary).
+ *  Each window's letter values are mapped proportionally across its own char range
+ *  so every window's slice spans exactly start_char → end_char — matching the
+ *  global waveform and telemetry full-document views.
+ */
+function _showMicroFull(data) {
+  if (!_somaWaveMicro || !data || !data.windows) return;
+  const buildPts = (windows) => {
+    const pts = [];
+    windows.forEach(win => {
+      const mw = (win.somatic && win.somatic.micro_wavelength) ? win.somatic.micro_wavelength : [];
+      let end = mw.length;
+      while (end > 1 && mw[end - 1] === 0) end--;
+      const sc     = win.start_char || 0;
+      const winLen = Math.max(1, (win.end_char || sc) - sc);
+      const n      = Math.max(1, end - 1);
+      for (let i = 0; i < end; i++) {
+        pts.push({ x: sc + Math.round(i * winLen / n), y: mw[i] });
+      }
+    });
+    return pts;
+  };
+  const ptsA = buildPts(data.windows);
+  if (!ptsA.length) return;
+  const totalA = _cachedTotalCharsA || ptsA[ptsA.length - 1].x;
+  _somaWaveMicro.data.datasets[0].data = ptsA;
+  if (_resultsB && _resultsB.windows && _somaWaveMicro.data.datasets.length > 1) {
+    const ptsB  = buildPts(_resultsB.windows);
+    const totalB = _cachedTotalCharsB || (ptsB.length ? ptsB[ptsB.length - 1].x : totalA);
+    _somaWaveMicro.data.datasets[1].data = ptsB;
+    _setWaveBounds(_somaWaveMicro, 0, Math.max(totalA, totalB));
+  } else {
+    _setWaveBounds(_somaWaveMicro, 0, totalA);
+  }
+  _somaWaveMicro.update();
+  const el = $('soma-micro-sublbl');
+  if (el) el.textContent = `full document · ${ptsA.length} letter values · proportional`;
+}
+
+function initSomaticCharts() {
+  if (_somaRadar)      { _somaRadar.destroy();      _somaRadar      = null; }
+  if (_somaScatter)    { _somaScatter.destroy();     _somaScatter    = null; }
+  if (_somaWaveGlobal) { _somaWaveGlobal.destroy();  _somaWaveGlobal = null; }
+  if (_somaWaveMicro)  { _somaWaveMicro.destroy();   _somaWaveMicro  = null; }
+
+  // ── Archetypal Radar ──────────────────────────────────────────────────────
+  const radarCtx = document.getElementById('soma-radar').getContext('2d');
+  _somaRadar = new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: SOMA_RADAR_LABELS,
+      datasets: [{
+        data: [0,0,0,0,0],
+        borderColor:          'rgba(185,106,247,1)',
+        backgroundColor:      'rgba(185,106,247,0.12)',
+        pointBackgroundColor: 'rgba(185,106,247,1)',
+        pointBorderColor:     '#0d0f14',
+        pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      scales: { r: {
+        min: 0,
+        grid: { color: _DARK }, angleLines: { color: _DARK },
+        ticks: { color: '#6b7394', backdropColor: 'transparent', font: { size: 9 }, stepSize: 0.1 },
+        pointLabels: { color: '#dce3f5', font: { size: 10, weight: '600' } },
+      }},
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: _DARK, titleColor: '#dce3f5', bodyColor: '#dce3f5',
+        borderColor: '#2e3550', borderWidth: 1, padding: 8,
+      }},
+      animation: { duration: 300 },
+    },
+  });
+
+  // ── Complexity Scatter ────────────────────────────────────────────────────
+  const scatCtx = document.getElementById('soma-scatter').getContext('2d');
+  _somaScatter = new Chart(scatCtx, {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'T1 Somatic',    data: [], backgroundColor: 'rgba(92,224,138,0.8)',  pointRadius: 4 },
+      { label: 'T2 Archetypal', data: [], backgroundColor: 'rgba(224,168,92,0.8)',  pointRadius: 4 },
+      { label: 'T3 State',      data: [], backgroundColor: 'rgba(224,92,92,0.8)',   pointRadius: 4 },
+      // Horizontal σ boundary lines
+      { label: 'σ=2', data: [], borderColor: 'rgba(224,168,92,0.6)',
+        borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, type: 'line', showLine: true },
+      { label: 'σ=5', data: [], borderColor: 'rgba(224,92,92,0.6)',
+        borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, type: 'line', showLine: true },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      scales: {
+        x: { title: { display: true, text: 'Word Sum', color: '#6b7394', font: { size: 10 }},
+             grid: { color: _DARK }, ticks: { color: '#6b7394', font: { size: 9 }}},
+        y: { title: { display: true, text: 'σ', color: '#6b7394', font: { size: 10 }},
+             grid: { color: _DARK }, ticks: { color: '#6b7394', font: { size: 9 }}, min: 0 },
+      },
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: _DARK, titleColor: '#dce3f5', bodyColor: '#dce3f5',
+        borderColor: '#2e3550', borderWidth: 1, padding: 8,
+        callbacks: { label: ctx => {
+          if (ctx.datasetIndex > 2) return null;
+          const d = ctx.raw;
+          return d && d.word ? ` ${d.word}  Σ=${d.x}  σ=${d.y}` : null;
+        }},
+      }},
+      animation: { duration: 300 },
+    },
+  });
+
+  // ── Chart A: Global Waveform Envelope (smooth bezier, cyan) ──────────────
+  _somaWaveGlobal = _buildWaveChart('soma-wave-global', 'rgba(96,192,224,1)', 0.45, '0.1');
+
+  // ── Chart B: Micro Oscilloscope (sharp, no smoothing, accent blue) ────────
+  _somaWaveMicro  = _buildWaveChart('soma-wave-micro',  'rgba(79,142,247,1)', 0.0,  '0.07');
+}
+
+// ── Cache envelope on analysis load ──────────────────────────────────────────
+// Always updates _cachedEnvActive (for per-window slicing).
+// Only overwrites _cachedEnvA when data is NOT _resultsB, so Text A's full-doc
+// envelope is preserved for Σ summary even when the user browses Text B windows.
+function renderGlobalEnvelope(data) {
+  const env = data.global_waveform_envelope || [];
+  const lastWin = data.windows && data.windows.length ? data.windows[data.windows.length - 1] : null;
+  const totalChars = lastWin ? lastWin.end_char : env.length * 10;
+  _cachedEnvActive        = env;
+  _cachedTotalCharsActive = totalChars;
+  if (data !== _resultsB) {   // preserve Text A's envelope for full-doc summary
+    _cachedEnvA        = env;
+    _cachedTotalCharsA = totalChars;
+  }
+  // initial slice is applied by selectWindow(0) called right after
+}
+
+/**
+ * Synchronise BOTH wave chart datasets with the currently active windows in compare mode.
+ *
+ * Contract:
+ *   dataset[0] — Text A, window _activeWinA, sliced from _cachedEnvA
+ *   dataset[1] — Text B, window _activeWinB, mapped onto winA's x range
+ *   x-axis     — [winA.start_char, winA.end_char] on EVERY chart
+ *
+ * This is the single source of truth for wave chart state in compare mode and must
+ * be called after every window-pill click and after the initial compare analysis so
+ * that the telemetry panel, global waveform and micro oscilloscope are always on the
+ * same numeric x-axis regardless of which window (A or B) was last selected.
+ */
+function _syncCompareWaveCharts() {
+  if (!_compareMode || !_resultsA || !_resultsB) return;
+  if (!_somaWaveGlobal || _somaWaveGlobal.data.datasets.length < 2) return;
+
+  const idxA = Math.min(_activeWin  || 0, _resultsA.windows.length - 1);
+  const idxB = Math.min(_activeWinB || 0, _resultsB.windows.length - 1);
+  const winA = _resultsA.windows[idxA];
+  const winB = _resultsB.windows[idxB];
+  if (!winA || !winB) return;
+
+  const sc     = winA.start_char || 0;
+  const ec     = winA.end_char   || sc;
+  const winLen = Math.max(1, ec - sc);
+
+  // Proportional mapper: any length array → x-values spanning [sc, ec].
+  const toXY = arr => {
+    const n = Math.max(1, arr.length - 1);
+    return arr.map((v, i) => ({ x: sc + Math.round(i * winLen / n), y: v }));
+  };
+
+  // ── Global Waveform: slice each 100-bucket envelope into this window ──────
+  if (_cachedEnvA && _cachedEnvA.length) {
+    const ta = _cachedTotalCharsA || 1;
+    const bs = Math.floor(sc / ta * _cachedEnvA.length);
+    const be = Math.min(_cachedEnvA.length, Math.ceil(ec / ta * _cachedEnvA.length));
+    _somaWaveGlobal.data.datasets[0].data = toXY(_cachedEnvA.slice(bs, Math.max(bs + 1, be)));
+  }
+  if (_cachedEnvB && _cachedEnvB.length) {
+    const tb = _cachedTotalCharsB || 1;
+    const bs = Math.floor(sc / tb * _cachedEnvB.length);
+    const be = Math.min(_cachedEnvB.length, Math.ceil(ec / tb * _cachedEnvB.length));
+    _somaWaveGlobal.data.datasets[1].data = toXY(_cachedEnvB.slice(bs, Math.max(bs + 1, be)));
+  }
+  _setWaveBounds(_somaWaveGlobal, sc, ec);
+  _somaWaveGlobal.update();
+
+  // ── Micro Oscilloscope: trim trailing zeros then map both wavelengths ─────
+  if (_somaWaveMicro && _somaWaveMicro.data.datasets.length > 1) {
+    const trim = mw => { let e = mw.length; while (e > 1 && mw[e - 1] === 0) e--; return mw.slice(0, e); };
+    const tA = winA.somatic ? trim(winA.somatic.micro_wavelength || []) : [];
+    const tB = winB.somatic ? trim(winB.somatic.micro_wavelength || []) : [];
+    _somaWaveMicro.data.datasets[0].data = toXY(tA);
+    _somaWaveMicro.data.datasets[1].data = toXY(tB);
+    _setWaveBounds(_somaWaveMicro, sc, ec);
+    _somaWaveMicro.update();
+  }
+}
+
+// ── Slice the cached global envelope to the active window's char range ────────
+// Uses _cachedEnvActive so it correctly slices whichever doc (A or B) is displayed.
+function _updateGlobalEnvelopeWindow(win) {
+  if (!_somaWaveGlobal || !_cachedEnvActive || _cachedEnvActive.length === 0) return;
+  const env        = _cachedEnvActive;
+  const totalChars = _cachedTotalCharsActive || 1;
+  const bs    = Math.floor(win.start_char / totalChars * env.length);
+  const be    = Math.min(env.length, Math.ceil(win.end_char / totalChars * env.length));
+  const slice = env.slice(bs, Math.max(bs + 1, be));
+  const winLen = Math.max(1, win.end_char - win.start_char);
+  // {x,y} point format — x is absolute char position
+  _somaWaveGlobal.data.datasets[0].data = slice.map((v, i) => ({
+    x: win.start_char + Math.round(i * winLen / Math.max(1, slice.length - 1)),
+    y: v,
+  }));
+  _setWaveBounds(_somaWaveGlobal, win.start_char, win.end_char);
+  _setWaveBounds(_somaWaveMicro,  win.start_char, win.end_char);
+  // Both charts share identical x bounds — render together so axes are aligned.
+  _somaWaveGlobal.update();
+  if (_somaWaveMicro) _somaWaveMicro.update();
+  const el = $('soma-global-sublbl');
+  if (el) {
+    const lineInfo = (win.start_line && win.end_line)
+      ? `L${win.start_line}–L${win.end_line}`
+      : `chars ${win.start_char}–${win.end_char}`;
+    const wi = win.window_index !== undefined ? win.window_index : '';
+    el.textContent = `W${wi} · ${lineInfo} · ${slice.length} energy buckets · bezier smooth`;
+  }
+}
+
+// ── Render per-window somatic data ────────────────────────────────────────────
+function renderSomatic(win) {
+  const s = win.somatic;
+  if (!s) return;
+
+  // ── Diagnostic: Tier badge ────────────────────────────────────────────────
+  const badge = $('soma-tier-badge');
+  badge.className   = `tier-badge tier-${s.tier_code || 'T1'}`;
+  badge.textContent = s.tier_code || 'T1';
+  $('soma-tier-label').textContent = s.tier_label || '—';
+  $('soma-sigma-text').textContent = `avg σ = ${(s.avg_word_sigma || 0).toFixed(3)}`;
+
+  // ── Diagnostic: Quersumme block ───────────────────────────────────────────
+  $('soma-qs-num').textContent = s.dominant_quersumme || '—';
+  const arch = s.quersumme_archetype || '';
+  // Split on " — " to bold the number+label part
+  const sep = arch.indexOf(' — ');
+  $('soma-qs-arch').innerHTML = sep > -1
+    ? `<strong>${arch.slice(0, sep)}</strong><br><span style="color:var(--muted)">${arch.slice(sep + 3)}</span>`
+    : arch;
+
+  // ── Composition bar ───────────────────────────────────────────────────────
+  const cats  = s.category_counts || {};
+  const total = Math.max(1, Object.values(cats).reduce((a, b) => a + b, 0));
+  $('soma-balance-bar').innerHTML = SOMA_CAT_KEYS.map((k, i) => {
+    const pct = ((cats[k] || 0) / total * 100).toFixed(1);
+    return `<div class="${SOMA_CAT_FILLS[i]}" style="width:${pct}%"></div>`;
+  }).join('');
+  $('soma-cat-pct-label').textContent = [
+    `sov:${((cats.sovereign||0)/total*100).toFixed(0)}%`,
+    `kin:${((cats.kinetic  ||0)/total*100).toFixed(0)}%`,
+    `res:${((cats.resonant ||0)/total*100).toFixed(0)}%`,
+    `lim:${((cats.liminal  ||0)/total*100).toFixed(0)}%`,
+    `ori:${((cats.origin   ||0)/total*100).toFixed(0)}%`,
+  ].join('  ');
+
+  // ── Archetypal Radar ──────────────────────────────────────────────────────
+  if (_somaRadar) {
+    _somaRadar.data.datasets[0].data = SOMA_RADAR_SCORE_KEYS.map(k => s[k] || 0);
+    _somaRadar.update();
+  }
+
+  // ── Complexity Scatter ────────────────────────────────────────────────────
+  if (_somaScatter) {
+    const scatter = s.word_scatter || [];
+    const t1 = [], t2 = [], t3 = [];
+    scatter.forEach(w => {
+      const pt = { x: w.x, y: w.y, word: w.word };
+      if (w.tier === 1) t1.push(pt);
+      else if (w.tier === 2) t2.push(pt);
+      else t3.push(pt);
+    });
+    const xs   = scatter.map(w => w.x);
+    const xMin = xs.length ? Math.min(...xs) : 0;
+    const xMax = xs.length ? Math.max(...xs) : 50;
+    _somaScatter.data.datasets[0].data = t1;
+    _somaScatter.data.datasets[1].data = t2;
+    _somaScatter.data.datasets[2].data = t3;
+    _somaScatter.data.datasets[3].data = [{ x: xMin, y: 2 }, { x: xMax, y: 2 }];
+    _somaScatter.data.datasets[4].data = [{ x: xMin, y: 5 }, { x: xMax, y: 5 }];
+    _somaScatter.update();
+  }
+
+  // ── FFT Harmonics panel ───────────────────────────────────────────────────
+  const harmonics = s.top_harmonics || [];
+  const fftEl = $('soma-fft-chips');
+  if (harmonics.length === 0) {
+    fftEl.innerHTML = '<span class="fft-none">No harmonic data (text may be too short)</span>';
+  } else {
+    fftEl.innerHTML = harmonics.map((h, i) =>
+      `<span class="fft-chip">
+         <span class="fft-chip-lbl">H${i+1}</span>
+         bin <strong>${h.bin}</strong> &nbsp;|&nbsp;
+         mag <strong>${(h.magnitude||0).toFixed(1)}</strong> &nbsp;|&nbsp;
+         f̃ <strong>${(h.norm_freq||0).toFixed(4)}</strong>
+       </span>`
+    ).join('');
+  }
+
+  // ── Micro Oscilloscope (Chart B — per-window, sharp) ─────────────────────
+  // NOTE: data is set here but .update() is deferred to _updateGlobalEnvelopeWindow
+  // so both charts render after shared x bounds are set.
+  //
+  // Letter values are mapped PROPORTIONALLY across the window's full char range
+  // (start_char → end_char) so the oscilloscope line always spans the same x
+  // extent as the Global Waveform and Wavelength Telemetry charts.
+  if (_somaWaveMicro) {
+    const mw = s.micro_wavelength || [];
+    let end = mw.length;
+    while (end > 1 && mw[end - 1] === 0) end--;
+    const trimmed   = mw.slice(0, end);
+    const startChar = win.start_char || 0;
+    const winLen    = Math.max(1, (win.end_char || startChar) - startChar);
+    const n         = Math.max(1, trimmed.length - 1);
+    _somaWaveMicro.data.datasets[0].data = trimmed.map((v, i) => ({
+      x: startChar + Math.round(i * winLen / n),
+      y: v,
+    }));
+    $('soma-micro-sublbl').textContent =
+      `chars ${startChar}–${win.end_char} · ${trimmed.length} letter values · no smoothing`;
+  }
+
+  // ── Global Waveform + set shared x bounds + flush both charts ────────────
+  _updateGlobalEnvelopeWindow(win);
+}
+
+/* ════════════════════════════════════════════════════════════
    Reader Matrix
 ════════════════════════════════════════════════════════════ */
 const READER_RULES = [
@@ -825,21 +1792,46 @@ function renderReaderProfile(win) {
 /* ════════════════════════════════════════════════════════════
    Render: Dissonance Events
 ════════════════════════════════════════════════════════════ */
+/* ── Classify trigger → CSS class + label ────────────────────────── */
+function _alertClass(trigger) {
+  const t = (trigger || '').toLowerCase();
+  if (t.includes('dissociation') || t.includes('ai') || t.includes('psychological fracture'))
+    return { cls: 'ai-flatline', tag: 'AI GHOST / FRACTURE' };
+  if (t.includes('stegano') || t.includes('suppressed'))
+    return { cls: 'steganographic', tag: 'STEGANOGRAPHIC SIGNAL' };
+  return { cls: 'macro-micro', tag: 'MACRO-MICRO CONFLICT' };
+}
+
+/* ── Build a single alert-box element for one dissonance event ──── */
+function _buildAlertBox(ev, winIdx, prefix) {
+  const info = _alertClass(ev.conclusion || ev.trigger_type);
+  const sl   = ev.start_line  || '?';
+  const el   = ev.end_line    || '?';
+  const ss   = ev.start_snippet ? `"${ev.start_snippet.slice(0,45)}…"` : '—';
+  const es   = ev.end_snippet   ? `"${ev.end_snippet.slice(0,45)}…"`   : '—';
+  const pref = prefix ? `${prefix} · ` : '';
+  const div  = document.createElement('div');
+  div.className = `alert-box ${info.cls}`;
+  div.innerHTML =
+    `<strong>[${info.tag} DETECTED]</strong> ${pref}Window ${winIdx ?? ev.window_index ?? '?'}` +
+    `<br><span class="loc-tag">Lines ${sl}–${el}</span>` +
+    `<span style="font-size:.7rem;color:var(--muted);">Δ = ${typeof ev.delta === 'number' ? ev.delta.toFixed(3) : ev.delta}</span>` +
+    `<br><em>Start (Line ${sl}):</em> <span class="snip">${ss}</span>` +
+    `<br><em>End &nbsp;&nbsp;(Line ${el}):</em> <span class="snip">${es}</span>` +
+    `<br><em>Vectors:</em> <strong>${(ev.vectors||[]).join(' ↔ ')}</strong>` +
+    `<br><span style="font-size:.73rem;color:var(--warn);">${ev.conclusion||''}</span>`;
+  return div;
+}
+
 function renderDissonance(windows) {
   const list = $('dissonance-list');
   list.innerHTML = '';
   let total = 0;
   windows.forEach((win, wi) => {
+    const winIdx = win.window_index ?? wi;
     win.dissonance_events.forEach(ev => {
       total++;
-      const div = document.createElement('div');
-      div.className = 'dis-event';
-      div.innerHTML = `
-        <div class="dis-title">⚡ ${ev.trigger_type} &nbsp; Δ = ${ev.delta.toFixed(3)}</div>
-        <div class="dis-meta">Window ${wi} · ${ev.event_id} · Vectors: <strong>${ev.vectors.join(' ↔ ')}</strong></div>
-        <div class="dis-conc">${ev.conclusion}</div>
-      `;
-      list.appendChild(div);
+      list.appendChild(_buildAlertBox(ev, winIdx, null));
     });
   });
   if (total === 0) {
@@ -847,18 +1839,88 @@ function renderDissonance(windows) {
   }
 }
 
+/* ── Render compare-mode side-by-side anomaly locator ─────────────── */
+function renderCompareAnomalies(windowsA, windowsB) {
+  const colA = $('cmp-anomalies-a');
+  const colB = $('cmp-anomalies-b');
+  if (!colA || !colB) return;
+  colA.innerHTML = '';
+  colB.innerHTML = '';
+
+  let countA = 0, countB = 0;
+  (windowsA || []).forEach((win, wi) => {
+    const winIdx = win.window_index ?? wi;
+    (win.dissonance_events || []).forEach(ev => {
+      countA++;
+      colA.appendChild(_buildAlertBox(ev, winIdx, 'A'));
+    });
+  });
+  (windowsB || []).forEach((win, wi) => {
+    const winIdx = win.window_index ?? wi;
+    (win.dissonance_events || []).forEach(ev => {
+      countB++;
+      colB.appendChild(_buildAlertBox(ev, winIdx, 'B'));
+    });
+  });
+  if (!countA) colA.innerHTML = '<div style="color:var(--ok);font-size:.8rem;">No anomalies in Text A.</div>';
+  if (!countB) colB.innerHTML = '<div style="color:var(--ok);font-size:.8rem;">No anomalies in Text B.</div>';
+
+  $('card-cmp-anomalies').style.display = (countA + countB > 0) ? '' : 'none';
+}
+
 /* ════════════════════════════════════════════════════════════
    Select Window
 ════════════════════════════════════════════════════════════ */
+function _setLfreqContext(label) {
+  const el = $('lfreq-context');
+  if (el) el.textContent = label;
+}
+
 function selectWindow(idx) {
   _activeWin = idx;
-  const win  = _results.windows[idx];
+
+  // Σ Overview pill — show summary card; all three waveform charts show full document
+  if (idx === -1) {
+    $('card-overview').style.display = '';
+    renderWindowPills(_results.windows);
+    renderDocOverview(_results);
+    // In compare mode ensure wave charts have 2 datasets (may have been downgraded
+    // to 1-dataset after the user clicked a per-window pill).
+    if (_resultsB && _somaWaveGlobal && _somaWaveGlobal.data.datasets.length < 2)
+      initSomaticChartsUnified();
+    _showGlobalEnvelopeFull();
+    // Always pass _resultsA so dataset[0] = Text A and dataset[1] = Text B,
+    // regardless of which doc tab was last active.
+    _showMicroFull(_resultsA || _results);
+    _telwShowActivePanel(-1);   // show all telemetry panels in full-doc mode
+    renderLetterFreq($('input-text').value);
+    _setLfreqContext('full document');
+    $('card-letter-freq').style.display = '';
+    return;
+  }
+
+  // Normal window — hide overview, ensure per-window cards are visible
+  $('card-overview').style.display = 'none';
+  ['card-radars','card-zscores','card-telemetry','card-somatic'].forEach(id => {
+    const el = $(id); if (el && _results) el.style.display = '';
+  });
+
+  _telwShowActivePanel(idx);    // show only this window's telemetry panel
+
+  if (_activeDoc === 'unified') { renderUnified(idx); return; }
+  const win = _results.windows[idx];
   renderWindowPills(_results.windows);
   renderJaPanel(win);
   renderZScores(win);
   updateCharts(win);
   renderTelemetry(win);
+  renderSomatic(win);
   if (_mode === 'reader') renderReaderProfile(win);
+
+  // Per-window letter frequency
+  const inputText = $('input-text').value;
+  renderLetterFreq(inputText.slice(win.start_char, win.end_char));
+  _setLfreqContext(`W${idx} · chars ${win.start_char}–${win.end_char}`);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -873,13 +1935,21 @@ function renderResults(data) {
   $('card-radars').style.display      = '';
   $('card-zscores').style.display     = '';
   $('card-telemetry').style.display   = '';
+  $('card-somatic').style.display     = '';
   $('card-dissonance').style.display  = '';
 
   if (!_microChart) initCharts();
+  // In compare mode use 2-dataset unified charts so both texts are always visible.
+  if (_resultsB) initSomaticChartsUnified();
+  else           initSomaticCharts();
 
   renderWindowPills(data.windows);
+  renderGlobalEnvelope(data);   // cache envelope before selectWindow slices it
   selectWindow(0);
   renderDissonance(data.windows);
+  _telwFromAnalysis();   // populate Wavelength Telemetry from analyzed document
+  renderSectionalSummary(data);
+  $('card-sectional').style.display   = '';
 
   if (_mode === 'reader') {
     $('card-reader').style.display = '';
@@ -1020,8 +2090,13 @@ $('btn-run').addEventListener('click', async () => {
 
   const btn = $('btn-run');
   btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span>Analyzing [${_lang}]…`;
-  setStatus(`<span class="spinner"></span>Running ${_lang} pipeline…`, 'info');
+
+  const params = {
+    language_code:        _lang,
+    window_size:          +$('param-window').value,
+    stride:               +$('param-stride').value,
+    dissonance_threshold: +$('param-threshold').value,
+  };
 
   try {
     const entity = $('param-entity').value.trim();
@@ -1032,23 +2107,78 @@ $('btn-run').addEventListener('click', async () => {
       });
     }
 
-    const res = await fetch('/api/analyze', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        text,
-        language_code:        _lang,
-        window_size:          +$('param-window').value,
-        stride:               +$('param-stride').value,
-        dissonance_threshold: +$('param-threshold').value,
-      }),
-    });
+    if (_compareMode) {
+      // ── Compare Mode: single /api/compare call (parallel C++ + Python) ──
+      const textB = $('input-text-b').value.trim();
+      if (!textB) { setStatus('Paste Text B for comparison.', 'err'); btn.disabled = false; return; }
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || res.statusText);
+      btn.innerHTML = `<span class="spinner"></span>Analysing Text A &amp; B [${_lang}]…`;
+      setStatus(`<span class="spinner"></span>Running parallel compare analysis [${_lang}]…`, 'info');
+
+      const res = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text_a: text, text_b: textB, ...params }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+
+      const cmpData  = await res.json();
+      _resultsA  = cmpData.text_a;
+      _resultsB  = cmpData.text_b;
+      _activeDoc = 'A';
+      _activeWinA = 0;
+      _activeWinB = 0;
+      _results   = _resultsA;
+
+      $('ab-tabs').style.display = '';
+      $('btn-doc-a').classList.add('active');
+      $('btn-doc-b').classList.remove('active');
+      if ($('btn-doc-unified')) $('btn-doc-unified').classList.remove('active');
+
+      renderResults(_resultsA);
+      // Cache Text B envelope so Σ summary compare mode can populate datasets[1].
+      // renderResults already initialized unified 2-dataset charts (because _resultsB is set).
+      const _lwB = _resultsB.windows && _resultsB.windows.length
+        ? _resultsB.windows[_resultsB.windows.length - 1] : null;
+      _cachedEnvB        = _resultsB.global_waveform_envelope || [];
+      _cachedTotalCharsB = _lwB ? _lwB.end_char : _cachedEnvB.length * 10;
+      // Sync both wave chart datasets with Window 0 of A and B.  _activeWinA/B are
+      // both 0 at this point (set above), so _syncCompareWaveCharts uses them directly.
+      _syncCompareWaveCharts();
+      renderDualWindowPills();            // show A + B pill rows simultaneously
+      _telwFromAnalysis();
+      renderLetterFreq($('input-text').value, $('input-text-b').value);
+      renderSectionalSummary(_resultsA, _resultsB);
+      renderDelta(cmpData.delta);         // delta summary card
+      renderCompareAnomalies(_resultsA.windows, _resultsB.windows);  // side-by-side locator
+
+      const totalA = _resultsA.windows.reduce((n, w) => n + w.dissonance_events.length, 0);
+      const totalB = _resultsB.windows.reduce((n, w) => n + w.dissonance_events.length, 0);
+      setStatus(
+        `Compare complete [${_lang}] — A: ${_resultsA.total_windows} win / ${totalA} event(s) · B: ${_resultsB.total_windows} win / ${totalB} event(s).`,
+        (totalA + totalB) > 0 ? 'err' : 'ok'
+      );
+
+    } else {
+      // ── Single mode ─────────────────────────────────────────────────────
+      btn.innerHTML = `<span class="spinner"></span>Analyzing [${_lang}]…`;
+      setStatus(`<span class="spinner"></span>Running ${_lang} pipeline…`, 'info');
+
+      const res = await fetch('/api/analyze', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text, ...params }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || res.statusText);
+      }
+
+      _resultsA = null; _resultsB = null;
+      $('ab-tabs').style.display = 'none';
+      renderResults(await res.json());
     }
 
-    renderResults(await res.json());
     await loadEntity();
   } catch(e) {
     setStatus(`Error: ${e.message}`, 'err');
@@ -1076,6 +2206,1022 @@ $('btn-seed').addEventListener('click', async () => {
     setStatus(`Seed error: ${e.message}`, 'err');
   }
 });
+
+/* ════════════════════════════════════════════════════════════
+   MODULE: TelwModule — Wavelength Telemetry
+   ──────────────────────────────────────────────────────────
+   Manages three panel types:
+     • Per-window panels  — one Chart.js line per window (inside #telw-chunks)
+       Data source: win.somatic.window_envelope from C++ compute_global_envelope
+       (20 buckets, absolute char x-axis matching oscilloscope bounds)
+     • Full-document panel — single chart inside #telw-full-doc-wrap
+       Data source: global_waveform_envelope (100 buckets, x: 0→totalChars)
+       Shown only in Σ summary mode; x-axis aligns with _showGlobalEnvelopeFull
+   Public API: _telwFromAnalysis(), _telwShowActivePanel(idx)
+════════════════════════════════════════════════════════════ */
+
+/** Shared linear x-axis config used by all telemetry charts. */
+function _telwXScale(xMin, xMax) {
+  return {
+    type: 'linear',
+    min:  xMin,
+    max:  xMax,
+    display: true,
+    ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 7,
+             maxRotation: 0, callback: v => `${v}c` },
+    grid: { color: '#1e2332' },
+  };
+}
+
+/** Build a Chart.js dataset descriptor for a telemetry line. */
+function _telwDataset(color, label) {
+  return {
+    label,
+    data:                 [],
+    parsing:              false,   // data is already {x,y}
+    borderColor:          color,
+    backgroundColor:      color.replace('1)', '0.08)'),
+    borderWidth:          1.8,
+    tension:              0.4,
+    fill:                 true,
+    pointRadius:          0,
+    pointHoverRadius:     5,
+    pointBackgroundColor: color,
+    pointBorderColor:     '#0d0f14',
+  };
+}
+
+/** Shared Chart.js options for all telemetry charts. */
+function _telwChartOptions(xMin, xMax, tooltipTitleFn) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      x: _telwXScale(xMin, xMax),
+      y: { min: 0, max: 27, grid: { color: '#1e2332' },
+           ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 4 } },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1e2332', bodyColor: '#dce3f5',
+        borderColor: '#2e3550', borderWidth: 1,
+        callbacks: {
+          title: tooltipTitleFn,
+          label: pt => ` ${pt.dataset.label} — ${(+pt.raw.y).toFixed(2)}`,
+        },
+      },
+    },
+    animation: { duration: 200 },
+  };
+}
+
+/** Destroy all per-window chunk charts and the full-doc chart. */
+function _telwDestroyChunks() {
+  _telwCharts.forEach(c => c.destroy());
+  _telwCharts = [];
+  if (_telwFullDocChart) { _telwFullDocChart.destroy(); _telwFullDocChart = null; }
+}
+
+/**
+ * Build one mini-chart per window inside #telw-chunks.
+ *
+ * Data source priority:
+ *   1. win.somatic.window_envelope  — 20-bucket C++ envelope for this window's text
+ *   2. Fallback: slice of the 100-bucket global envelope proportional to char range
+ *
+ * The x-axis uses absolute char positions (start_char → end_char) so it aligns
+ * with the Global Waveform Envelope and Micro Oscilloscope charts.
+ */
+function _telwBuildWindowPanels(envA, envB, windows, totalChars) {
+  _telwDestroyChunks();
+  const container = $('telw-chunks');
+  container.innerHTML = '';
+
+  const maxLen = envB ? Math.max(envA.length, envB.length) : envA.length;
+  if (maxLen === 0 || !windows.length) return;
+
+  windows.forEach((win, wi) => {
+    // ── Resolve per-window envelope data ──────────────────────────────────
+    // Prefer the C++ window_envelope (exact letter-value buckets for this window).
+    // Fall back to a proportional slice of the global 100-bucket envelope.
+    const winEnvA = (win.somatic && win.somatic.window_envelope && win.somatic.window_envelope.length)
+      ? win.somatic.window_envelope
+      : (() => {
+          const bs  = Math.floor(win.start_char / totalChars * maxLen);
+          const be  = Math.min(maxLen, Math.ceil(win.end_char / totalChars * maxLen));
+          return envA.slice(bs, Math.max(bs + 1, be));
+        })();
+
+    const winEnvB = envB
+      ? (() => {
+          const bs  = Math.floor(win.start_char / totalChars * envB.length);
+          const be  = Math.min(envB.length, Math.ceil(win.end_char / totalChars * envB.length));
+          return envB.slice(bs, Math.max(bs + 1, be));
+        })()
+      : null;
+
+    // ── Map to absolute char x-positions ─────────────────────────────────
+    const winLen = Math.max(1, win.end_char - win.start_char);
+    const toXY   = (arr) => arr.map((v, i) => ({
+      x: win.start_char + Math.round(i * winLen / Math.max(1, arr.length - 1)),
+      y: v,
+    }));
+
+    // ── Build DOM ─────────────────────────────────────────────────────────
+    const lineInfo = (win.start_line && win.end_line)
+      ? `L${win.start_line}–L${win.end_line}`
+      : `chars ${win.start_char}–${win.end_char}`;
+
+    const block = document.createElement('div');
+    block.id = `telw-block-${wi}`;
+    block.className = 'telw-chunk-block';
+
+    const rangeLbl = document.createElement('div');
+    rangeLbl.className   = 'telw-chunk-range';
+    rangeLbl.textContent = `W${wi} · ${lineInfo} · ${winEnvA.length} energy buckets`;
+    block.appendChild(rangeLbl);
+
+    const wrap   = document.createElement('div');
+    wrap.className = 'telw-chunk-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.id = `telw-win-${wi}`;
+    wrap.appendChild(canvas);
+    block.appendChild(wrap);
+    container.appendChild(block);
+
+    // ── Build chart datasets ──────────────────────────────────────────────
+    const dsA = _telwDataset('rgba(0,200,255,1)', 'TEXT A');
+    dsA.data = toXY(winEnvA);
+    const datasets = [dsA];
+    if (winEnvB) {
+      const dsB = _telwDataset('rgba(167,139,250,1)', 'TEXT B');
+      dsB.data = toXY(winEnvB);
+      datasets.push(dsB);
+    }
+
+    const opts = _telwChartOptions(
+      win.start_char, win.end_char,
+      pts => `W${wi} · char ${pts[0].raw.x}`,
+    );
+    opts.plugins.legend.display = !!winEnvB;
+
+    _telwCharts.push(new Chart(canvas.getContext('2d'), {
+      type: 'line', data: { datasets }, options: opts,
+    }));
+  });
+}
+
+/**
+ * Build the single full-document telemetry chart inside #telw-full-doc-wrap.
+ * Uses the 100-bucket global_waveform_envelope mapped to absolute char positions
+ * (x: 0 → totalChars), matching _showGlobalEnvelopeFull and _showMicroFull.
+ */
+function _telwBuildFullDocChart(envA, envB, totalChars) {
+  if (_telwFullDocChart) { _telwFullDocChart.destroy(); _telwFullDocChart = null; }
+  const canvas = $('telw-full-doc-canvas');
+  if (!canvas || !envA || !envA.length) return;
+
+  const toXY = (arr) => arr.map((v, i) => ({
+    x: Math.round(i * totalChars / Math.max(1, arr.length - 1)),
+    y: v,
+  }));
+
+  const dsA = _telwDataset('rgba(0,200,255,1)', 'TEXT A');
+  dsA.data = toXY(envA);
+  const datasets = [dsA];
+  if (envB && envB.length) {
+    const dsB = _telwDataset('rgba(167,139,250,1)', 'TEXT B');
+    dsB.data = toXY(envB);
+    datasets.push(dsB);
+  }
+
+  const opts = _telwChartOptions(
+    0, totalChars,
+    pts => `char ${pts[0].raw.x}`,
+  );
+  opts.plugins.legend.display = !!(envB && envB.length);
+
+  _telwFullDocChart = new Chart(canvas.getContext('2d'), {
+    type: 'line', data: { datasets }, options: opts,
+  });
+
+  const lbl = $('telw-full-doc-lbl');
+  if (lbl) lbl.textContent = `full document · ${envA.length} energy buckets · chars 0–${totalChars}`;
+}
+
+/**
+ * Show the correct telemetry view.
+ *   idx === -1  → Σ summary: full-document panel, hide per-window blocks
+ *   idx ≥ 0    → window view: that window's panel only, hide full-doc chart
+ */
+function _telwShowActivePanel(idx) {
+  const container  = $('telw-chunks');
+  const fullDocWrap = $('telw-full-doc-wrap');
+  const chunksWrap  = $('telw-chunks-wrap');
+  if (!container) return;
+
+  const blocks = container.querySelectorAll('.telw-chunk-block');
+
+  if (idx === -1) {
+    // Summary mode: show the single full-document chart
+    if (fullDocWrap) fullDocWrap.style.display = '';
+    blocks.forEach(b => { b.style.display = 'none'; });
+    if (chunksWrap) chunksWrap.style.display = 'none';
+  } else {
+    // Per-window mode: hide full-doc, show only this window's block
+    if (fullDocWrap) fullDocWrap.style.display = 'none';
+    blocks.forEach((b, i) => { b.style.display = i === idx ? '' : 'none'; });
+    if (chunksWrap) chunksWrap.style.display = blocks.length ? '' : 'none';
+  }
+}
+
+/**
+ * Rebuild all telemetry panels from the current analysis results.
+ * Called after Run Analysis and after switching compare docs.
+ */
+function _telwFromAnalysis() {
+  const chunksWrap = $('telw-chunks-wrap');
+  const legend     = $('telw-legend');
+  const sublbl     = $('telw-sublbl');
+
+  const srcA = _resultsA || _results;
+  if (!srcA) { if (chunksWrap) chunksWrap.style.display = 'none'; return; }
+
+  const envA = srcA.global_waveform_envelope || [];
+  if (envA.length === 0) { if (chunksWrap) chunksWrap.style.display = 'none'; return; }
+
+  const lastWin    = srcA.windows && srcA.windows.length ? srcA.windows[srcA.windows.length - 1] : null;
+  const totalChars = lastWin ? lastWin.end_char : envA.length * 10;
+  const windows    = srcA.windows || [];
+
+  if (_compareMode && _resultsA && _resultsB) {
+    const envB = _resultsB.global_waveform_envelope || [];
+    _telwBuildWindowPanels(envA, envB, windows, totalChars);
+    _telwBuildFullDocChart(envA, envB, totalChars);
+    legend.style.display = '';
+    sublbl.textContent   =
+      `Text A [${_resultsA.language}] vs Text B [${_resultsB.language}] · ${windows.length} windows`;
+  } else {
+    _telwBuildWindowPanels(envA, null, windows, totalChars);
+    _telwBuildFullDocChart(envA, null, totalChars);
+    legend.style.display = 'none';
+    sublbl.textContent   = `[${srcA.language}] · ${windows.length} windows · C++ envelope`;
+  }
+
+  // Route through the panel-selector so only the active window (or Σ full-doc) is
+  // visible — mirrors what selectWindow() does when the user navigates manually.
+  _telwShowActivePanel(_activeWin);
+}
+
+/* ================================================================================
+   Compare Mode — analyse two texts and overlay their results
+================================================================================ */
+
+function toggleCompareMode() {
+  _compareMode = !_compareMode;
+  const btn    = $('btn-compare-toggle');
+  const divB   = $('compare-text-b');
+  const lblA   = $('label-text-a');
+  const abTabs = $('ab-tabs');
+
+  if (_compareMode) {
+    btn.classList.add('active');
+    btn.textContent    = '✕ Disable Compare Mode';
+    divB.style.display = '';
+    lblA.textContent   = 'TEXT A — INTERCEPT';
+  } else {
+    btn.classList.remove('active');
+    btn.textContent      = '⇄ Compare Mode — Analyse Two Texts';
+    divB.style.display   = 'none';
+    lblA.textContent     = 'INTERCEPT TEXT';
+    _resultsA            = null;
+    _resultsB            = null;
+    _activeDoc           = 'A';
+    abTabs.style.display = 'none';
+    if (_results) _telwFromAnalysis();
+  }
+}
+
+function selectDoc(doc) {
+  _activeDoc = doc;
+  $('btn-doc-a').classList.toggle('active', doc === 'A');
+  $('btn-doc-b').classList.toggle('active', doc === 'B');
+  const uBtn = $('btn-doc-unified');
+  if (uBtn) uBtn.classList.toggle('active', doc === 'unified');
+
+  if (doc === 'unified') {
+    if (!_resultsA || !_resultsB) return;
+    _results   = _resultsA;
+    _activeWin = 0;
+    initChartsUnified();
+    initSomaticChartsUnified();
+    renderDualWindowPills();  // both pill rows in unified mode
+    renderUnified(0);
+    _telwFromAnalysis();
+    renderLetterFreq($('input-text').value, $('input-text-b').value);
+    renderSectionalSummary(_resultsA, _resultsB);
+    renderDissonanceUnified(_resultsA.windows, _resultsB.windows);
+    renderCompareAnomalies(_resultsA.windows, _resultsB.windows);
+    $('card-reader').style.display = 'none';
+    return;
+  }
+
+  const data = doc === 'A' ? _resultsA : _resultsB;
+  if (!data) return;
+  _results   = data;
+  _activeWin = doc === 'A' ? _activeWinA : _activeWinB;
+
+  if (_microChart && _microChart.data.datasets.length > 1) initCharts();
+  // In compare mode keep 2-dataset somatic charts; _syncCompareWaveCharts handles them.
+  if (!_compareMode && _somaRadar && _somaRadar.data.datasets.length > 1) initSomaticCharts();
+
+  // In compare mode always show both A and B pill rows; single mode: one row
+  if (_compareMode && _resultsA && _resultsB) {
+    renderDualWindowPills();
+  } else {
+    renderWindowPills(data.windows);
+  }
+  renderGlobalEnvelope(data);   // cache envelope before selectWindow slices it
+  selectWindow(_activeWin);
+  renderDissonance(data.windows);
+  _telwFromAnalysis();
+  // Resync wave charts so all three charts share winA's x-axis.
+  _syncCompareWaveCharts();
+  const inputText = doc === 'A' ? $('input-text').value : $('input-text-b').value;
+  renderLetterFreq(inputText);
+  renderSectionalSummary(data);
+
+  if (_mode === 'reader') {
+    $('card-reader').style.display = '';
+    renderReaderProfile(data.windows[0]);
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   Feature 1 — Letter Frequency Analysis (A–Z cryptographic baseline)
+════════════════════════════════════════════════════════════ */
+
+let _lfreqSort = 'abc';
+let _lfreqA = null, _lfreqB = null;
+
+function computeLetterFreq(text) {
+  const freq = {};
+  for (let i = 65; i <= 90; i++) freq[String.fromCharCode(i)] = 0;
+  for (const ch of text.toUpperCase()) {
+    if (ch >= 'A' && ch <= 'Z') freq[ch]++;
+  }
+  return freq;
+}
+
+function setLfreqSort(mode) {
+  _lfreqSort = mode;
+  $('lfreq-sort-abc').classList.toggle('active',  mode === 'abc');
+  $('lfreq-sort-freq').classList.toggle('active', mode === 'freq');
+  _renderLfreqBody();
+}
+
+function renderLetterFreq(textA, textB = null) {
+  _lfreqA = computeLetterFreq(textA || '');
+  _lfreqB = textB ? computeLetterFreq(textB) : null;
+  $('card-letter-freq').style.display = '';
+  _renderLfreqBody();
+}
+
+function _renderLfreqBody() {
+  const freqA = _lfreqA || {};
+  const freqB = _lfreqB;
+  const hasB  = !!freqB;
+
+  let keys = Object.keys(freqA);
+  if (_lfreqSort === 'freq') {
+    keys = keys.sort((a, b) => (hasB
+      ? (freqA[b] + (freqB[b]||0)) - (freqA[a] + (freqB[a]||0))
+      : freqA[b] - freqA[a]));
+  } else {
+    keys = keys.sort();
+  }
+
+  const maxAll  = Math.max(1, ...Object.values(freqA), ...(hasB ? Object.values(freqB) : [0]));
+  const totalA  = Object.values(freqA).reduce((s, v) => s + v, 0);
+  const totalB  = hasB ? Object.values(freqB).reduce((s, v) => s + v, 0) : 0;
+  const body    = $('lfreq-body');
+
+  if (hasB) {
+    const legend = `<div style="display:flex;gap:.8rem;margin-bottom:.55rem;font-size:.65rem;color:var(--muted);">
+      <span style="display:flex;align-items:center;gap:.3rem;"><span style="display:inline-block;width:12px;height:4px;background:#00f0ff;border-radius:2px;"></span>Text A &mdash; ${totalA.toLocaleString()} letters</span>
+      <span style="display:flex;align-items:center;gap:.3rem;"><span style="display:inline-block;width:12px;height:4px;background:#ff2040;border-radius:2px;"></span>Text B &mdash; ${totalB.toLocaleString()} letters</span>
+    </div>`;
+    body.innerHTML = legend + `<div class="lfreq-grid-cmp">${keys.map(ch => {
+      const cA = freqA[ch] || 0, cB = freqB[ch] || 0;
+      const pA = (cA / maxAll * 100).toFixed(0), pB = (cB / maxAll * 100).toFixed(0);
+      const delta = cA - cB;
+      const deltaStr = delta === 0 ? '' : `<span style="font-size:.58rem;color:${delta>0?'#00f0ff':'#ff2040'};margin-left:.25rem;">${delta>0?'+':''}${delta}</span>`;
+      return `<div class="lfreq-row">
+        <span class="lfreq-char">${ch}</span>
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+          <div class="lfreq-track"><div style="height:100%;width:${pA}%;background:#00f0ff;border-radius:2px;transition:width .3s;"></div></div>
+          <div class="lfreq-track"><div style="height:100%;width:${pB}%;background:#ff2040;border-radius:2px;transition:width .3s;"></div></div>
+        </div>
+        <div class="lfreq-cnt">${cA}&nbsp;<span style="color:var(--border);">|</span>&nbsp;${cB}${deltaStr}</div>
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    body.innerHTML = `<div style="font-size:.65rem;color:var(--muted);margin-bottom:.55rem;">${totalA.toLocaleString()} total alphabetic characters</div>
+    <div class="lfreq-grid">${keys.map(ch => {
+      const cnt = freqA[ch] || 0;
+      const pct = (cnt / maxAll * 100).toFixed(0);
+      const pctT = totalA > 0 ? (cnt / totalA * 100).toFixed(1) : '0.0';
+      return `<div class="lfreq-row">
+        <span class="lfreq-char">${ch}</span>
+        <div class="lfreq-track"><div class="lfreq-fill-a" style="width:${pct}%;"></div></div>
+        <div class="lfreq-cnt">${cnt} <span style="font-size:.6rem;color:var(--muted);">(${pctT}%)</span></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Feature 2 — Sectional Summary Matrix (bird's-eye across all windows)
+════════════════════════════════════════════════════════════ */
+
+function renderSectionalSummary(data, dataB = null) {
+  const card = $('card-sectional');
+  card.style.display = '';
+
+  const windows = data.windows;
+  const hasB    = !!dataB;
+
+  // ── Mini sparklines ─────────────────────────────────────────────────────
+  const microZmax  = windows.map(w => Math.max(0, ...Object.values(w.z_scores_micro || {}).map(Math.abs)));
+  const macroZmax  = windows.map(w => Math.max(0, ...Object.values(w.z_scores_macro || {}).map(Math.abs)));
+  const somaticSig = windows.map(w => w.somatic?.avg_word_sigma || 0);
+
+  function miniSpark(arr, color, label) {
+    const mx = Math.max(1e-9, ...arr);
+    const cols = arr.map((v, i) => {
+      const h        = Math.max(2, (v / mx * 24)).toFixed(0);
+      const isActive = i === _activeWin;
+      const barStyle = `height:${h}px;background:${isActive ? '#ffffff' : color};opacity:${isActive ? 1 : 0.75};`;
+      const lblCls   = isActive ? 'sect-spark-xlbl active' : 'sect-spark-xlbl';
+      return `<div class="sect-spark-col" onclick="selectWindow(${i})" title="W${i}">
+        <div class="sect-spark-bar" style="${barStyle}"></div>
+        <div class="${lblCls}">W${i}</div>
+      </div>`;
+    }).join('');
+    return `<div class="sect-spark-row">
+      <span class="sect-spark-lbl">${label}</span>
+      <div class="sect-spark">${cols}</div>
+    </div>`;
+  }
+
+  $('sect-sparklines').innerHTML =
+    miniSpark(microZmax,  'var(--ok)',     'Micro Z\u2191') +
+    miniSpark(macroZmax,  'var(--accent)', 'Macro Z\u2191') +
+    miniSpark(somaticSig, '#b96af7',       'Somatic \u03c3');
+
+  // ── Window rows ──────────────────────────────────────────────────────────
+  const tbody = $('sect-tbody');
+  tbody.innerHTML = '';
+
+  function appendRows(wins, prefix, rowCls) {
+    wins.forEach((win, i) => {
+      const rt   = win.raw_telemetry || {};
+      const s    = win.somatic || {};
+      const zm   = win.z_scores_micro || {};
+      const zM   = win.z_scores_macro || {};
+      const maxZm = Math.max(0, ...Object.values(zm).map(Math.abs)).toFixed(2);
+      const maxZM = Math.max(0, ...Object.values(zM).map(Math.abs)).toFixed(2);
+      const nDis  = win.dissonance_events?.length || 0;
+      const tier  = s.tier_code || '\u2014';
+      const qs    = s.dominant_quersumme || '\u2014';
+      const sigma = (s.avg_word_sigma || 0).toFixed(2);
+      const domCat = (s.dominant_category || '\u2014').slice(0, 4);
+      const zCls = v => +v >= 2.5 ? 'z-high' : +v >= 1.5 ? 'z-mid' : +v >= 0.5 ? 'z-low' : 'z-zero';
+      const tierCls = tier === 'T3' ? 'z-high' : tier === 'T2' ? 'z-mid' : 'z-low';
+
+      const tr = document.createElement('tr');
+      if (rowCls) tr.className = rowCls;
+      if (!prefix && i === _activeWin) tr.style.background = 'rgba(79,142,247,.08)';
+      tr.innerHTML = `
+        <td><span class="sect-win-lbl ${nDis > 0 ? 'z-high' : ''}">${prefix}W${i}</span></td>
+        <td style="font-family:monospace;font-size:.7rem;">${rt.total_chars ?? '\u2014'}</td>
+        <td><span class="${tierCls}" style="font-weight:700;font-size:.7rem;">${tier}</span></td>
+        <td style="font-family:monospace;font-weight:700;color:#e0c060;font-size:.75rem;">${qs}</td>
+        <td style="font-family:monospace;font-size:.7rem;color:#b96af7;">${sigma}</td>
+        <td class="${zCls(maxZm)}" style="font-family:monospace;font-size:.7rem;">${maxZm}</td>
+        <td class="${zCls(maxZM)}" style="font-family:monospace;font-size:.7rem;">${maxZM}</td>
+        <td style="font-size:.67rem;color:var(--muted);">${domCat}</td>
+        <td class="${nDis > 0 ? 'z-high' : 'z-zero'}" style="font-family:monospace;font-weight:700;font-size:.75rem;">${nDis || '\u2014'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  appendRows(windows, hasB ? 'A\u00b7' : '', '');
+  if (hasB) appendRows(dataB.windows, 'B\u00b7', 'sect-row-b');
+}
+
+/* ════════════════════════════════════════════════════════════
+   Feature 3 — Unified Overlay (Delta Interface)
+════════════════════════════════════════════════════════════ */
+
+const UNIFIED_A = 'rgba(0,240,255,1)';    // Neon Blue  — Text A
+const UNIFIED_B = 'rgba(255,32,64,1)';    // Crimson Red — Text B
+
+function _uDataset(color, label) {
+  return {
+    label,
+    data: [],
+    borderColor:          color,
+    backgroundColor:      color.replace(',1)', ',0.1)'),
+    pointBackgroundColor: color,
+    pointBorderColor:     '#0d0f14',
+    pointRadius: 3, pointHoverRadius: 5, borderWidth: 2,
+  };
+}
+
+const _LEGEND_BOTTOM = {
+  display: true, position: 'bottom',
+  labels: { color: '#dce3f5', font: { size: 9 }, boxWidth: 10, padding: 6 },
+};
+
+function initChartsUnified() {
+  if (_microChart) { _microChart.destroy(); _microChart = null; }
+  if (_macroChart) { _macroChart.destroy(); _macroChart = null; }
+
+  const radarBase = {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: _LEGEND_BOTTOM,
+      tooltip: { backgroundColor:'#1e2332', titleColor:'#dce3f5', bodyColor:'#dce3f5',
+        borderColor:'#2e3550', borderWidth:1, padding:9 }},
+    animation: { duration: 280 },
+  };
+
+  _microChart = new Chart(document.getElementById('micro-radar').getContext('2d'), {
+    type: 'radar',
+    data: { labels: MICRO_LABELS, datasets: [_uDataset(UNIFIED_A,'Text A'), _uDataset(UNIFIED_B,'Text B')] },
+    options: { ...radarBase, scales: { r: { ...RADAR_SCALE, max: 100 } } },
+  });
+
+  _macroChart = new Chart(document.getElementById('macro-radar').getContext('2d'), {
+    type: 'radar',
+    data: { labels: MACRO_LABELS, datasets: [_uDataset(UNIFIED_A,'Text A'), _uDataset(UNIFIED_B,'Text B')] },
+    options: { ...radarBase, scales: { r: { ...RADAR_SCALE, max: 10 } } },
+  });
+}
+
+function updateChartsUnified(winA, winB) {
+  if (!_microChart || !_macroChart) return;
+  const vA = winA.micro.vectors, vB = winB.micro.vectors;
+  const rA = MICRO_KEYS.map(k => Math.abs(vA[k] ?? 0));
+  const rB = MICRO_KEYS.map(k => Math.abs(vB[k] ?? 0));
+  const mA = Math.max(1e-9, ...rA), mB = Math.max(1e-9, ...rB);
+  _microChart.data.datasets[0].data = rA.map(v => Math.min(100, v / mA * 100));
+  _microChart.data.datasets[1].data = rB.map(v => Math.min(100, v / mB * 100));
+  _microChart.update();
+
+  const zA = winA.z_scores_macro || {}, zB = winB.z_scores_macro || {};
+  _macroChart.data.datasets[0].data = MACRO_PRIMARY.map(k => Math.min(10, Math.max(0, (zA[k]??0)+5)));
+  _macroChart.data.datasets[1].data = MACRO_PRIMARY.map(k => Math.min(10, Math.max(0, (zB[k]??0)+5)));
+  _macroChart.update();
+}
+
+function initSomaticChartsUnified() {
+  if (_somaRadar)      { _somaRadar.destroy();      _somaRadar      = null; }
+  if (_somaScatter)    { _somaScatter.destroy();     _somaScatter    = null; }
+  if (_somaWaveGlobal) { _somaWaveGlobal.destroy();  _somaWaveGlobal = null; }
+  if (_somaWaveMicro)  { _somaWaveMicro.destroy();   _somaWaveMicro  = null; }
+
+  // Archetypal Radar — 2 datasets
+  _somaRadar = new Chart(document.getElementById('soma-radar').getContext('2d'), {
+    type: 'radar',
+    data: { labels: SOMA_RADAR_LABELS, datasets: [_uDataset(UNIFIED_A,'Text A'), _uDataset(UNIFIED_B,'Text B')] },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      scales:{ r:{ min:0, grid:{color:_DARK}, angleLines:{color:_DARK},
+        ticks:{color:'#6b7394',backdropColor:'transparent',font:{size:9},stepSize:0.1},
+        pointLabels:{color:'#dce3f5',font:{size:10,weight:'600'}} }},
+      plugins:{ legend: _LEGEND_BOTTOM,
+        tooltip:{backgroundColor:_DARK,titleColor:'#dce3f5',bodyColor:'#dce3f5',borderColor:'#2e3550',borderWidth:1,padding:8}},
+      animation:{duration:250},
+    },
+  });
+
+  // Complexity Scatter — 6 data + 2 boundary (A=circles, B=triangles)
+  _somaScatter = new Chart(document.getElementById('soma-scatter').getContext('2d'), {
+    type: 'scatter',
+    data: { datasets: [
+      { label:'A\u00b7T1', data:[], backgroundColor:'rgba(0,240,255,0.7)',  pointRadius:4 },
+      { label:'A\u00b7T2', data:[], backgroundColor:'rgba(0,160,220,0.7)',  pointRadius:4 },
+      { label:'A\u00b7T3', data:[], backgroundColor:'rgba(0,80,200,0.7)',   pointRadius:4 },
+      { label:'B\u00b7T1', data:[], backgroundColor:'rgba(255,120,120,0.7)', pointRadius:4, pointStyle:'triangle' },
+      { label:'B\u00b7T2', data:[], backgroundColor:'rgba(255,32,64,0.7)',   pointRadius:4, pointStyle:'triangle' },
+      { label:'B\u00b7T3', data:[], backgroundColor:'rgba(180,0,30,0.7)',    pointRadius:4, pointStyle:'triangle' },
+      { label:'\u03c3=2', data:[], borderColor:'rgba(224,168,92,0.6)', borderWidth:1.5, borderDash:[5,3], pointRadius:0, type:'line', showLine:true },
+      { label:'\u03c3=5', data:[], borderColor:'rgba(224,92,92,0.6)',  borderWidth:1.5, borderDash:[5,3], pointRadius:0, type:'line', showLine:true },
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      scales:{
+        x:{title:{display:true,text:'Word Sum',color:'#6b7394',font:{size:10}},grid:{color:_DARK},ticks:{color:'#6b7394',font:{size:9}}},
+        y:{title:{display:true,text:'\u03c3',color:'#6b7394',font:{size:10}},grid:{color:_DARK},ticks:{color:'#6b7394',font:{size:9}},min:0},
+      },
+      plugins:{
+        legend:{ display:true, position:'bottom',
+          labels:{ color:'#dce3f5', font:{size:9}, boxWidth:10, padding:4,
+            filter: item => item.datasetIndex < 6 }},
+        tooltip:{ backgroundColor:_DARK, titleColor:'#dce3f5', bodyColor:'#dce3f5',
+          borderColor:'#2e3550', borderWidth:1, padding:8,
+          callbacks:{ label: ctx => {
+            if (ctx.datasetIndex > 5) return null;
+            const d = ctx.raw;
+            return d?.word ? ` ${ctx.dataset.label}: ${d.word}  \u03a3=${d.x}  \u03c3=${d.y}` : null;
+          }}},
+      },
+      animation:{duration:250},
+    },
+  });
+
+  // Global waveform — 2 datasets, {x,y} linear scale
+  _somaWaveGlobal = new Chart(document.getElementById('soma-wave-global').getContext('2d'), {
+    type:'line',
+    data:{ datasets:[
+      { label:'Text A', data:[], parsing:false, borderColor:UNIFIED_A, backgroundColor:UNIFIED_A.replace(',1)',',0.09)'), borderWidth:1.8, fill:true, tension:0.45, pointRadius:0 },
+      { label:'Text B', data:[], parsing:false, borderColor:UNIFIED_B, backgroundColor:UNIFIED_B.replace(',1)',',0.09)'), borderWidth:1.8, fill:true, tension:0.45, pointRadius:0 },
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{..._WAVE_X_OPTS},y:{grid:{color:_DARK},ticks:{color:'#6b7394',font:{size:8},maxTicksLimit:5},min:0,max:27}},
+      plugins:{legend:_LEGEND_BOTTOM,tooltip:{backgroundColor:_DARK,bodyColor:'#dce3f5',borderColor:'#2e3550',borderWidth:1,
+        callbacks:{title:pts=>`pos ${pts[0].raw.x}`,label:pt=>` ${pt.dataset.label} = ${(+pt.raw.y).toFixed(2)}`}}},
+      animation:{duration:200}},
+  });
+
+  // Micro oscilloscope — 2 datasets, {x,y} linear scale
+  _somaWaveMicro = new Chart(document.getElementById('soma-wave-micro').getContext('2d'), {
+    type:'line',
+    data:{ datasets:[
+      { label:'Text A', data:[], parsing:false, borderColor:UNIFIED_A, backgroundColor:UNIFIED_A.replace(',1)',',0.07)'), borderWidth:1.6, fill:true, tension:0, pointRadius:0 },
+      { label:'Text B', data:[], parsing:false, borderColor:UNIFIED_B, backgroundColor:UNIFIED_B.replace(',1)',',0.07)'), borderWidth:1.6, fill:true, tension:0, pointRadius:0 },
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{..._WAVE_X_OPTS},y:{grid:{color:_DARK},ticks:{color:'#6b7394',font:{size:8},maxTicksLimit:5},min:0,max:27}},
+      plugins:{legend:_LEGEND_BOTTOM,tooltip:{backgroundColor:_DARK,bodyColor:'#dce3f5',borderColor:'#2e3550',borderWidth:1,
+        callbacks:{title:pts=>`pos ${pts[0].raw.x}`,label:pt=>` ${pt.dataset.label} = ${(+pt.raw.y).toFixed(2)}`}}},
+      animation:{duration:200}},
+  });
+}
+
+function renderSomaticUnified(winA, winB) {
+  const sA = winA.somatic || {}, sB = winB.somatic || {};
+
+  // Diagnostic row — show A's values (dominant doc) with B indicator
+  const badge = $('soma-tier-badge');
+  badge.className   = `tier-badge tier-${sA.tier_code || 'T1'}`;
+  badge.textContent = sA.tier_code || 'T1';
+  $('soma-tier-label').textContent = `A:${sA.tier_label||'\u2014'} \u2502 B:${sB.tier_label||'\u2014'}`;
+  $('soma-sigma-text').textContent = `A \u03c3=${(sA.avg_word_sigma||0).toFixed(3)}  B \u03c3=${(sB.avg_word_sigma||0).toFixed(3)}`;
+  $('soma-qs-num').textContent  = `${sA.dominant_quersumme||'\u2014'}\u2502${sB.dominant_quersumme||'\u2014'}`;
+  $('soma-qs-arch').textContent = `A:${(sA.quersumme_archetype||'\u2014').split(' \u2014 ')[0]}  B:${(sB.quersumme_archetype||'\u2014').split(' \u2014 ')[0]}`;
+
+  // Composition bar — show A
+  const cats  = sA.category_counts || {};
+  const total = Math.max(1, Object.values(cats).reduce((a,b)=>a+b,0));
+  $('soma-balance-bar').innerHTML = SOMA_CAT_KEYS.map((k,i) =>
+    `<div class="${SOMA_CAT_FILLS[i]}" style="width:${((cats[k]||0)/total*100).toFixed(1)}%"></div>`
+  ).join('');
+  $('soma-cat-pct-label').textContent = 'A composition';
+
+  // Archetypal Radar
+  if (_somaRadar) {
+    _somaRadar.data.datasets[0].data = SOMA_RADAR_SCORE_KEYS.map(k => sA[k] || 0);
+    _somaRadar.data.datasets[1].data = SOMA_RADAR_SCORE_KEYS.map(k => sB[k] || 0);
+    _somaRadar.update();
+  }
+
+  // Scatter
+  if (_somaScatter) {
+    const split = scatter => {
+      const t1=[],t2=[],t3=[];
+      (scatter||[]).forEach(w => { const p={x:w.x,y:w.y,word:w.word}; w.tier===1?t1.push(p):w.tier===2?t2.push(p):t3.push(p); });
+      return [t1,t2,t3];
+    };
+    const [a1,a2,a3] = split(sA.word_scatter);
+    const [b1,b2,b3] = split(sB.word_scatter);
+    const all = [...(sA.word_scatter||[]),...(sB.word_scatter||[])];
+    const xs = all.map(w=>w.x);
+    const xMin = xs.length?Math.min(...xs):0, xMax = xs.length?Math.max(...xs):50;
+    [a1,a2,a3,b1,b2,b3].forEach((d,i) => { _somaScatter.data.datasets[i].data = d; });
+    _somaScatter.data.datasets[6].data = [{x:xMin,y:2},{x:xMax,y:2}];
+    _somaScatter.data.datasets[7].data = [{x:xMin,y:5},{x:xMax,y:5}];
+    _somaScatter.update();
+  }
+
+  // Global waveform — {x,y} proportional mapping, shared x domain 0…xMax
+  if (_somaWaveGlobal && _resultsA && _resultsB) {
+    const envA = _resultsA.global_waveform_envelope || [];
+    const envB = _resultsB.global_waveform_envelope || [];
+    const lastWinA    = _resultsA.windows.length ? _resultsA.windows[_resultsA.windows.length-1] : null;
+    const totalCharsA = lastWinA ? lastWinA.end_char : envA.length * 10;
+    const lastWinB    = _resultsB.windows.length ? _resultsB.windows[_resultsB.windows.length-1] : null;
+    const totalCharsB = lastWinB ? lastWinB.end_char : envB.length * 10;
+
+    // Slice each envelope proportionally to its window's char range
+    const sliceEnv = (env, total, win) => {
+      const bs = Math.floor(win.start_char / total * env.length);
+      const be = Math.min(env.length, Math.ceil(win.end_char / total * env.length));
+      return env.slice(bs, Math.max(bs + 1, be));
+    };
+    const sliceA = sliceEnv(envA, totalCharsA, winA);
+    const sliceB = sliceEnv(envB, totalCharsB, winB);
+
+    // Map both onto a shared x domain [0, xMax] so lines always span the full chart
+    const xMax = Math.max(1, sliceA.length, sliceB.length) - 1;
+    const toXY = (arr) => arr.map((v, i) => ({
+      x: Math.round(i * xMax / Math.max(1, arr.length - 1)),
+      y: v,
+    }));
+
+    _somaWaveGlobal.data.datasets[0].data = toXY(sliceA);
+    _somaWaveGlobal.data.datasets[1].data = toXY(sliceB);
+    _setWaveBounds(_somaWaveGlobal, 0, xMax);
+    _somaWaveGlobal.update();
+
+    const glEl = $('soma-global-sublbl');
+    if (glEl) {
+      const liA = (winA.start_line&&winA.end_line)?`L${winA.start_line}–${winA.end_line}`:`chars ${winA.start_char}–${winA.end_char}`;
+      const liB = (winB.start_line&&winB.end_line)?`L${winB.start_line}–${winB.end_line}`:`chars ${winB.start_char}–${winB.end_char}`;
+      glEl.textContent = `A·W${_activeWin}(${liA}) vs B·W${_activeWin}(${liB}) · bezier smooth`;
+    }
+  }
+
+  // Micro oscilloscope — {x,y} proportional mapping, both lines span full x domain
+  if (_somaWaveMicro) {
+    const trim = mw => { let e = mw.length; while (e > 1 && mw[e-1] === 0) e--; return mw.slice(0, e); };
+    const tA = trim(sA.micro_wavelength || []);
+    const tB = trim(sB.micro_wavelength || []);
+
+    // Shared x domain: 0 to max letter count, both arrays mapped proportionally
+    const xMax = Math.max(1, tA.length, tB.length) - 1;
+    const toXY = (arr) => arr.map((v, i) => ({
+      x: Math.round(i * xMax / Math.max(1, arr.length - 1)),
+      y: v,
+    }));
+
+    _somaWaveMicro.data.datasets[0].data = toXY(tA);
+    _somaWaveMicro.data.datasets[1].data = toXY(tB);
+    _setWaveBounds(_somaWaveMicro, 0, xMax);
+    _somaWaveMicro.update();
+    $('soma-micro-sublbl').textContent =
+      `A: ${tA.length} letters \u2502 B: ${tB.length} letters \u2014 proportional overlay`;
+  }
+
+  // FFT — show both
+  const hA = sA.top_harmonics||[], hB = sB.top_harmonics||[];
+  const fftEl = $('soma-fft-chips');
+  const chipRow = (harmonics, lbl, clr) => harmonics.map((h,i) =>
+    `<span class="fft-chip" style="border-color:${clr};color:${clr};background:${clr.replace(',1)',',0.08)')};">
+       <span class="fft-chip-lbl" style="color:${clr};">${lbl}\u00b7H${i+1}</span>
+       bin&nbsp;<strong>${h.bin}</strong>&nbsp;|&nbsp;mag&nbsp;<strong>${(h.magnitude||0).toFixed(1)}</strong>
+     </span>`
+  ).join('');
+  fftEl.innerHTML = (hA.length||hB.length)
+    ? chipRow(hA,'A','#00f0ff') + chipRow(hB,'B','#ff2040')
+    : '<span class="fft-none">No harmonic data</span>';
+}
+
+function renderZScoresUnified(winA, winB) {
+  const grid = $('zscore-grid');
+  grid.innerHTML = '';
+
+  function addSection(label, scoresA, scoresB) {
+    const hdr = document.createElement('div');
+    hdr.className = 'zscore-section-hdr';
+    hdr.textContent = label;
+    grid.appendChild(hdr);
+    const keys = [...new Set([...Object.keys(scoresA), ...Object.keys(scoresB)])];
+    keys.forEach(key => {
+      const zA = scoresA[key] ?? 0, zB = scoresB[key] ?? 0;
+      const delta = zB - zA;
+      const cell = document.createElement('div');
+      cell.className = 'zscore-cell';
+      cell.innerHTML = `
+        <div class="zscore-label">${key.replace(/_/g,' ')}</div>
+        <div style="display:flex;gap:.35rem;align-items:baseline;flex-wrap:wrap;">
+          <span class="zscore-value ${zClass(zA)}" style="font-size:.85rem;">${fmtZ(zA)}</span>
+          <span style="font-size:.75rem;color:#ff2040;font-family:monospace;font-weight:700;">${fmtZ(zB)}</span>
+          <span style="font-size:.63rem;color:${Math.abs(delta)>1?'#e0a85c':'var(--muted)'};font-family:monospace;">\u0394${delta>=0?'+':''}${delta.toFixed(2)}</span>
+        </div>`;
+      grid.appendChild(cell);
+    });
+  }
+
+  addSection('Micro \u2014 Subconscious Signal  \u00b7  A\u2009=\u2009cyan  B\u2009=\u2009red  \u0394\u2009=\u2009delta', winA.z_scores_micro, winB.z_scores_micro);
+  addSection('Macro \u2014 Conscious Framing  \u00b7  A\u2009=\u2009cyan  B\u2009=\u2009red  \u0394\u2009=\u2009delta', winA.z_scores_macro, winB.z_scores_macro);
+}
+
+function renderDissonanceUnified(windowsA, windowsB) {
+  const list = $('dissonance-list');
+  list.innerHTML = '';
+  let total = 0;
+
+  function appendEvents(windows, prefix, borderColor, tagColor) {
+    windows.forEach((win, wi) => {
+      win.dissonance_events.forEach(ev => {
+        total++;
+        const div = document.createElement('div');
+        div.className = 'dis-event';
+        div.style.borderLeftColor = borderColor;
+        div.innerHTML = `
+          <div class="dis-title" style="color:${tagColor};">\u26a1 [${prefix}] ${ev.trigger_type} &nbsp; \u0394 = ${ev.delta.toFixed(3)}</div>
+          <div class="dis-meta">Win ${wi} \u00b7 ${ev.event_id} \u00b7 Vectors: <strong>${ev.vectors.join(' \u2194 ')}</strong></div>
+          <div class="dis-conc">${ev.conclusion}</div>`;
+        list.appendChild(div);
+      });
+    });
+  }
+
+  appendEvents(windowsA, 'TEXT A', '#00f0ff', '#00f0ff');
+  appendEvents(windowsB, 'TEXT B', '#ff2040', '#ff2040');
+
+  if (total === 0) {
+    list.innerHTML = '<div style="color:var(--ok);font-size:.83rem;">No dissonance events detected in either text.</div>';
+  }
+}
+
+function renderUnified(winIdx) {
+  if (!_resultsA || !_resultsB) return;
+  _activeWin = winIdx;
+  const winA = _resultsA.windows[winIdx];
+  const winB = _resultsB.windows[Math.min(winIdx, _resultsB.windows.length - 1)];
+  if (!winA || !winB) return;
+
+  renderWindowPills(_resultsA.windows, true);
+  updateChartsUnified(winA, winB);
+  renderSomaticUnified(winA, winB);
+  renderZScoresUnified(winA, winB);
+  renderTelemetry(winA);
+  renderJaPanel(winA);
+
+  // Per-window letter frequency — both slices
+  const tA = $('input-text').value.slice(winA.start_char, winA.end_char);
+  const tB = $('input-text-b') ? $('input-text-b').value.slice(winB.start_char, winB.end_char) : '';
+  renderLetterFreq(tA, tB || null);
+  _setLfreqContext(`W${winIdx} · A:${winA.start_char}–${winA.end_char} / B:${winB.start_char}–${winB.end_char}`);
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   Dual Window Pills — Compare Mode Navigation
+════════════════════════════════════════════════════════════ */
+
+function renderDualWindowPills() {
+  if (!_compareMode || !_resultsA || !_resultsB) {
+    const data = _results || _resultsA;
+    if (data) renderWindowPills(data.windows);
+    return;
+  }
+  const c = $('window-pills');
+  c.innerHTML = '';
+
+  const lblA = document.createElement('div');
+  lblA.className = 'win-pills-label win-pills-lbl-a';
+  lblA.textContent = '\u25b6 Text A';
+  c.appendChild(lblA);
+
+  const rowA = document.createElement('div');
+  rowA.className = 'win-pills-row';
+  (_resultsA.windows || []).forEach((win, i) => {
+    const hasDis  = win.dissonance_events.length > 0;
+    const isReset = win.reset_reason === 'structural_boundary';
+    const isAct   = i === _activeWinA;
+    const pill    = document.createElement('span');
+    pill.className = ['window-pill', isAct ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
+    if (isAct) { pill.style.borderColor = 'rgba(0,240,255,.9)'; pill.style.color = 'rgba(0,240,255,.9)'; }
+    pill.textContent = 'W' + i + (isReset ? ' \u27b3' : '') + (hasDis ? ' \u26a1' : '');
+    const lineA = (win.start_line && win.end_line) ? 'Lines ' + win.start_line + '\u2013' + win.end_line : 'chars ' + win.start_char + '\u2013' + win.end_char;
+    const snipA = win.start_snippet ? '\n"' + win.start_snippet.slice(0,40) + '\u2026"' : '';
+    pill.title = 'A \u00b7 ' + lineA + snipA + ' | ' + win.reset_reason;
+    pill.addEventListener('click', () => selectWindowA(i));
+    rowA.appendChild(pill);
+  });
+  c.appendChild(rowA);
+
+  const divEl = document.createElement('div');
+  divEl.className = 'win-pills-div';
+  c.appendChild(divEl);
+
+  const lblB = document.createElement('div');
+  lblB.className = 'win-pills-label win-pills-lbl-b';
+  lblB.textContent = '\u25b6 Text B';
+  c.appendChild(lblB);
+
+  const rowB = document.createElement('div');
+  rowB.className = 'win-pills-row';
+  (_resultsB.windows || []).forEach((win, i) => {
+    const hasDis  = win.dissonance_events.length > 0;
+    const isReset = win.reset_reason === 'structural_boundary';
+    const isAct   = i === _activeWinB;
+    const pill    = document.createElement('span');
+    pill.className = ['window-pill', isAct ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
+    if (isAct) { pill.style.borderColor = 'rgba(255,32,64,.9)'; pill.style.color = 'rgba(255,32,64,.9)'; }
+    pill.textContent = 'W' + i + (isReset ? ' \u27b3' : '') + (hasDis ? ' \u26a1' : '');
+    const lineB = (win.start_line && win.end_line) ? 'Lines ' + win.start_line + '\u2013' + win.end_line : 'chars ' + win.start_char + '\u2013' + win.end_char;
+    const snipB = win.start_snippet ? '\n"' + win.start_snippet.slice(0,40) + '\u2026"' : '';
+    pill.title = 'B \u00b7 ' + lineB + snipB + ' | ' + win.reset_reason;
+    pill.addEventListener('click', () => selectWindowB(i));
+    rowB.appendChild(pill);
+  });
+  c.appendChild(rowB);
+}
+
+function selectWindowA(idx) {
+  _activeWinA = idx;
+  _activeWin  = idx;
+  if (_activeDoc === 'unified') {
+    _activeWinB = Math.min(idx, Math.max(0, (_resultsB.windows.length || 1) - 1));
+    renderDualWindowPills();
+    renderUnified(idx);
+  } else {
+    if (_activeDoc !== 'A') {
+      _activeDoc = 'A';
+      $('btn-doc-a').classList.add('active');
+      $('btn-doc-b').classList.remove('active');
+      if ($('btn-doc-unified')) $('btn-doc-unified').classList.remove('active');
+      _results = _resultsA;
+      if (_microChart && _microChart.data.datasets.length > 1) initCharts();
+      // In compare mode keep 2-dataset somatic charts; _syncCompareWaveCharts handles them.
+      if (!_compareMode && _somaRadar && _somaRadar.data.datasets.length > 1) initSomaticCharts();
+    }
+    renderDualWindowPills();
+    selectWindow(idx);
+    // Keep both wave chart datasets in sync with the current A and B windows.
+    _syncCompareWaveCharts();
+  }
+}
+
+function selectWindowB(idx) {
+  _activeWinB = idx;
+  if (_activeDoc === 'unified') {
+    _activeWinA = Math.min(idx, Math.max(0, (_resultsA.windows.length || 1) - 1));
+    _activeWin  = _activeWinA;
+    renderDualWindowPills();
+    renderUnified(_activeWinA);
+  } else {
+    if (_activeDoc !== 'B') {
+      _activeDoc = 'B';
+      $('btn-doc-a').classList.remove('active');
+      $('btn-doc-b').classList.add('active');
+      if ($('btn-doc-unified')) $('btn-doc-unified').classList.remove('active');
+      _results = _resultsB;
+      _activeWin = idx;
+      if (_microChart && _microChart.data.datasets.length > 1) initCharts();
+      // In compare mode keep 2-dataset somatic charts; _syncCompareWaveCharts handles them.
+      if (!_compareMode && _somaRadar && _somaRadar.data.datasets.length > 1) initSomaticCharts();
+      renderGlobalEnvelope(_resultsB);
+      renderDissonance(_resultsB.windows);
+      _telwFromAnalysis();
+    } else {
+      _activeWin = idx;
+    }
+    renderDualWindowPills();
+    selectWindow(idx);
+    // Wave charts: always use winA's x range for both datasets so telemetry,
+    // waveform and oscilloscope share an identical x-axis on every window click.
+    _syncCompareWaveCharts();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Delta Summary — /api/compare response rendering
+════════════════════════════════════════════════════════════ */
+
+function renderDelta(delta) {
+  const body = $('delta-body');
+  if (!body || !delta) return;
+  const mk = (lbl, val, cls) =>
+    '<div class="delta-cell"><div class="delta-lbl">' + lbl + '</div><div class="delta-val ' + (cls||'') + '">' + val + '</div></div>';
+  const dd  = delta.dissonance_delta || 0;
+  const ddc = dd > 0 ? 'delta-pos' : dd < 0 ? 'delta-neg' : 'delta-zero';
+  const md  = delta.mean_micro_delta || {};
+  let microHtml = '';
+  for (const [k, v] of Object.entries(md)) {
+    const pct = (v * 100).toFixed(1);
+    const cls = v > 0.08 ? 'delta-pos' : v > 0.02 ? '' : 'delta-neg';
+    microHtml += mk(k.toUpperCase(), pct + '%', cls);
+  }
+  body.innerHTML =
+    '<div class="delta-grid" style="margin-bottom:.7rem;">' +
+    mk('A Windows', delta.window_count_a ?? 0) +
+    mk('B Windows', delta.window_count_b ?? 0) +
+    mk('Paired', delta.aligned_pairs ?? 0) +
+    mk('Events A', delta.dissonance_a ?? 0) +
+    mk('Events B', delta.dissonance_b ?? 0) +
+    mk('Event \u0394', (dd >= 0 ? '+' : '') + dd, ddc) +
+    '</div><div class="telem-section-hdr">Mean Micro Vector \u0394 (A vs B)</div>' +
+    '<div class="delta-grid">' + microHtml + '</div>';
+  $('card-delta').style.display = '';
+}
 
 /* ════════════════════════════════════════════════════════════
    Init

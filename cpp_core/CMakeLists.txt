@@ -20,8 +20,8 @@
 
 cmake_minimum_required(VERSION 3.21)
 project(psycho_core
-    VERSION     1.0.0
-    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core"
+    VERSION     3.0.0
+    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core with compare engine"
     LANGUAGES   CXX
 )
 
@@ -55,6 +55,8 @@ endif()
 # Source files
 # ---------------------------------------------------------------------------
 set(PSYCHO_SOURCES
+    src/pipeline.cpp
+    src/compare_engine.cpp
     src/window_engine.cpp
     src/micro_analyzer.cpp
     src/thread_pool.cpp

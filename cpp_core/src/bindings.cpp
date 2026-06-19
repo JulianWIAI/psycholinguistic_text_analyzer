@@ -3,34 +3,39 @@
  * ------------
  * pybind11 Python module for the C++ micro-layer core.
  *
- * v2 additions (Raw Telemetry):
- *   window_result_to_dict() now serializes a nested "raw_telemetry" dict:
- *     total_chars, total_words, avg_word_length,
- *     top_micro_chars (top-5 by raw count),
- *     double_letter_anomalies (XX → count),
- *     macro_drivers (empty dict — populated by Python routes.py after spaCy).
+ * v3 additions (Compare Engine):
+ *   compare_texts(text_a, text_b, window_size, stride)
+ *     Parallel dual-text BPV analysis via CompareEngine.
+ *     Returns dict { windows_a: list[dict], windows_b: list[dict],
+ *                    alignments: list[dict] }
+ *
+ * v3.1 additions (Localization Tracking):
+ *   Each window dict now includes: start_line, end_line, start_snippet, end_snippet.
  *
  * Exported functions
  * ──────────────────
  * analyze(text, window_size, stride)
  *     Single-document micro-layer pipeline.
- *     Returns list[dict] — one dict per window; see window_result_to_dict().
+ *     Returns list[dict] — one dict per window.
  *
  * analyze_sections_parallel(sections, window_size, stride, n_threads)
  *     Chapter-level parallelism via ThreadPool.
  *     Returns list[list[dict]].
+ *
+ * compare_texts(text_a, text_b, window_size, stride)
+ *     Parallel dual-document analysis via CompareEngine.
+ *     Returns dict with windows_a, windows_b, alignments.
  */
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "window_engine.h"
-#include "micro_analyzer.h"
+#include "pipeline.h"
+#include "compare_engine.h"
 #include "thread_pool.h"
 #include "types.h"
 
 #include <algorithm>
-#include <array>
 #include <string>
 #include <vector>
 #include <future>
@@ -63,6 +68,10 @@ static py::dict window_result_to_dict(const WindowResult& wr) {
     d["start_char"]   = wr.start_char;
     d["end_char"]     = wr.end_char;
     d["reset_reason"] = wr.reset_reason;
+    d["start_line"]     = wr.start_line;
+    d["end_line"]       = wr.end_line;
+    d["start_snippet"]  = wr.start_snippet;
+    d["end_snippet"]    = wr.end_snippet;
     d["vectors"]      = vectors_to_dict(wr.vectors);
 
     // ── Raw telemetry nested dict ───────────────────────────────────────────
@@ -71,95 +80,21 @@ static py::dict window_result_to_dict(const WindowResult& wr) {
     telem["total_words"]     = wr.total_words;
     telem["avg_word_length"] = wr.avg_word_length;
 
-    // Top-5 letters by raw character frequency
     py::dict top_chars;
     for (const auto& [letter, count] : wr.top_micro_chars) {
         top_chars[letter.c_str()] = count;
     }
     telem["top_micro_chars"] = top_chars;
 
-    // Double-letter pair anomalies
     py::dict dl_anom;
     for (const auto& [pair, count] : wr.double_letter_anomalies) {
         dl_anom[pair.c_str()] = count;
     }
     telem["double_letter_anomalies"] = dl_anom;
 
-    // macro_drivers is left empty here; the Python API layer (routes.py)
-    // fills it after running the spaCy macro analyzer.
     telem["macro_drivers"] = py::dict();
-
     d["raw_telemetry"] = telem;
     return d;
-}
-
-
-// ---------------------------------------------------------------------------
-// Core pipeline: text → vector<WindowResult>
-// ---------------------------------------------------------------------------
-static std::vector<WindowResult> run_pipeline(
-    const std::string& text,
-    int                window_size,
-    int                stride
-) {
-    const RollingWindowEngine engine(window_size, stride);
-    const OrthographicEngine  scorer;
-
-    const auto windows = engine.tokenize(text);
-
-    std::vector<WindowResult> results;
-    results.reserve(windows.size());
-
-    for (const auto& win : windows) {
-        // Run the full scoring pass; keep the rich MicroScore for telemetry.
-        const MicroScore ms = scorer.score_window(win.text);
-
-        WindowResult wr;
-        wr.index        = win.index;
-        wr.start_char   = win.start_char;
-        wr.end_char     = win.end_char;
-        wr.reset_reason = win.reset_reason;
-        wr.vectors      = scorer.to_vectors(ms);
-
-        // ── Populate raw telemetry ──────────────────────────────────────────
-        wr.total_chars     = ms.total_chars;
-        wr.total_words     = ms.total_words;
-        wr.avg_word_length = ms.total_words > 0
-            ? static_cast<float>(ms.total_chars) / static_cast<float>(ms.total_words)
-            : 0.0f;
-
-        // Top-5 characters by raw frequency: sort descending, take 5.
-        struct LetterEntry { int idx; int count; };
-        std::array<LetterEntry, 26> entries{};
-        for (int i = 0; i < 26; ++i) entries[i] = { i, ms.char_counts[i] };
-
-        std::partial_sort(
-            entries.begin(),
-            entries.begin() + std::min(5, 26),
-            entries.end(),
-            [](const LetterEntry& a, const LetterEntry& b) {
-                return a.count > b.count;
-            }
-        );
-
-        for (int i = 0; i < 5; ++i) {
-            if (entries[i].count == 0) break;
-            std::string letter(1, static_cast<char>('A' + entries[i].idx));
-            wr.top_micro_chars[letter] = entries[i].count;
-        }
-
-        // Double-letter anomalies: any letter whose count > 0.
-        for (int i = 0; i < 26; ++i) {
-            if (ms.double_letter_counts[i] > 0) {
-                std::string pair(2, static_cast<char>('A' + i));
-                wr.double_letter_anomalies[pair] = ms.double_letter_counts[i];
-            }
-        }
-
-        results.push_back(std::move(wr));
-    }
-
-    return results;
 }
 
 
@@ -204,7 +139,6 @@ static py::list analyze_sections_parallel(
 
     {
         py::gil_scoped_release release;
-
         ThreadPool pool(std::min(n_threads, sections.size()));
         for (const auto& sec : sections) {
             futures.push_back(
@@ -228,13 +162,57 @@ static py::list analyze_sections_parallel(
 }
 
 
+// ---------------------------------------------------------------------------
+// Exported: compare_texts — parallel dual-document analysis
+// ---------------------------------------------------------------------------
+static py::dict compare_texts(
+    const std::string& text_a,
+    const std::string& text_b,
+    int                window_size = 1000,
+    int                stride      = 500
+) {
+    CompareResult cr;
+    {
+        py::gil_scoped_release release;
+        const CompareEngine engine(window_size, stride);
+        cr = engine.compare(text_a, text_b);
+    }
+
+    py::list list_a;
+    for (const auto& wr : cr.windows_a) {
+        list_a.append(window_result_to_dict(wr));
+    }
+
+    py::list list_b;
+    for (const auto& wr : cr.windows_b) {
+        list_b.append(window_result_to_dict(wr));
+    }
+
+    py::list alignments;
+    for (const auto& al : cr.alignments) {
+        py::dict a;
+        a["index_a"]        = al.index_a;
+        a["index_b"]        = al.index_b;
+        a["position_score"] = al.position_score;
+        alignments.append(a);
+    }
+
+    py::dict result;
+    result["windows_a"]  = list_a;
+    result["windows_b"]  = list_b;
+    result["alignments"] = alignments;
+    return result;
+}
+
+
 // ===========================================================================
 // Module
 // ===========================================================================
 PYBIND11_MODULE(psycho_core, m) {
     m.doc() = R"pbdoc(
-        psycho_core v2 — compiled BPV orthographic engine with raw telemetry.
-        Exports: analyze(), analyze_sections_parallel()
+        psycho_core v3.1 — compiled BPV orthographic engine with compare support and localization tracking.
+        Exports: analyze(), analyze_sections_parallel(), compare_texts()
+        Window dicts include: start_line, end_line, start_snippet, end_snippet.
     )pbdoc";
 
     m.def("analyze", &analyze,
@@ -243,12 +221,8 @@ PYBIND11_MODULE(psycho_core, m) {
         py::arg("stride")      = 500,
         R"pbdoc(
             Tokenize *text* and score each window with the BPV pipeline.
-            Returns list[dict]; each dict contains:
-              index, start_char, end_char, reset_reason, vectors,
-              raw_telemetry: {
-                total_chars, total_words, avg_word_length,
-                top_micro_chars, double_letter_anomalies, macro_drivers
-              }
+            Returns list[dict]; each dict: index, start_char, end_char,
+            reset_reason, vectors, raw_telemetry.
         )pbdoc"
     );
 
@@ -260,7 +234,19 @@ PYBIND11_MODULE(psycho_core, m) {
         "Process multiple sections in parallel. Returns list[list[dict]]."
     );
 
+    m.def("compare_texts", &compare_texts,
+        py::arg("text_a"),
+        py::arg("text_b"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        R"pbdoc(
+            Analyse two documents in parallel using CompareEngine.
+            Returns dict { windows_a: list[dict], windows_b: list[dict],
+                           alignments: list[{index_a, index_b, position_score}] }
+        )pbdoc"
+    );
+
     m.attr("DEFAULT_WINDOW_SIZE") = 1000;
     m.attr("DEFAULT_STRIDE")      = 500;
-    m.attr("VERSION")             = "2.0.0";
+    m.attr("VERSION")             = "3.1.0";
 }

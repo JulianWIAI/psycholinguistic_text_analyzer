@@ -46,6 +46,37 @@ RollingWindowEngine::RollingWindowEngine(int window_size, int stride)
 
 
 // ===========================================================================
+// Private static: build_line_index
+// ===========================================================================
+
+RollingWindowEngine::LineIndex
+RollingWindowEngine::build_line_index(std::string_view text) {
+    LineIndex starts;
+    starts.push_back(0);          // line 1 always starts at offset 0
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == '\n' && i + 1 < text.size()) {
+            starts.push_back(i + 1);   // line N+1 starts after the '\n'
+        }
+    }
+    return starts;
+}
+
+// ===========================================================================
+// Private static: line_of
+// ===========================================================================
+
+int RollingWindowEngine::line_of(
+    const LineIndex& idx,
+    std::size_t      pos
+) noexcept {
+    // upper_bound gives the first element > pos;
+    // its index equals the 1-based line number.
+    const auto it = std::upper_bound(idx.begin(), idx.end(), pos);
+    return static_cast<int>(it - idx.begin());
+}
+
+
+// ===========================================================================
 // Public: tokenize
 // ===========================================================================
 
@@ -53,37 +84,26 @@ std::vector<TextWindow> RollingWindowEngine::tokenize(std::string_view text) con
     std::vector<TextWindow> out;
     int global_idx = 0;
 
-    // 1. Discover all structural boundaries.
+    const LineIndex line_idx = build_line_index(text);   // O(N) pre-pass
+
     auto boundaries = find_boundaries(text);
+    std::stable_sort(boundaries.begin(), boundaries.end(),
+        [](const Boundary& a, const Boundary& b) { return a.b_start < b.b_start; });
 
-    // 2. Sort by starting position (double-newline scan is usually in order,
-    //    but heading detection can interleave so an explicit sort is needed).
-    std::stable_sort(
-        boundaries.begin(), boundaries.end(),
-        [](const Boundary& a, const Boundary& b) {
-            return a.b_start < b.b_start;
-        }
-    );
-
-    // 3. Walk the boundary list and emit one segment per gap.
     std::size_t prev_end = 0;
     for (const auto& b : boundaries) {
-        // Skip overlapping or degenerate boundaries.
         if (b.b_start <= prev_end) continue;
-
         std::string_view seg = text.substr(prev_end, b.b_start - prev_end);
         if (!is_blank(seg)) {
-            // Every segment before a boundary triggered the boundary → mark it.
-            slide_segment(seg, prev_end, global_idx, /*is_boundary=*/true, out);
+            slide_segment(seg, prev_end, global_idx, true, line_idx, out);
         }
         prev_end = b.b_end;
     }
 
-    // 4. Trailing segment after the last boundary (or the whole text if no boundaries).
     if (prev_end < text.size()) {
         std::string_view tail = text.substr(prev_end);
         if (!is_blank(tail)) {
-            slide_segment(tail, prev_end, global_idx, /*is_boundary=*/false, out);
+            slide_segment(tail, prev_end, global_idx, false, line_idx, out);
         }
     }
 
@@ -180,6 +200,7 @@ void RollingWindowEngine::slide_segment(
     std::size_t             offset,
     int&                    global_idx,
     bool                    is_boundary_segment,
+    const LineIndex&        line_idx,
     std::vector<TextWindow>& out
 ) const {
     int pos     = 0;
@@ -196,13 +217,17 @@ void RollingWindowEngine::slide_segment(
             // a structural boundary carries "structural_boundary".
             // All other chunks (and the tail segment) get "stride".
             const bool is_reset_chunk = first && is_boundary_segment;
+            const std::size_t abs_start = offset + static_cast<std::size_t>(pos);
+            const std::size_t abs_end   = offset + static_cast<std::size_t>(end);
 
             out.push_back(TextWindow{
                 .index        = global_idx++,
                 .text         = chunk,
-                .start_char   = offset + static_cast<std::size_t>(pos),
-                .end_char     = offset + static_cast<std::size_t>(end),
+                .start_char   = abs_start,
+                .end_char     = abs_end,
                 .reset_reason = is_reset_chunk ? "structural_boundary" : "stride",
+                .start_line   = line_of(line_idx, abs_start),
+                .end_line     = line_of(line_idx, abs_end > 0 ? abs_end - 1 : abs_end),
             });
         }
 

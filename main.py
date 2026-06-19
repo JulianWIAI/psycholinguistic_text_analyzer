@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 
 from api.routes import router
+from api.compare_routes import router as compare_router
 
 app = FastAPI(
     title="PsychoLinguistic Analysis Engine",
@@ -20,6 +21,7 @@ app = FastAPI(
 )
 
 app.include_router(router, prefix="/api")
+app.include_router(compare_router, prefix="/api")
 
 templates = Jinja2Templates(directory="templates")
 

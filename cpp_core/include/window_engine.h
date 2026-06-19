@@ -58,6 +58,25 @@ private:
     /// a "1." / "2." style section marker, assuming it is at line start.
     bool is_heading_start(std::string_view text, std::size_t pos) const noexcept;
 
+    // ── Line number index ─────────────────────────────────────────────────────
+
+    /**
+     * Sorted array of absolute byte offsets of the first character of each
+     * line in the document.  line_starts[0] is always 0 (the document start).
+     * Built once by build_line_index() in tokenize() and passed into
+     * slide_segment() so every window can look up its line numbers in O(log N).
+     */
+    using LineIndex = std::vector<std::size_t>;
+
+    /// Scan *text* for '\n' characters and build the LineIndex.
+    static LineIndex build_line_index(std::string_view text);
+
+    /**
+     * Return the 1-based line number of the character at *pos*.
+     * Uses upper_bound on the LineIndex — O(log N).
+     */
+    static int line_of(const LineIndex& idx, std::size_t pos) noexcept;
+
     // ── Sliding window ────────────────────────────────────────────────────
 
     /**
@@ -68,6 +87,7 @@ private:
      * @param offset              Absolute byte offset of seg within original text.
      * @param global_idx          Next window index to assign; incremented in place.
      * @param is_boundary_segment True → first window gets reset_reason="structural_boundary".
+     * @param line_idx            Pre-built line index for O(log N) line lookups.
      * @param out                 Output accumulator.
      */
     void slide_segment(
@@ -75,6 +95,7 @@ private:
         std::size_t             offset,
         int&                    global_idx,
         bool                    is_boundary_segment,
+        const LineIndex&        line_idx,
         std::vector<TextWindow>& out
     ) const;
 

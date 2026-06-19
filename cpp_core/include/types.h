@@ -9,6 +9,10 @@
  *   MicroScore  — char_counts[26], total_words, double_letter_counts[26]
  *   WindowResult — total_chars, total_words, avg_word_length,
  *                  top_micro_chars, double_letter_anomalies
+ *
+ * v3 additions (Localization Tracking):
+ *   TextWindow   — start_line, end_line (1-based line numbers in source document)
+ *   WindowResult — start_line, end_line, start_snippet, end_snippet
  */
 
 #include <map>
@@ -57,6 +61,8 @@ struct TextWindow {
     std::size_t      start_char   = 0;          // absolute offset in source
     std::size_t      end_char     = 0;          // absolute offset in source
     std::string      reset_reason = "stride";   // "stride" | "structural_boundary"
+    int              start_line   = 1;          // 1-based line number of start_char in the source document
+    int              end_line     = 1;          // 1-based line number of end_char in the source document
 };
 
 // ---------------------------------------------------------------------------
@@ -74,6 +80,12 @@ struct WindowResult {
     std::size_t start_char   = 0;
     std::size_t end_char     = 0;
     std::string reset_reason = "stride";
+
+    // ── Spatial Localization ──────────────────────────────────────────────────
+    int         start_line    = 1;   // 1-based line number of window start in source
+    int         end_line      = 1;   // 1-based line number of window end in source
+    std::string start_snippet;       // first ~60 chars, trimmed to word boundary
+    std::string end_snippet;         // last ~60 chars, trimmed to word boundary
 
     // ── Normalized six-vector output ─────────────────────────────────────────
     MicroVector vectors;
