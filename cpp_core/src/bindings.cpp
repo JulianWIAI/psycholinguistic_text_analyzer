@@ -248,13 +248,112 @@ static py::list analyze_with_strokes(
 }
 
 
+// ---------------------------------------------------------------------------
+// Exported: analyze_ru — Cyrillic (Russian) UTF-8 pipeline
+// Identical output schema to analyze(); top_micro_chars keys are Cyrillic glyphs.
+// ---------------------------------------------------------------------------
+static py::list analyze_ru(
+    const std::string& text,
+    int                window_size = 1000,
+    int                stride      = 500
+) {
+    std::vector<WindowResult> results;
+    {
+        py::gil_scoped_release release;
+        results = run_pipeline_ru(text, window_size, stride);
+    }
+    py::list out;
+    for (const auto& wr : results)
+        out.append(window_result_to_dict(wr));
+    return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// Exported: analyze_ar — Arabic (28-bin Abjad) UTF-8 pipeline
+//
+// Processes the byte stream in logical order (RTL reversal is NOT applied).
+// top_micro_chars keys are Arabic glyph strings (e.g. "ر", "ا").
+// Returns list[dict] with the same schema as analyze().
+// ---------------------------------------------------------------------------
+static py::list analyze_ar(
+    const std::string& text,
+    int                window_size = 1000,
+    int                stride      = 500
+) {
+    std::vector<WindowResult> results;
+    {
+        py::gil_scoped_release release;
+        results = run_pipeline_ar(text, window_size, stride);
+    }
+    py::list out;
+    for (const auto& wr : results)
+        out.append(window_result_to_dict(wr));
+    return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// Exported: analyze_fa — Farsi (32-bin Abjad) UTF-8 pipeline
+//
+// Extends the Arabic 28-bin core with پ چ ژ گ at indices 28–31.
+// top_micro_chars keys are Farsi glyph strings (e.g. "پ", "چ", "ر").
+// Returns list[dict] with the same schema as analyze().
+// ---------------------------------------------------------------------------
+static py::list analyze_fa(
+    const std::string& text,
+    int                window_size = 1000,
+    int                stride      = 500
+) {
+    std::vector<WindowResult> results;
+    {
+        py::gil_scoped_release release;
+        results = run_pipeline_fa(text, window_size, stride);
+    }
+    py::list out;
+    for (const auto& wr : results)
+        out.append(window_result_to_dict(wr));
+    return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// Exported: analyze_ko — Korean (24-bin Jamo) UTF-8 pipeline
+//
+// Input text must already be Jamo-decomposed by Python's unpack_hangul_to_jamo()
+// before calling this function (syllable blocks U+AC00–U+D7A3 are not handled
+// in the C++ layer). Python also overrides total_chars with native syllable count.
+// top_micro_chars keys are Jamo glyph strings (e.g. "ㄱ", "ㅏ", "ㄹ").
+// Returns list[dict] with the same schema as analyze().
+// ---------------------------------------------------------------------------
+static py::list analyze_ko(
+    const std::string& text,
+    int                window_size = 1000,
+    int                stride      = 500
+) {
+    std::vector<WindowResult> results;
+    {
+        py::gil_scoped_release release;
+        results = run_pipeline_ko(text, window_size, stride);
+    }
+    py::list out;
+    for (const auto& wr : results)
+        out.append(window_result_to_dict(wr));
+    return out;
+}
+
+
 // ===========================================================================
 // Module
 // ===========================================================================
 PYBIND11_MODULE(psycho_core, m) {
     m.doc() = R"pbdoc(
-        psycho_core v3.1 — compiled BPV orthographic engine with compare support and localization tracking.
-        Exports: analyze(), analyze_sections_parallel(), compare_texts()
+        psycho_core v3.6 — compiled BPV orthographic engine.
+        Latin pipeline:    analyze(), analyze_sections_parallel(), compare_texts(), analyze_with_strokes()
+        Cyrillic pipeline: analyze_ru()  (UTF-8, 33-bin BPV, archetypal mapping)
+        Arabic pipeline:   analyze_ar()  (UTF-8, 28-bin Abjad BPV, logical order)
+        Farsi pipeline:    analyze_fa()  (UTF-8, 32-bin Abjad BPV, logical order)
+        Korean pipeline:   analyze_ko()  (UTF-8, 24-bin Jamo BPV, Jamo-decomposed input)
         Window dicts include: start_line, end_line, start_snippet, end_snippet.
     )pbdoc";
 
@@ -301,7 +400,64 @@ PYBIND11_MODULE(psycho_core, m) {
         )pbdoc"
     );
 
+    m.def("analyze_ru", &analyze_ru,
+        py::arg("text"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        R"pbdoc(
+            Cyrillic (Russian) BPV pipeline.
+            Iterates UTF-8 codepoints, maps Cyrillic letters to indices 0-32,
+            applies the five-rule BPV pipeline with 33-bin tables and archetypal
+            categories (Origin/Kinetic/Resonant/Liminal/Sovereign).
+            top_micro_chars keys are Cyrillic glyph strings (e.g. "С", "А").
+            Returns list[dict] with the same schema as analyze().
+        )pbdoc"
+    );
+
+    m.def("analyze_ar", &analyze_ar,
+        py::arg("text"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        R"pbdoc(
+            Arabic (AR) Abjad BPV pipeline — 28-bin matrix.
+            Iterates UTF-8 codepoints in logical order (no RTL reversal),
+            maps the 28 canonical Arabic consonants (abjadi order) to indices 0–27.
+            Applies the five-rule BPV pipeline with pharyngeal/emphatic interaction
+            coefficients and archetypal categories.
+            top_micro_chars keys are Arabic glyph strings (e.g. "ر", "ا").
+            Returns list[dict] with the same schema as analyze().
+        )pbdoc"
+    );
+
+    m.def("analyze_fa", &analyze_fa,
+        py::arg("text"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        R"pbdoc(
+            Farsi (FA) Abjad BPV pipeline — 32-bin matrix.
+            Extends the 28-bin Arabic core with پ(28) چ(29) ژ(30) گ(31).
+            Processes the byte stream in logical order (no RTL reversal).
+            top_micro_chars keys are Farsi glyph strings (e.g. "پ", "چ", "ر").
+            Returns list[dict] with the same schema as analyze().
+        )pbdoc"
+    );
+
+    m.def("analyze_ko", &analyze_ko,
+        py::arg("text"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        R"pbdoc(
+            Korean (KO) Jamo BPV pipeline — 24-bin matrix.
+            Expects Jamo-decomposed UTF-8 input from Python's unpack_hangul_to_jamo().
+            14 basic consonants (ㄱ–ㅎ, bins 0–13) + 10 basic vowels (ㅏ–ㅣ, bins 14–23).
+            Tense consonants (ㄲ ㄸ ㅃ ㅆ ㅉ) fold to base bin with BPV=9.
+            Compound codas fold to primary consonant bin.
+            top_micro_chars keys are Jamo glyph strings (e.g. "ㄱ", "ㅏ", "ㄹ").
+            Returns list[dict] with the same schema as analyze().
+        )pbdoc"
+    );
+
     m.attr("DEFAULT_WINDOW_SIZE") = 1000;
     m.attr("DEFAULT_STRIDE")      = 500;
-    m.attr("VERSION")             = "3.3.0";
+    m.attr("VERSION")             = "3.6.0";
 }

@@ -19,6 +19,10 @@
       --text:     #dce3f5;
       --ja:       #f7c87e;
       --zh:       #e06850;
+      --ru:       #e8504a;
+      --ar:       #e8a030;
+      --fa:       #60c888;
+      --ko:       #f06890;
       --es:       #e07878;
       --fr:       #7eb8f7;
       --en:       #5ce08a;
@@ -40,6 +44,9 @@
     .lang-FR { background: var(--fr);  color: #000; }
     .lang-JA { background: var(--ja);  color: #000; }
     .lang-ZH { background: var(--zh);  color: #fff; }
+    .lang-AR { background: var(--ar);  color: #000; }
+    .lang-FA { background: var(--fa);  color: #000; }
+    .lang-KO { background: var(--ko);  color: #000; }
 
     /* ── Layout ── */
     .layout { display: grid; grid-template-columns: 420px 1fr; height: calc(100vh - 52px); }
@@ -68,6 +75,10 @@
     .lang-btn.active-FR { border-color: var(--fr); color: var(--fr); background: #1a1e2a; }
     .lang-btn.active-JA { border-color: var(--ja); color: var(--ja); background: #2a261a; }
     .lang-btn.active-ZH { border-color: var(--zh); color: var(--zh); background: #2a1810; }
+    .lang-btn.active-RU { border-color: var(--ru); color: var(--ru); background: #2a1210; }
+    .lang-btn.active-AR { border-color: var(--ar); color: var(--ar); background: #2a200a; }
+    .lang-btn.active-FA { border-color: var(--fa); color: var(--fa); background: #0a2018; }
+    .lang-btn.active-KO { border-color: var(--ko); color: var(--ko); background: #2a0e18; }
     .lang-note { font-size: .7rem; color: var(--muted); margin-top: .4rem; line-height: 1.4; }
 
     /* ── Buttons ── */
@@ -342,6 +353,7 @@
     .card-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:.7rem; }
 
     /* ── Letter Frequency Analysis ── */
+    #lfreq-body     { max-height:22rem; overflow-y:auto; }
     .lfreq-grid     { display:flex; flex-direction:column; gap:.28rem; }
     .lfreq-grid-cmp { display:flex; flex-direction:column; gap:.38rem; }
     .lfreq-row      { display:flex; align-items:center; gap:.5rem; }
@@ -473,6 +485,10 @@
         <button class="lang-btn" data-lang="FR" onclick="selectLang('FR')">🇫🇷 FR</button>
         <button class="lang-btn" data-lang="JA" onclick="selectLang('JA')">🇯🇵 JA</button>
         <button class="lang-btn" data-lang="ZH" onclick="selectLang('ZH')">🇨🇳 ZH</button>
+        <button class="lang-btn" data-lang="RU" onclick="selectLang('RU')">🇷🇺 RU</button>
+        <button class="lang-btn" data-lang="AR" onclick="selectLang('AR')">🇸🇦 AR</button>
+        <button class="lang-btn" data-lang="FA" onclick="selectLang('FA')">🇮🇷 FA</button>
+        <button class="lang-btn" data-lang="KO" onclick="selectLang('KO')">🇰🇷 KO</button>
       </div>
       <div class="lang-note" id="lang-note">Latin BPV matrix · en_core_web_md</div>
     </div>
@@ -855,6 +871,36 @@
    State
 ════════════════════════════════════════════════════════════ */
 let _lang        = "EN";
+
+const ALPHABET = {
+  LATIN:    Array.from({length: 26}, (_, i) => String.fromCharCode(65 + i)),
+  CYRILLIC: [
+    'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й',
+    'К','Л','М','Н','О','П','Р','С','Т','У','Ф',
+    'Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я',
+  ],
+  // Arabic 28-bin abjadi order (mirrors ar::AR_GLYPH in ar_bpv_table.h)
+  ARABIC: [
+    'ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي',
+  ],
+  // Farsi 32-bin: 28 Arabic + 4 Farsi-specific (mirrors ar::FA_GLYPH)
+  FARSI: [
+    'ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي',
+    'پ','چ','ژ','گ',
+  ],
+  // Korean 24-bin Jamo: 14 basic consonants + 10 basic vowels (mirrors ko::KO_GLYPH)
+  HANGUL: [
+    'ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ',
+    'ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ',
+  ],
+};
+function getAlphabet(lang) {
+  if (lang === 'RU') return ALPHABET.CYRILLIC;
+  if (lang === 'AR') return ALPHABET.ARABIC;
+  if (lang === 'FA') return ALPHABET.FARSI;
+  if (lang === 'KO') return ALPHABET.HANGUL;
+  return ALPHABET.LATIN;
+}
 let _results     = null;   // currently viewed result
 let _resultsA    = null;   // Text A result (compare mode)
 let _resultsB    = null;   // Text B result (compare mode)
@@ -897,6 +943,10 @@ const LANG_NOTES = {
   FR: "Latin BPV + Silent terminal suppression (S/T/X/D→0) · fr_core_news_md",
   JA: "Logographic matrix: Kanji/Hiragana/Katakana + Stroke density + Keigo · ja_core_news_md",
   ZH: "Dual-Signal Engine: Hanzi → Pinyin → C++ BPV + Stroke-Count Waveform · jieba + pypinyin",
+  RU: "Cyrillic UTF-8 BPV · 33-bin matrix · Archetypal mapping · ru_core_news_md",
+  AR: "Abjad UTF-8 BPV · 28-bin matrix · Pharyngeal/Emphatic interactions · Logical order · xx_ent_wiki_sm",
+  FA: "Abjad UTF-8 BPV · 32-bin matrix (AR+پچژگ) · Logical order · xx_ent_wiki_sm",
+  KO: "Hangul Jamo BPV · 24-bin matrix (14 consonants + 10 vowels) · Syllable decomposition · ko_core_news_sm",
 };
 
 const MICRO_KEYS   = ['intensity','anxiety','attention','emotion','agitation','complexity'];
@@ -942,10 +992,24 @@ function selectLang(code) {
   });
   $('lang-note').textContent = LANG_NOTES[code] || '';
   const badge = $('hdr-lang-badge');
-  const names = { EN:'🇬🇧 English', DE:'🇩🇪 German', ES:'🇪🇸 Spanish', FR:'🇫🇷 French', JA:'🇯🇵 Japanese', ZH:'🇨🇳 Chinese' };
+  const names = {
+    EN:'🇬🇧 English', DE:'🇩🇪 German', ES:'🇪🇸 Spanish', FR:'🇫🇷 French',
+    JA:'🇯🇵 Japanese', ZH:'🇨🇳 Chinese', RU:'🇷🇺 Russian',
+    AR:'🇸🇦 Arabic', FA:'🇮🇷 Farsi', KO:'🇰🇷 Korean',
+  };
   badge.textContent   = names[code];
   badge.className     = `badge-lang lang-${code}`;
   badge.style.display = '';
+
+  // RTL injection: set dir="rtl" on both intercept textareas when
+  // the selected language is an Abjad RTL script.
+  // Time-series canvases (Micro Oscilloscope et al.) use <canvas> elements
+  // and are unaffected by dir="rtl" — their x-axis remains strictly LTR.
+  const isRTL = (code === 'AR' || code === 'FA');
+  const dirAttr = isRTL ? 'rtl' : 'ltr';
+  $('input-text').setAttribute('dir', dirAttr);
+  const textB = $('input-text-b');
+  if (textB) textB.setAttribute('dir', dirAttr);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2146,6 +2210,7 @@ function selectWindow(idx) {
 function renderResults(data) {
   _results   = data;
   _activeWin = 0;
+  _lang      = data.language || _lang;   // sync alphabet before any freq/telemetry renders
 
   $('empty-state').style.display      = 'none';
   $('card-windows').style.display     = '';
@@ -2338,7 +2403,7 @@ $('btn-run').addEventListener('click', async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text_a: text, text_b: textB, ...params }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+      if (!res.ok) { const t = await res.text(); let msg; try { msg = JSON.parse(t).detail; } catch(_) { msg = t; } throw new Error(msg || res.statusText); }
 
       const cmpData  = await res.json();
       _resultsA  = cmpData.text_a;
@@ -2388,8 +2453,9 @@ $('btn-run').addEventListener('click', async () => {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || res.statusText);
+        const t = await res.text();
+        let msg; try { msg = JSON.parse(t).detail; } catch(_) { msg = t; }
+        throw new Error(msg || res.statusText);
       }
 
       _resultsA = null; _resultsB = null;
@@ -2418,7 +2484,13 @@ $('btn-seed').addEventListener('click', async () => {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ text, language_code: _lang }),
     });
-    const data = await res.json();
+    const raw = await res.text();
+    if (!res.ok) {
+      let msg = raw;
+      try { msg = JSON.parse(raw).detail ?? raw; } catch(_) {}
+      throw new Error(msg);
+    }
+    const data = JSON.parse(raw);
     setStatus(`Baselines seeded [${_lang}] from ${data.windows_processed} windows. Now paste target.`, 'ok');
   } catch(e) {
     setStatus(`Seed error: ${e.message}`, 'err');
@@ -2802,11 +2874,75 @@ function selectDoc(doc) {
 let _lfreqSort = 'abc';
 let _lfreqA = null, _lfreqB = null;
 
-function computeLetterFreq(text) {
-  const freq = {};
-  for (let i = 65; i <= 90; i++) freq[String.fromCharCode(i)] = 0;
-  for (const ch of text.toUpperCase()) {
-    if (ch >= 'A' && ch <= 'Z') freq[ch]++;
+function computeLetterFreq(text, lang) {
+  const activeLang = lang || _lang;
+  const alpha = getAlphabet(activeLang);
+  const freq  = {};
+  for (const ch of alpha) freq[ch] = 0;
+
+  if (activeLang === 'RU') {
+    const upper = text.toUpperCase();
+    for (const ch of upper) {
+      if (Object.prototype.hasOwnProperty.call(freq, ch)) freq[ch]++;
+    }
+  } else if (activeLang === 'AR' || activeLang === 'FA') {
+    // Arabic/Farsi: count codepoints directly (no upper-case transform needed —
+    // Arabic script has no case distinction). Alef variants fold to ا; ى → ي.
+    const ALEF_VARIANTS = new Set(['آ','أ','إ','ٱ']);
+    const YA_VARIANTS   = new Set(['ى','ئ']);
+    const WAW_VARIANTS  = new Set(['ؤ']);
+    for (const ch of text) {
+      if (ALEF_VARIANTS.has(ch)) { freq['ا'] = (freq['ا'] || 0) + 1; }
+      else if (YA_VARIANTS.has(ch)) { freq['ي'] = (freq['ي'] || 0) + 1; }
+      else if (WAW_VARIANTS.has(ch)) { freq['و'] = (freq['و'] || 0) + 1; }
+      else if (Object.prototype.hasOwnProperty.call(freq, ch)) { freq[ch]++; }
+    }
+  } else if (activeLang === 'KO') {
+    // Korean: decompose each Hangul syllable block (U+AC00–U+D7A3) into
+    // Onset/Nucleus/Coda and map each component to one of 24 Jamo bins.
+    const SYL_START = 0xAC00, SYL_END = 0xD7A3;
+    // Onset U+1100–U+1112 → bin 0–13
+    const ONSET_BIN = {
+      0x1100:0,0x1101:0, 0x1102:1, 0x1103:2,0x1104:2, 0x1105:3,
+      0x1106:4, 0x1107:5,0x1108:5, 0x1109:6,0x110A:6, 0x110B:7,
+      0x110C:8,0x110D:8, 0x110E:9, 0x110F:10, 0x1110:11, 0x1111:12, 0x1112:13,
+    };
+    // Nucleus U+1161–U+1175 → bin 14–23
+    const NUC_BIN = {
+      0x1161:14,0x1162:14, 0x1163:15,0x1164:15,
+      0x1165:16,0x1166:16, 0x1167:17,0x1168:17,
+      0x1169:18,0x116A:18,0x116B:18,0x116C:18, 0x116D:19,
+      0x116E:20,0x116F:20,0x1170:20,0x1171:20, 0x1172:21,
+      0x1173:22,0x1174:22, 0x1175:23,
+    };
+    // Coda U+11A8–U+11C2 → consonant bin
+    const CODA_BIN = {
+      0x11A8:0,0x11A9:0, 0x11AA:6, 0x11AB:1,0x11AC:1,0x11AD:1,
+      0x11AE:2, 0x11AF:3,0x11B0:3,0x11B1:3,0x11B2:3,0x11B3:3,0x11B4:3,0x11B5:3,0x11B6:3,
+      0x11B7:4, 0x11B8:5,0x11B9:5, 0x11BA:6,0x11BB:6, 0x11BC:7,
+      0x11BD:8, 0x11BE:9, 0x11BF:10, 0x11C0:11, 0x11C1:12, 0x11C2:13,
+    };
+    const JAMO = ALPHABET.HANGUL;
+    const inc = bin => { if (bin >= 0 && bin < 24) freq[JAMO[bin]]++; };
+    for (const ch of text) {
+      const cp = ch.codePointAt(0);
+      if (cp >= SYL_START && cp <= SYL_END) {
+        const idx     = cp - SYL_START;
+        const onset   = Math.floor(idx / (21 * 28));
+        const nucleus = Math.floor((idx % (21 * 28)) / 28);
+        const coda    = idx % 28;
+        const oBin = ONSET_BIN[0x1100 + onset];
+        const nBin = NUC_BIN[0x1161 + nucleus];
+        if (oBin !== undefined) inc(oBin);
+        if (nBin !== undefined) inc(nBin);
+        if (coda > 0) { const cBin = CODA_BIN[0x11A7 + coda]; if (cBin !== undefined) inc(cBin); }
+      }
+    }
+  } else {
+    const upper = text.toUpperCase();
+    for (const ch of upper) {
+      if (ch >= 'A' && ch <= 'Z') freq[ch]++;
+    }
   }
   return freq;
 }
@@ -2824,8 +2960,9 @@ function renderLetterFreq(srcA, srcB = null) {
   const _toFreq = s => {
     if (!s) return computeLetterFreq('');
     if (typeof s === 'string') return computeLetterFreq(s);
-    // Fill in any missing A–Z keys with 0 so _renderLfreqBody always sees all 26
-    const base = {}; for (let i = 65; i <= 90; i++) base[String.fromCharCode(i)] = 0;
+    // Fill in any missing alphabet keys with 0 so _renderLfreqBody always sees all bins
+    const base = {};
+    for (const ch of getAlphabet(_lang)) base[ch] = 0;
     return { ...base, ...s };
   };
   _lfreqA = _toFreq(srcA);
@@ -2839,14 +2976,14 @@ function _renderLfreqBody() {
   const freqB = _lfreqB;
   const hasB  = !!freqB;
 
-  let keys = Object.keys(freqA);
+  const alpha = getAlphabet(_lang);
+  let keys = alpha.filter(ch => Object.prototype.hasOwnProperty.call(freqA, ch));
   if (_lfreqSort === 'freq') {
     keys = keys.sort((a, b) => (hasB
       ? (freqA[b] + (freqB[b]||0)) - (freqA[a] + (freqB[a]||0))
       : freqA[b] - freqA[a]));
-  } else {
-    keys = keys.sort();
   }
+  // 'abc' mode: keys already in alphabet order from the filter above
 
   const maxAll  = Math.max(1, ...Object.values(freqA), ...(hasB ? Object.values(freqB) : [0]));
   const totalA  = Object.values(freqA).reduce((s, v) => s + v, 0);

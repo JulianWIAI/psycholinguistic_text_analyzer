@@ -21,6 +21,7 @@ Endpoints:
 """
 
 import re
+import traceback
 import uuid
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional
@@ -104,6 +105,164 @@ def _compute_letter_freq(text: str) -> Dict[str, int]:
     return freq
 
 
+# Canonical 33-letter Cyrillic alphabet in dictionary order (А–Е, Ё, Ж–Я)
+_CYRILLIC_UPPER: List[str] = (
+    [chr(c) for c in range(0x0410, 0x0416)]   # А Б В Г Д Е
+    + [chr(0x0401)]                             # Ё
+    + [chr(c) for c in range(0x0416, 0x0430)]  # Ж З И Й К … Я
+)
+
+# Arabic 28-letter abjadi sequence (mirrors ar::AR_GLYPH in ar_bpv_table.h)
+_ARABIC_ABJAD: List[str] = [
+    "ا","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي",
+]
+# Farsi 32-letter sequence (28 Arabic + پ چ ژ گ)
+_FARSI_ABJAD: List[str] = _ARABIC_ABJAD + ["پ","چ","ژ","گ"]
+
+# Korean 24-bin Jamo sequence (14 consonants + 10 vowels, mirrors ko::KO_GLYPH)
+_KOREAN_JAMO_24: List[str] = [
+    "ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ",
+    "ㅏ","ㅑ","ㅓ","ㅕ","ㅗ","ㅛ","ㅜ","ㅠ","ㅡ","ㅣ",
+]
+
+# Onset Jamo range U+1100–U+1112 → bin 0–13 (14 basic consonant bins)
+# Each onset maps to the same 24-bin index as in ko_bpv_table.h ONSET_TABLE.
+# Tense consonants fold to base bin; compound codas handled via syllable decompose.
+_KO_ONSET_TO_BIN: Dict[int, int] = {
+    0x1100:  0, 0x1101:  0,  # ㄱ ㄲ→ㄱ
+    0x1102:  1,              # ㄴ
+    0x1103:  2, 0x1104:  2,  # ㄷ ㄸ→ㄷ
+    0x1105:  3,              # ㄹ
+    0x1106:  4,              # ㅁ
+    0x1107:  5, 0x1108:  5,  # ㅂ ㅃ→ㅂ
+    0x1109:  6, 0x110A:  6,  # ㅅ ㅆ→ㅅ
+    0x110B:  7,              # ㅇ
+    0x110C:  8, 0x110D:  8,  # ㅈ ㅉ→ㅈ
+    0x110E:  9,              # ㅊ
+    0x110F: 10,              # ㅋ
+    0x1110: 11,              # ㅌ
+    0x1111: 12,              # ㅍ
+    0x1112: 13,              # ㅎ
+}
+# Nucleus Jamo range U+1161–U+1175 → bin 14–23 (10 basic vowel bins)
+_KO_NUCLEUS_TO_BIN: Dict[int, int] = {
+    0x1161: 14, 0x1162: 14,  # ㅏ ㅐ→ㅏ
+    0x1163: 15, 0x1164: 15,  # ㅑ ㅒ→ㅑ
+    0x1165: 16, 0x1166: 16,  # ㅓ ㅔ→ㅓ
+    0x1167: 17, 0x1168: 17,  # ㅕ ㅖ→ㅕ
+    0x1169: 18, 0x116A: 18, 0x116B: 18, 0x116C: 18,  # ㅗ ㅘ ㅙ ㅚ→ㅗ
+    0x116D: 19,              # ㅛ
+    0x116E: 20, 0x116F: 20, 0x1170: 20, 0x1171: 20,  # ㅜ ㅝ ㅞ ㅟ→ㅜ
+    0x1172: 21,              # ㅠ
+    0x1173: 22, 0x1174: 22,  # ㅡ ㅢ→ㅡ
+    0x1175: 23,              # ㅣ
+}
+# Coda → consonant bin (subset; non-null codas fold to their primary consonant bin)
+_KO_CODA_TO_BIN: Dict[int, int] = {
+    0x11A8:  0, 0x11A9:  0,  # ㄱ ㄲ
+    0x11AA:  6,              # ㄳ→ㅅ
+    0x11AB:  1, 0x11AC:  1, 0x11AD:  1,  # ㄴ ㄵ ㄶ
+    0x11AE:  2,              # ㄷ
+    0x11AF:  3, 0x11B0:  3, 0x11B1:  3, 0x11B2:  3,
+    0x11B3:  3, 0x11B4:  3, 0x11B5:  3, 0x11B6:  3,  # ㄹ cluster
+    0x11B7:  4,              # ㅁ
+    0x11B8:  5, 0x11B9:  5,  # ㅂ ㅄ
+    0x11BA:  6, 0x11BB:  6,  # ㅅ ㅆ
+    0x11BC:  7,              # ㅇ
+    0x11BD:  8,              # ㅈ
+    0x11BE:  9,              # ㅊ
+    0x11BF: 10,              # ㅋ
+    0x11C0: 11,              # ㅌ
+    0x11C1: 12,              # ㅍ
+    0x11C2: 13,              # ㅎ
+}
+
+# Arabic punctuation bytes for the Python-side waveform builder (2-byte UTF-8)
+_PUNCT_UTF8_2: Dict[bytes, int] = {
+    b"\xd8\x8c": 1,  # ، U+060C Arabic Comma → magnitude 1
+    b"\xd8\x9f": 4,  # ؟ U+061F Arabic Question Mark → magnitude 4
+}
+
+
+def _compute_cyrillic_freq(text: str) -> Dict[str, int]:
+    """Return a full 33-key Cyrillic frequency dict (А–Я including Ё)."""
+    freq: Dict[str, int] = {ch: 0 for ch in _CYRILLIC_UPPER}
+    for ch in text.upper():
+        if ch in freq:
+            freq[ch] += 1
+    return freq
+
+
+def _compute_korean_freq(text: str) -> Dict[str, int]:
+    """
+    Return a 24-key Jamo frequency dict by decomposing each Hangul syllable block
+    (U+AC00–U+D7A3) and mapping its Onset/Nucleus/Coda to the 24 basic bins.
+    Non-syllabic Hangul Jamo (standalone) are also counted if present.
+    """
+    freq: Dict[str, int] = {g: 0 for g in _KOREAN_JAMO_24}
+    _SYL_START = 0xAC00
+    _SYL_END   = 0xD7A3
+
+    def _inc(bin_idx: int) -> None:
+        if 0 <= bin_idx < 24:
+            freq[_KOREAN_JAMO_24[bin_idx]] += 1
+
+    for ch in text:
+        cp = ord(ch)
+        if _SYL_START <= cp <= _SYL_END:
+            idx     = cp - _SYL_START
+            onset   = idx // (21 * 28)
+            nucleus = (idx % (21 * 28)) // 28
+            coda    = idx % 28
+            onset_cp   = 0x1100 + onset
+            nucleus_cp = 0x1161 + nucleus
+            if onset_cp in _KO_ONSET_TO_BIN:
+                _inc(_KO_ONSET_TO_BIN[onset_cp])
+            if nucleus_cp in _KO_NUCLEUS_TO_BIN:
+                _inc(_KO_NUCLEUS_TO_BIN[nucleus_cp])
+            if coda > 0:
+                coda_cp = 0x11A7 + coda
+                if coda_cp in _KO_CODA_TO_BIN:
+                    _inc(_KO_CODA_TO_BIN[coda_cp])
+        elif cp in _KO_ONSET_TO_BIN:
+            _inc(_KO_ONSET_TO_BIN[cp])
+        elif cp in _KO_NUCLEUS_TO_BIN:
+            _inc(_KO_NUCLEUS_TO_BIN[cp])
+        elif cp in _KO_CODA_TO_BIN:
+            _inc(_KO_CODA_TO_BIN[cp])
+    return freq
+
+
+def _compute_arabic_freq(text: str, is_farsi: bool = False) -> Dict[str, int]:
+    """
+    Return an Abjad frequency dict: 28 keys for AR, 32 keys for FA.
+    Counts each canonical consonant; diacritics and Alef variants are folded
+    into their canonical form (all Alef variants → ا, ى → ي).
+    """
+    alphabet = _FARSI_ABJAD if is_farsi else _ARABIC_ABJAD
+    freq: Dict[str, int] = {ch: 0 for ch in alphabet}
+
+    # Alef variant mapping: آ أ إ ٱ ﺃ → ا
+    _ALEF_VARIANTS = {"آ", "أ", "إ", "ٱ"}
+    # Alef Maqsura ى → ي
+    _YA_VARIANTS   = {"ى"}
+    # Waw+Hamza ؤ → و
+    _WAW_VARIANTS  = {"ؤ"}
+    # Ya+Hamza ئ → ي
+    _YAH_VARIANTS  = {"ئ"}
+
+    for ch in text:
+        if ch in _ALEF_VARIANTS:
+            freq["ا"] = freq.get("ا", 0) + 1
+        elif ch in _YA_VARIANTS or ch in _YAH_VARIANTS:
+            freq["ي"] = freq.get("ي", 0) + 1
+        elif ch in _WAW_VARIANTS:
+            freq["و"] = freq.get("و", 0) + 1
+        elif ch in freq:
+            freq[ch] += 1
+    return freq
+
+
 def _scan_hidden_unicode(text: str) -> Dict[str, Any]:
     """
     Scan *text* (original window text, any language) for steganographic Unicode.
@@ -133,12 +292,19 @@ def _build_punct_waveform(text: str) -> List[int]:
     i = 0
     n = len(raw)
     while i < n:
-        # Check 3-byte sequences first
+        # 3-byte sequences (en/em dash)
         if i + 2 < n:
             tri = bytes(raw[i:i+3])
             if tri in _PUNCT_UTF8:
                 wave.append(_PUNCT_UTF8[tri])
                 i += 3
+                continue
+        # 2-byte sequences: Arabic comma ، (D8 8C) and question mark ؟ (D8 9F)
+        if i + 1 < n:
+            bi = bytes(raw[i:i+2])
+            if bi in _PUNCT_UTF8_2:
+                wave.append(_PUNCT_UTF8_2[bi])
+                i += 2
                 continue
         ch = chr(raw[i]) if raw[i] < 128 else ""
         if ch in _PUNCT_MAP:
@@ -333,12 +499,51 @@ def _run_pipeline(
                 "stroke_count_array", []
             )
 
-        # ── A–Z letter frequencies ─────────────────────────────────────────────
-        # For JA/ZH: use the phonetic Romaji/Pinyin string so the UI letter
-        # frequency list reflects the actual BPV alphabet, not native glyphs.
-        # For all other languages: count directly from the window text.
-        phonetic = micro_result.raw.get("phonetic_text", "") if language_code in ("JA", "ZH") else ""
-        raw_telem["letter_frequencies"] = _compute_letter_freq(phonetic or win.text)
+        # ── RU override — replace Latin-regex telemetry with Cyrillic C++ output ──
+        # _compute_window_telemetry uses [A-Za-z]+ regex → finds nothing in Cyrillic
+        # text. The C++ analyze_ru() provides correct Cyrillic counts in micro_result.raw.
+        if language_code == "RU" and micro_result.raw:
+            for key in ("total_chars", "total_words", "avg_word_length",
+                        "top_micro_chars", "double_letter_anomalies", "structural_waveform"):
+                if key in micro_result.raw:
+                    raw_telem[key] = micro_result.raw[key]
+
+        # ── AR / FA override — Abjad C++ telemetry replaces Latin-regex counts ──
+        # Same rationale as RU: [A-Za-z]+ finds nothing in Arabic/Farsi script.
+        # psycho_core.analyze_ar() / analyze_fa() provide correct counts.
+        if language_code in ("AR", "FA") and micro_result.raw:
+            for key in ("total_chars", "total_words", "avg_word_length",
+                        "top_micro_chars", "double_letter_anomalies", "structural_waveform"):
+                if key in micro_result.raw:
+                    raw_telem[key] = micro_result.raw[key]
+
+        # ── KO override — Hangul Jamo C++ telemetry replaces Latin-regex counts ──
+        # [A-Za-z]+ finds nothing in Hangul text. psycho_core.analyze_ko() provides
+        # Jamo-level counts; total_chars is replaced with native syllable count by
+        # KoreanOrthographicAnalyzer._parse_windows() before reaching here.
+        if language_code == "KO" and micro_result.raw:
+            for key in ("total_chars", "total_words", "avg_word_length",
+                        "top_micro_chars", "double_letter_anomalies", "structural_waveform"):
+                if key in micro_result.raw:
+                    raw_telem[key] = micro_result.raw[key]
+
+        # ── Letter frequencies ────────────────────────────────────────────────
+        # RU:     count Cyrillic А–Я directly from window text.
+        # AR:     count 28 Arabic consonants (abjadi order) from window text.
+        # FA:     count 32 Farsi consonants (abjadi + پچژگ) from window text.
+        # JA/ZH:  use phonetic Romaji/Pinyin string for the Latin BPV alphabet.
+        # Others: count A–Z directly from window text.
+        if language_code == "RU":
+            raw_telem["letter_frequencies"] = _compute_cyrillic_freq(win.text)
+        elif language_code == "AR":
+            raw_telem["letter_frequencies"] = _compute_arabic_freq(win.text, is_farsi=False)
+        elif language_code == "FA":
+            raw_telem["letter_frequencies"] = _compute_arabic_freq(win.text, is_farsi=True)
+        elif language_code == "KO":
+            raw_telem["letter_frequencies"] = _compute_korean_freq(win.text)
+        else:
+            phonetic = micro_result.raw.get("phonetic_text", "") if language_code in ("JA", "ZH") else ""
+            raw_telem["letter_frequencies"] = _compute_letter_freq(phonetic or win.text)
 
         window_results.append({
             "window_index":  win.index,
@@ -420,8 +625,9 @@ def analyze_text(req: AnalysisRequest) -> Dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(400, detail=str(exc))
     except RuntimeError as exc:
-        # Raised by ModelRegistry when a spaCy model is missing
         raise HTTPException(503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(500, detail=f"{type(exc).__name__}: {exc}")
 
     # Persist to entity database
     entity = db.load_entity(DB_PATH)
@@ -451,30 +657,35 @@ def seed_control_text(req: ControlTextRequest) -> Dict[str, Any]:
     except RuntimeError as exc:
         raise HTTPException(503, detail=str(exc))
 
-    tokenizer = RollingWindowTokenizer()
-    windows   = tokenizer.tokenize(req.text)
-    seeded    = 0
+    try:
+        tokenizer = RollingWindowTokenizer()
+        windows   = tokenizer.tokenize(req.text)
+        seeded    = 0
 
-    for win in windows:
-        micro  = micro_analyzer.analyze(win.text)
-        macro  = macro_analyzer.analyze(win.text)
-        _dissonance_engine.seed_baselines(
-            micro_observations=micro.filled_vectors(),
-            macro_observations=_flatten_macro(macro.cluster_scores),
-        )
-        seeded += 1
+        for win in windows:
+            micro  = micro_analyzer.analyze(win.text)
+            macro  = macro_analyzer.analyze(win.text)
+            _dissonance_engine.seed_baselines(
+                micro_observations=micro.filled_vectors(),
+                macro_observations=_flatten_macro(macro.cluster_scores),
+            )
+            seeded += 1
 
-    snapshot = _dissonance_engine.get_baseline_snapshot()
-    entity   = db.load_entity(DB_PATH)
-    db.update_baselines(entity, snapshot["micro"], snapshot["macro"])
-    db.save_entity(entity, DB_PATH)
+        snapshot = _dissonance_engine.get_baseline_snapshot()
+        entity   = db.load_entity(DB_PATH)
+        db.update_baselines(entity, snapshot["micro"], snapshot["macro"])
+        db.save_entity(entity, DB_PATH)
 
-    return {
-        "status":            "baselines seeded",
-        "language":          req.language_code.upper(),
-        "windows_processed": seeded,
-        "baseline_snapshot": snapshot,
-    }
+        return {
+            "status":            "baselines seeded",
+            "language":          req.language_code.upper(),
+            "windows_processed": seeded,
+            "baseline_snapshot": snapshot,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, detail=f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}")
 
 
 @router.get("/languages")

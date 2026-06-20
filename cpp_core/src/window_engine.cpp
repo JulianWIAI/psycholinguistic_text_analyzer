@@ -20,6 +20,16 @@
 namespace psycho {
 
 // ---------------------------------------------------------------------------
+// UTF-8 helper — walk pos backward to the start of the current character.
+// Continuation bytes are 10xxxxxx (0x80–0xBF); a leading byte is anything else.
+// ---------------------------------------------------------------------------
+static std::size_t utf8_char_start(std::string_view sv, std::size_t pos) noexcept {
+    while (pos > 0 && (static_cast<unsigned char>(sv[pos]) & 0xC0) == 0x80)
+        --pos;
+    return pos;
+}
+
+// ---------------------------------------------------------------------------
 // Heading keywords (all lowercase; compared case-insensitively in the scan).
 // Matches Python: r"^(?:chapter|section|part|prologue|epilogue|\d+\.)\s+"
 // ---------------------------------------------------------------------------
@@ -209,6 +219,10 @@ void RollingWindowEngine::slide_segment(
 
     while (pos < seg_len) {
         int end = std::min(pos + window_size_, seg_len);
+        // Snap end to a UTF-8 character boundary so multi-byte chars are never split.
+        if (end < seg_len)
+            end = static_cast<int>(utf8_char_start(seg, static_cast<std::size_t>(end)));
+
         std::string_view chunk = seg.substr(static_cast<std::size_t>(pos),
                                              static_cast<std::size_t>(end - pos));
 
@@ -234,6 +248,9 @@ void RollingWindowEngine::slide_segment(
         first = false;
         if (end >= seg_len) break;
         pos += stride_;
+        // Align pos to a UTF-8 character start after stride advance.
+        if (pos < seg_len)
+            pos = static_cast<int>(utf8_char_start(seg, static_cast<std::size_t>(pos)));
     }
 }
 

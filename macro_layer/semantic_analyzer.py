@@ -192,6 +192,13 @@ class MacroScore:
 
 _SIMILARITY_THRESHOLD = 0.65
 
+# ---------------------------------------------------------------------------
+# POS-fallback constants — injected when all similarity scores equal zero
+# ---------------------------------------------------------------------------
+_FALLBACK_CLUSTER = "baseline"
+_FALLBACK_POLE    = "structural"
+_FALLBACK_POS     = frozenset({"NOUN", "VERB", "ADJ", "PROPN"})
+
 
 class VectorClusterScorer:
     """
@@ -293,7 +300,8 @@ class VectorClusterScorer:
 
     def _score_exact(self, tokens, raw: dict, hits: list) -> None:
         for token in tokens:
-            lemma = token.lemma_.lower()
+            # xx_ent_wiki_sm returns empty lemma_ for Arabic/Farsi — fall back to text
+            lemma = (token.lemma_ or token.text).lower()
             if lemma in self._exact_lookup:
                 cluster, pole, weight = self._exact_lookup[lemma]
                 raw[cluster][pole] += weight
@@ -342,6 +350,72 @@ def extract_entity_polarity(doc, scorer: "VectorClusterScorer") -> List[Dict]:
 
 
 # ---------------------------------------------------------------------------
+# POS-based absolute fallback (Task 1)
+#
+# Called when VectorClusterScorer returns zero hits — regardless of whether
+# that is due to the similarity threshold, a model with no word vectors, or
+# tokenization mismatches.  Guarantees the UI Driver Matrix is never empty.
+# ---------------------------------------------------------------------------
+
+def apply_pos_fallback(
+    doc,
+    exact_lookup: Dict[str, Tuple[str, str, float]],
+) -> Tuple[Dict[str, Dict[str, float]], List[ClusterHit]]:
+    """
+    Extract content tokens from *doc* and inject them into the cluster space.
+
+    Strategy (in order):
+      1. Try the exact-match lookup — real cluster assignment, real weight.
+      2. If no lookup hit, assign to 'baseline/structural' at weight 1.0.
+
+    POS filter: NOUN, VERB, ADJ, PROPN.  Secondary fallback: any alpha
+    non-stop token when the loaded model provides no POS annotation.
+
+    Returns:
+        extra_raw  — {cluster: {pole: score}} increments to merge into raw
+        hits       — ClusterHit list for raw_telemetry macro_drivers
+    """
+    extra_raw: Dict[str, Dict[str, float]] = {}
+    hits:      List[ClusterHit]            = []
+    seen:      set                         = set()
+
+    # xx_ent_wiki_sm returns empty lemma_ for Arabic/Farsi — use text as fallback.
+    # Filter requires len(surface) > 1 so stray single-char tokens are excluded.
+    def _surface(t) -> str:
+        return (t.lemma_ or t.text).lower()
+
+    eligible = [
+        t for t in doc
+        if t.is_alpha and not t.is_stop and len(_surface(t)) > 1
+        and t.pos_ in _FALLBACK_POS
+    ]
+    if not eligible:
+        # Model has no POS tagger (e.g. xx_ent_wiki_sm on Arabic) — all content tokens
+        eligible = [t for t in doc if t.is_alpha and not t.is_stop and len(_surface(t)) > 1]
+
+    for token in eligible:
+        if len(hits) >= 10:
+            break
+        lemma = _surface(token)
+        if lemma in seen:
+            continue
+        seen.add(lemma)
+
+        # Direct lookup first; the exact_lookup already contains prefix-attached
+        # variants for Arabic/Farsi (registered in _build_lookup).
+        if lemma in exact_lookup:
+            cluster, pole, weight = exact_lookup[lemma]
+        else:
+            cluster, pole, weight = _FALLBACK_CLUSTER, _FALLBACK_POLE, 1.0
+
+        extra_raw.setdefault(cluster, {})
+        extra_raw[cluster][pole] = extra_raw[cluster].get(pole, 0.0) + weight
+        hits.append(ClusterHit(lemma=lemma, cluster=cluster, pole=pole, weight=weight))
+
+    return extra_raw, hits
+
+
+# ---------------------------------------------------------------------------
 # English Semantic Analyzer
 # ---------------------------------------------------------------------------
 
@@ -370,6 +444,17 @@ class SemanticAnalyzer:
         total_words = max(1, len(content_tokens))
 
         raw, hits = self._scorer.score_tokens(content_tokens)
+
+        # Task 1 — absolute POS fallback: if every cluster score is zero, bypass
+        # the similarity threshold and inject any extractable content tokens so
+        # the Driver Matrix and Top Macro Lemmas are never empty.
+        if not hits:
+            extra_raw, hits = apply_pos_fallback(doc, _WORD_LOOKUP)
+            for cluster, poles in extra_raw.items():
+                for pole, score in poles.items():
+                    raw.setdefault(cluster, {})[pole] = (
+                        raw.get(cluster, {}).get(pole, 0.0) + score
+                    )
 
         normalized: Dict[str, Dict[str, float]] = {
             cluster: {

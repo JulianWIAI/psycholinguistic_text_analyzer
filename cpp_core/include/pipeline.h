@@ -38,4 +38,50 @@ std::vector<WindowResult> run_pipeline(
     int                stride
 );
 
+/**
+ * Cyrillic (Russian) variant — UTF-8 codepoint iterator + 33-bin BPV.
+ * Routes to CyrillicOrthographicEngine; Latin path is completely unaffected.
+ */
+std::vector<WindowResult> run_pipeline_ru(
+    const std::string& text,
+    int                window_size,
+    int                stride
+);
+
+/**
+ * Arabic variant — UTF-8 codepoint iterator + 28-bin Abjad BPV.
+ * Routes to AbjadOrthographicEngine(is_farsi=false).
+ * The byte stream is processed in logical order (keystroke sequence);
+ * no RTL reversal is performed in this layer.
+ */
+std::vector<WindowResult> run_pipeline_ar(
+    const std::string& text,
+    int                window_size,
+    int                stride
+);
+
+/**
+ * Farsi variant — UTF-8 codepoint iterator + 32-bin Abjad BPV.
+ * Routes to AbjadOrthographicEngine(is_farsi=true).
+ * Extends the 28-bin Arabic core with پ چ ژ گ at indices 28–31.
+ */
+std::vector<WindowResult> run_pipeline_fa(
+    const std::string& text,
+    int                window_size,
+    int                stride
+);
+
+/**
+ * Korean variant — UTF-8 conjoining Jamo iterator + 24-bin Jamo BPV.
+ * Routes to KoreanOrthographicEngine.
+ * Input must be Jamo-decomposed by Python's unpack_hangul_to_jamo() before
+ * reaching this layer (syllable blocks U+AC00–U+D7A3 are not handled here).
+ * top_micro_chars keys are Jamo glyph strings (e.g. "ㄱ", "ㅏ").
+ */
+std::vector<WindowResult> run_pipeline_ko(
+    const std::string& text,
+    int                window_size,
+    int                stride
+);
+
 } // namespace psycho

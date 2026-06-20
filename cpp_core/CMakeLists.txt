@@ -20,8 +20,8 @@
 
 cmake_minimum_required(VERSION 3.21)
 project(psycho_core
-    VERSION     3.3.0
-    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core with hidden Unicode scanner and punctuation waveform"
+    VERSION     3.6.0
+    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core (Latin + Cyrillic + Abjad + Hangul Jamo) with Unicode scanner and punctuation waveform"
     LANGUAGES   CXX
 )
 
@@ -59,6 +59,9 @@ set(PSYCHO_SOURCES
     src/compare_engine.cpp
     src/window_engine.cpp
     src/micro_analyzer.cpp
+    src/cyrillic_analyzer.cpp
+    src/abjad_analyzer.cpp
+    src/ko_analyzer.cpp
     src/thread_pool.cpp
     src/bindings.cpp
 )
@@ -86,6 +89,7 @@ if(MSVC)
         /arch:AVX2
         /W3
         /wd4996   # suppress deprecation warnings from pybind11 internals
+        /utf-8    # treat source and execution charset as UTF-8 (required for Cyrillic literals)
     )
     target_link_options(psycho_core PRIVATE
         /LTCG     # link-time code generation matches /GL

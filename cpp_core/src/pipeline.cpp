@@ -11,6 +11,9 @@
 #include "pipeline.h"
 #include "window_engine.h"
 #include "micro_analyzer.h"
+#include "cyrillic_engine.h"
+#include "abjad_engine.h"
+#include "ko_engine.h"
 
 #include <algorithm>
 #include <array>
@@ -30,7 +33,13 @@ static std::string extract_start_snippet(std::string_view sv, std::size_t max_ch
     if (e < sv.size()) {
         std::size_t wb = e;
         while (wb > s && !std::isspace(static_cast<unsigned char>(sv[wb - 1]))) --wb;
-        if (wb > s) e = wb;
+        if (wb > s) {
+            e = wb;
+        } else {
+            // No space found in max_chars bytes: snap e back to a UTF-8 char start
+            // so we never return a string ending with a truncated multi-byte sequence.
+            while (e > s && (static_cast<unsigned char>(sv[e]) & 0xC0) == 0x80) --e;
+        }
     }
     // Trim trailing whitespace
     while (e > s && std::isspace(static_cast<unsigned char>(sv[e - 1]))) --e;
@@ -116,6 +125,14 @@ static std::vector<int> build_punct_waveform(std::string_view text) {
         else if (i + 2 < n && c == 0xE2 && s[i+1] == 0x80 && s[i+2] == 0x94) {
             wave.push_back(3); i += 3;
         }
+        // Arabic comma ، U+060C (D8 8C) → magnitude 1
+        else if (i + 1 < n && c == 0xD8 && s[i+1] == 0x8C) {
+            wave.push_back(1); i += 2;
+        }
+        // Arabic question mark ؟ U+061F (D8 9F) → magnitude 4
+        else if (i + 1 < n && c == 0xD8 && s[i+1] == 0x9F) {
+            wave.push_back(4); i += 2;
+        }
         else { ++i; }
     }
     return wave;
@@ -197,6 +214,199 @@ std::vector<WindowResult> run_pipeline(
         results.push_back(std::move(wr));
     }
 
+    return results;
+}
+
+// ---------------------------------------------------------------------------
+// Cyrillic (Russian) pipeline — UTF-8 codepoint iterator + 33-bin BPV
+// The Latin run_pipeline() above is completely untouched.
+// ---------------------------------------------------------------------------
+std::vector<WindowResult> run_pipeline_ru(
+    const std::string& text,
+    int                window_size,
+    int                stride
+) {
+    const RollingWindowEngine        engine(window_size, stride);
+    const CyrillicOrthographicEngine scorer;
+
+    const auto windows = engine.tokenize(text);
+
+    std::vector<WindowResult> results;
+    results.reserve(windows.size());
+
+    for (const auto& win : windows) {
+        const CyrillicMicroScore ms = scorer.score_window(win.text);
+
+        WindowResult wr;
+        wr.index        = win.index;
+        wr.start_char   = win.start_char;
+        wr.end_char     = win.end_char;
+        wr.reset_reason = win.reset_reason;
+        wr.start_line   = win.start_line;
+        wr.end_line     = win.end_line;
+        wr.start_snippet = extract_start_snippet(win.text);
+        wr.end_snippet   = extract_end_snippet(win.text);
+
+        wr.vectors         = scorer.to_vectors(ms);
+        wr.total_chars     = ms.total_chars;
+        wr.total_words     = ms.total_words;
+        wr.avg_word_length = ms.total_words > 0
+            ? static_cast<float>(ms.total_chars) / static_cast<float>(ms.total_words)
+            : 0.0f;
+
+        scorer.fill_telemetry(ms, wr);
+
+        wr.hidden_unicode_count = count_hidden_unicode(win.text);
+        wr.stego_anomaly_flag   = wr.hidden_unicode_count > 0;
+        wr.punctuation_waveform = build_punct_waveform(win.text);
+
+        results.push_back(std::move(wr));
+    }
+
+    return results;
+}
+
+// ---------------------------------------------------------------------------
+// Arabic (AR) pipeline — UTF-8 codepoint iterator + 28-bin Abjad BPV
+// Logical order processing: the byte stream is not reversed for RTL rendering.
+// ---------------------------------------------------------------------------
+std::vector<WindowResult> run_pipeline_ar(
+    const std::string& text,
+    int                window_size,
+    int                stride
+) {
+    const RollingWindowEngine      engine(window_size, stride);
+    const AbjadOrthographicEngine  scorer(/*is_farsi=*/false);
+
+    const auto windows = engine.tokenize(text);
+
+    std::vector<WindowResult> results;
+    results.reserve(windows.size());
+
+    for (const auto& win : windows) {
+        const AbjadMicroScore ms = scorer.score_window(win.text);
+
+        WindowResult wr;
+        wr.index         = win.index;
+        wr.start_char    = win.start_char;
+        wr.end_char      = win.end_char;
+        wr.reset_reason  = win.reset_reason;
+        wr.start_line    = win.start_line;
+        wr.end_line      = win.end_line;
+        wr.start_snippet = extract_start_snippet(win.text);
+        wr.end_snippet   = extract_end_snippet(win.text);
+
+        wr.vectors         = scorer.to_vectors(ms);
+        wr.total_chars     = ms.total_chars;
+        wr.total_words     = ms.total_words;
+        wr.avg_word_length = ms.total_words > 0
+            ? static_cast<float>(ms.total_chars) / static_cast<float>(ms.total_words)
+            : 0.0f;
+
+        scorer.fill_telemetry(ms, wr);
+
+        wr.hidden_unicode_count = count_hidden_unicode(win.text);
+        wr.stego_anomaly_flag   = wr.hidden_unicode_count > 0;
+        wr.punctuation_waveform = build_punct_waveform(win.text);
+
+        results.push_back(std::move(wr));
+    }
+    return results;
+}
+
+// ---------------------------------------------------------------------------
+// Farsi (FA) pipeline — UTF-8 codepoint iterator + 32-bin Abjad BPV
+// Extends the Arabic core with پ چ ژ گ at indices 28–31.
+// ---------------------------------------------------------------------------
+std::vector<WindowResult> run_pipeline_fa(
+    const std::string& text,
+    int                window_size,
+    int                stride
+) {
+    const RollingWindowEngine      engine(window_size, stride);
+    const AbjadOrthographicEngine  scorer(/*is_farsi=*/true);
+
+    const auto windows = engine.tokenize(text);
+
+    std::vector<WindowResult> results;
+    results.reserve(windows.size());
+
+    for (const auto& win : windows) {
+        const AbjadMicroScore ms = scorer.score_window(win.text);
+
+        WindowResult wr;
+        wr.index         = win.index;
+        wr.start_char    = win.start_char;
+        wr.end_char      = win.end_char;
+        wr.reset_reason  = win.reset_reason;
+        wr.start_line    = win.start_line;
+        wr.end_line      = win.end_line;
+        wr.start_snippet = extract_start_snippet(win.text);
+        wr.end_snippet   = extract_end_snippet(win.text);
+
+        wr.vectors         = scorer.to_vectors(ms);
+        wr.total_chars     = ms.total_chars;
+        wr.total_words     = ms.total_words;
+        wr.avg_word_length = ms.total_words > 0
+            ? static_cast<float>(ms.total_chars) / static_cast<float>(ms.total_words)
+            : 0.0f;
+
+        scorer.fill_telemetry(ms, wr);
+
+        wr.hidden_unicode_count = count_hidden_unicode(win.text);
+        wr.stego_anomaly_flag   = wr.hidden_unicode_count > 0;
+        wr.punctuation_waveform = build_punct_waveform(win.text);
+
+        results.push_back(std::move(wr));
+    }
+    return results;
+}
+
+// ---------------------------------------------------------------------------
+// Korean (KO) pipeline — conjoining Jamo UTF-8 + 24-bin Jamo BPV
+// Input must be Jamo-decomposed by Python's unpack_hangul_to_jamo().
+// ---------------------------------------------------------------------------
+std::vector<WindowResult> run_pipeline_ko(
+    const std::string& text,
+    int                window_size,
+    int                stride
+) {
+    const RollingWindowEngine      engine(window_size, stride);
+    const KoreanOrthographicEngine scorer;
+
+    const auto windows = engine.tokenize(text);
+
+    std::vector<WindowResult> results;
+    results.reserve(windows.size());
+
+    for (const auto& win : windows) {
+        const KoreanMicroScore ms = scorer.score_window(win.text);
+
+        WindowResult wr;
+        wr.index         = win.index;
+        wr.start_char    = win.start_char;
+        wr.end_char      = win.end_char;
+        wr.reset_reason  = win.reset_reason;
+        wr.start_line    = win.start_line;
+        wr.end_line      = win.end_line;
+        wr.start_snippet = extract_start_snippet(win.text);
+        wr.end_snippet   = extract_end_snippet(win.text);
+
+        wr.vectors         = scorer.to_vectors(ms);
+        wr.total_chars     = ms.total_chars;
+        wr.total_words     = ms.total_words;
+        wr.avg_word_length = ms.total_words > 0
+            ? static_cast<float>(ms.total_chars) / static_cast<float>(ms.total_words)
+            : 0.0f;
+
+        scorer.fill_telemetry(ms, wr);
+
+        wr.hidden_unicode_count = count_hidden_unicode(win.text);
+        wr.stego_anomaly_flag   = wr.hidden_unicode_count > 0;
+        wr.punctuation_waveform = build_punct_waveform(win.text);
+
+        results.push_back(std::move(wr));
+    }
     return results;
 }
 

@@ -53,7 +53,16 @@ class BaselineStats:
         self.ema = (value * alpha) + (self.ema * (1.0 - alpha))
 
     def z_score(self, value: float) -> float:
-        """Return the Z-score of *value* relative to the current baseline."""
+        """Return Z-score of *value* against the current baseline.
+
+        Task 2 guard: when n < 2 the engine has no variance history
+        (update() was just called with this value, so mu == value and the
+        standard formula always returns 0).  In that case, return the raw
+        value so a non-zero score produces a visible signal on the first
+        observation rather than being silently swallowed.
+        """
+        if self.n < 2:
+            return value
         return (value - self.mu) / self.sigma if self.sigma > 0 else 0.0
 
     def to_dict(self) -> dict:

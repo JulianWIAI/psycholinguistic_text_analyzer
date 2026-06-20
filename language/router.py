@@ -9,6 +9,13 @@ Supported codes:
     "ES"  — Spanish  (Latin BPV + RR/LL overrides, es_core_news_sm)
     "FR"  — French   (Latin BPV + silent terminal override, fr_core_news_sm)
     "JA"  — Japanese (Logographic matrix + Keigo, ja_core_news_sm)
+    "RU"  — Russian  (Cyrillic UTF-8 BPV, 33-bin, psycho_core.analyze_ru, ru_core_news_md)
+    "AR"  — Arabic   (Abjad UTF-8 BPV, 28-bin, psycho_core.analyze_ar, xx_ent_wiki_sm)
+    "FA"  — Farsi    (Abjad UTF-8 BPV, 32-bin, psycho_core.analyze_fa, xx_ent_wiki_sm)
+    "KO"  — Korean   (Hangul Jamo BPV, 24-bin, psycho_core.analyze_ko, ko_core_news_sm)
+
+RTL languages (AR, FA): byte stream processed in logical order throughout.
+Reversal for visual rendering is the frontend's responsibility.
 
 All instances are cached after first construction so spaCy models are
 loaded only once per process.
@@ -27,6 +34,10 @@ SUPPORTED_LANGUAGES: Dict[str, str] = {
     "FR": "French",
     "JA": "Japanese",
     "ZH": "Chinese",
+    "RU": "Russian",
+    "AR": "Arabic",
+    "FA": "Farsi",
+    "KO": "Korean",
 }
 
 
@@ -97,6 +108,22 @@ class LanguageRouter:
             from micro_layer.zh_analyzer import ChineseOrthographicAnalyzer
             return ChineseOrthographicAnalyzer()
 
+        if code == "RU":
+            from micro_layer.ru_analyzer import RussianOrthographicAnalyzer
+            return RussianOrthographicAnalyzer()
+
+        if code == "AR":
+            from micro_layer.ar_analyzer import ArabicOrthographicAnalyzer
+            return ArabicOrthographicAnalyzer()
+
+        if code == "FA":
+            from micro_layer.ar_analyzer import FarsiOrthographicAnalyzer
+            return FarsiOrthographicAnalyzer()
+
+        if code == "KO":
+            from micro_layer.ko_analyzer import KoreanOrthographicAnalyzer
+            return KoreanOrthographicAnalyzer()
+
         raise ValueError(f"No micro analyzer registered for language code: {code!r}")
 
     def _build_macro(self, code: str) -> Any:
@@ -126,6 +153,25 @@ class LanguageRouter:
         if code == "ZH":
             from macro_layer.zh_clusters import ChineseSemanticAnalyzer
             return ChineseSemanticAnalyzer()
+
+        if code == "RU":
+            from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
+            from macro_layer.ru_clusters import RU_CLUSTERS
+            return MultilingualSemanticAnalyzer("ru_core_news_md", RU_CLUSTERS)
+
+        if code == "AR":
+            from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
+            from macro_layer.ar_clusters import AR_CLUSTERS
+            return MultilingualSemanticAnalyzer("xx_ent_wiki_sm", AR_CLUSTERS)
+
+        if code == "FA":
+            from macro_layer.multilingual_analyzer import MultilingualSemanticAnalyzer
+            from macro_layer.fa_clusters import FA_CLUSTERS
+            return MultilingualSemanticAnalyzer("xx_ent_wiki_sm", FA_CLUSTERS)
+
+        if code == "KO":
+            from macro_layer.ko_clusters import KoreanSemanticAnalyzer
+            return KoreanSemanticAnalyzer()
 
         raise ValueError(f"No macro analyzer registered for language code: {code!r}")
 
