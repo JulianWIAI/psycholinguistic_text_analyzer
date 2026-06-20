@@ -20,8 +20,8 @@
 
 cmake_minimum_required(VERSION 3.21)
 project(psycho_core
-    VERSION     3.0.0
-    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core with compare engine"
+    VERSION     3.3.0
+    DESCRIPTION "PsychoLinguistic Analysis Engine — compiled BPV core with hidden Unicode scanner and punctuation waveform"
     LANGUAGES   CXX
 )
 

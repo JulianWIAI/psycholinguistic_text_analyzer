@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 import database.schema as db
 from dissonance.engine import DissonanceEngine
+from entropy_engine import compute_entropy_metrics, sanitize_for_entropy
 from language.router import LanguageRouter, SUPPORTED_LANGUAGES
 from micro_layer.somatic_engine import SomaticEngine
 from tokenizer.rolling_window import RollingWindowTokenizer
@@ -52,7 +53,7 @@ _somatic_engine    = SomaticEngine()
 
 class AnalysisRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Raw text to analyze")
-    language_code: str = Field("EN", description="ISO language code: EN, ES, FR, JA")
+    language_code: str = Field("EN", description="ISO language code: EN, DE, ES, FR, JA, ZH")
     document_id: Optional[str] = Field(None, description="Optional document identifier")
     window_size: int = Field(1000, ge=100, description="Characters per window")
     stride: int = Field(500, ge=50, description="Step size between windows")
@@ -61,7 +62,7 @@ class AnalysisRequest(BaseModel):
 
 class ControlTextRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Control / reference text")
-    language_code: str = Field("EN", description="ISO language code: EN, ES, FR, JA")
+    language_code: str = Field("EN", description="ISO language code: EN, DE, ES, FR, JA, ZH")
 
 
 class EntityCreateRequest(BaseModel):
@@ -75,7 +76,75 @@ class EntityCreateRequest(BaseModel):
 # Core pipeline helper
 # ---------------------------------------------------------------------------
 
-_WORD_RE = re.compile(r"[A-Za-z]+")
+_WORD_RE   = re.compile(r"[A-Za-z]+")
+_LETTER_RE = re.compile(r"[A-Za-z]")
+
+# Zero-width / invisible Unicode byte sequences (UTF-8 encoded)
+_HIDDEN_SEQS = [
+    b"\xe2\x80\x8b",  # U+200B Zero-Width Space
+    b"\xe2\x80\x8c",  # U+200C Zero-Width Non-Joiner
+    b"\xe2\x80\x8d",  # U+200D Zero-Width Joiner
+    b"\xe2\x81\xa0",  # U+2060 Word Joiner
+    b"\xef\xbb\xbf",  # U+FEFF BOM
+]
+# Punctuation magnitude table
+_PUNCT_MAP: Dict[str, int] = {",": 1, ".": 2, ":": 2, "-": 2, ";": 3, "!": 4, "?": 4}
+_PUNCT_UTF8: Dict[bytes, int] = {
+    b"\xe2\x80\x93": 2,  # U+2013 en dash
+    b"\xe2\x80\x94": 3,  # U+2014 em dash
+}
+
+
+def _compute_letter_freq(text: str) -> Dict[str, int]:
+    """Return a full A-Z frequency dict for *text* (uppercase keys, all 26 present)."""
+    freq: Dict[str, int] = {chr(i): 0 for i in range(65, 91)}
+    for ch in text.upper():
+        if "A" <= ch <= "Z":
+            freq[ch] += 1
+    return freq
+
+
+def _scan_hidden_unicode(text: str) -> Dict[str, Any]:
+    """
+    Scan *text* (original window text, any language) for steganographic Unicode.
+    Returns hidden_unicode_count and stego_anomaly_flag.
+    Runs on the native text for all languages — catches ZW chars embedded in
+    Japanese/Chinese text that the C++ phonetic path would not see.
+    """
+    raw = text.encode("utf-8", errors="replace")
+    count = 0
+    for seq in _HIDDEN_SEQS:
+        count += raw.count(seq)
+    # Trailing whitespace before newline (binary pacing)
+    for line in text.split("\n"):
+        stripped = line.rstrip(" \t")
+        count += len(line) - len(stripped)
+    return {"hidden_unicode_count": count, "stego_anomaly_flag": count > 0}
+
+
+def _build_punct_waveform(text: str) -> List[int]:
+    """
+    Return an ordered array of pause-magnitude values for each punctuation mark
+    in *text*.  Runs on the original text so native punctuation is captured for
+    all languages.
+    """
+    wave: List[int] = []
+    raw = text.encode("utf-8", errors="replace")
+    i = 0
+    n = len(raw)
+    while i < n:
+        # Check 3-byte sequences first
+        if i + 2 < n:
+            tri = bytes(raw[i:i+3])
+            if tri in _PUNCT_UTF8:
+                wave.append(_PUNCT_UTF8[tri])
+                i += 3
+                continue
+        ch = chr(raw[i]) if raw[i] < 128 else ""
+        if ch in _PUNCT_MAP:
+            wave.append(_PUNCT_MAP[ch])
+        i += 1
+    return wave
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +302,44 @@ def _run_pipeline(
         end_line   = _char_to_line(text, win.end_char)
         start_snip, end_snip = _extract_snippets(text, win.start_char, win.end_char)
 
+        raw_telem = _compute_window_telemetry(win.text, macro_result.hits)
+
+        # ── v3.3: Steganographic anomaly scan (original text, all languages) ──
+        raw_telem.update(_scan_hidden_unicode(win.text))
+
+        # ── v3.3: Punctuation structural waveform (original text) ─────────────
+        raw_telem["punctuation_waveform"] = _build_punct_waveform(win.text)
+
+        # ── v3.3: Linguistic Entropy Engine (Split-Stream) ────────────────────
+        # Stream A: win.text — untouched; used above for stego scan, punct waveform,
+        #           C++ telemetry, and UI rendering.
+        # Stream B: sanitized prose — Markdown structure stripped before NLP so
+        #           headers/fences/bullets don't corrupt burstiness baselines.
+        entropy_text = sanitize_for_entropy(win.text)
+        lemmas = [h.lemma for h in macro_result.hits] if macro_result.hits else None
+        raw_telem.update(compute_entropy_metrics(entropy_text, lemmas=lemmas))
+
+        # ── Logographic structural override ───────────────────────────────────
+        # For JA/ZH the micro analyzer computed native token counts via pykakasi
+        # / jieba. Overwrite the Latin-regex counts so Total Words / Total Chars
+        # in the UI reflect the actual native text, not the romanized proxy.
+        if language_code in ("JA", "ZH") and micro_result.raw:
+            for key in ("total_chars", "total_words", "avg_word_length"):
+                if key in micro_result.raw:
+                    raw_telem[key] = micro_result.raw[key]
+        # ZH: pass stroke array through to the frontend Dual-Signal oscilloscope
+        if language_code == "ZH":
+            raw_telem["stroke_count_array"] = micro_result.raw.get(
+                "stroke_count_array", []
+            )
+
+        # ── A–Z letter frequencies ─────────────────────────────────────────────
+        # For JA/ZH: use the phonetic Romaji/Pinyin string so the UI letter
+        # frequency list reflects the actual BPV alphabet, not native glyphs.
+        # For all other languages: count directly from the window text.
+        phonetic = micro_result.raw.get("phonetic_text", "") if language_code in ("JA", "ZH") else ""
+        raw_telem["letter_frequencies"] = _compute_letter_freq(phonetic or win.text)
+
         window_results.append({
             "window_index":  win.index,
             "start_char":    win.start_char,
@@ -253,7 +360,8 @@ def _run_pipeline(
                     cluster: {pole: round(score, 6) for pole, score in poles.items()}
                     for cluster, poles in macro_result.cluster_scores.items()
                 },
-                "semantic_hits": len(macro_result.hits),
+                "semantic_hits":       len(macro_result.hits),
+                "entity_polarity_map": macro_result.entity_polarity_map,
             },
             "somatic": {**somatic_result.to_dict(),
                         "window_envelope": [round(v, 4) for v in win_envelope]},
@@ -268,7 +376,6 @@ def _run_pipeline(
                     "vectors":      e.vectors_involved,
                     "delta":        e.delta_score,
                     "conclusion":   e.algorithmic_conclusion,
-                    # Spatial anchor — locates the anomaly in the source document
                     "window_index":  win.index,
                     "start_line":    start_line,
                     "end_line":      end_line,
@@ -277,7 +384,7 @@ def _run_pipeline(
                 }
                 for e in dis.dissonance_events
             ],
-            "raw_telemetry": _compute_window_telemetry(win.text, macro_result.hits),
+            "raw_telemetry": raw_telem,
         })
 
     return {

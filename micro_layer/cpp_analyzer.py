@@ -117,6 +117,11 @@ class CppOrthographicAnalyzer(BaseMicroAnalyzer):
                 "avg_word_length":         rt.get("avg_word_length", 0.0),
                 "top_micro_chars":         rt.get("top_micro_chars", {}),
                 "double_letter_anomalies": rt.get("double_letter_anomalies", {}),
+                # v3.3 — steganographic anomaly detection
+                "hidden_unicode_count":    rt.get("hidden_unicode_count", 0),
+                "stego_anomaly_flag":      rt.get("stego_anomaly_flag", False),
+                # v3.3 — punctuation structural waveform
+                "punctuation_waveform":    rt.get("punctuation_waveform", []),
             },
             language=self._lang,
         )

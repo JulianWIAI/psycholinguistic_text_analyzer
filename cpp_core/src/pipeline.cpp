@@ -54,6 +54,73 @@ static std::string extract_end_snippet(std::string_view sv, std::size_t max_char
     return std::string(sv.substr(s, e - s));
 }
 
+// ---------------------------------------------------------------------------
+// v3.3 — Hidden Unicode scanner
+// Counts zero-width chars (U+200B/C/D, U+2060, U+FEFF) and trailing
+// whitespace before newlines (space/tab used as binary pacing steganography).
+// ---------------------------------------------------------------------------
+static int count_hidden_unicode(std::string_view text) noexcept {
+    int count = 0;
+    const auto* s = reinterpret_cast<const unsigned char*>(text.data());
+    const std::size_t n = text.size();
+    for (std::size_t i = 0; i < n; ) {
+        // 3-byte sequences beginning with E2
+        if (i + 2 < n && s[i] == 0xE2) {
+            // U+200B (E2 80 8B)  U+200C (E2 80 8C)  U+200D (E2 80 8D)
+            if (s[i+1] == 0x80 && s[i+2] >= 0x8B && s[i+2] <= 0x8D) {
+                ++count; i += 3; continue;
+            }
+            // U+2060 Word Joiner (E2 81 A0)
+            if (s[i+1] == 0x81 && s[i+2] == 0xA0) {
+                ++count; i += 3; continue;
+            }
+        }
+        // U+FEFF BOM (EF BB BF)
+        if (i + 2 < n && s[i] == 0xEF && s[i+1] == 0xBB && s[i+2] == 0xBF) {
+            ++count; i += 3; continue;
+        }
+        // Trailing whitespace: run of spaces/tabs immediately before a newline
+        if (s[i] == ' ' || s[i] == '\t') {
+            std::size_t j = i;
+            while (j < n && (s[j] == ' ' || s[j] == '\t')) ++j;
+            if (j < n && s[j] == '\n') {
+                count += static_cast<int>(j - i);
+                i = j; continue;
+            }
+        }
+        ++i;
+    }
+    return count;
+}
+
+// ---------------------------------------------------------------------------
+// v3.3 — Punctuation structural waveform builder
+// Returns an ordered array of pause-magnitude values for each punctuation mark.
+// ---------------------------------------------------------------------------
+static std::vector<int> build_punct_waveform(std::string_view text) {
+    std::vector<int> wave;
+    const auto* s = reinterpret_cast<const unsigned char*>(text.data());
+    const std::size_t n = text.size();
+    for (std::size_t i = 0; i < n; ) {
+        const unsigned char c = s[i];
+        if      (c == ',')              { wave.push_back(1); ++i; }
+        else if (c == '.' || c == ':'
+              || c == '-')             { wave.push_back(2); ++i; }
+        else if (c == ';')             { wave.push_back(3); ++i; }
+        else if (c == '!' || c == '?') { wave.push_back(4); ++i; }
+        // En dash U+2013 (E2 80 93) → magnitude 2
+        else if (i + 2 < n && c == 0xE2 && s[i+1] == 0x80 && s[i+2] == 0x93) {
+            wave.push_back(2); i += 3;
+        }
+        // Em dash U+2014 (E2 80 94) → magnitude 3
+        else if (i + 2 < n && c == 0xE2 && s[i+1] == 0x80 && s[i+2] == 0x94) {
+            wave.push_back(3); i += 3;
+        }
+        else { ++i; }
+    }
+    return wave;
+}
+
 } // anonymous namespace
 
 namespace psycho {
@@ -121,6 +188,11 @@ std::vector<WindowResult> run_pipeline(
                 wr.double_letter_anomalies[pair] = ms.double_letter_counts[i];
             }
         }
+
+        // v3.3 — steganographic anomaly detection + punctuation waveform
+        wr.hidden_unicode_count = count_hidden_unicode(win.text);
+        wr.stego_anomaly_flag   = wr.hidden_unicode_count > 0;
+        wr.punctuation_waveform = build_punct_waveform(win.text);
 
         results.push_back(std::move(wr));
     }

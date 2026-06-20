@@ -18,6 +18,7 @@
       --muted:    #6b7394;
       --text:     #dce3f5;
       --ja:       #f7c87e;
+      --zh:       #e06850;
       --es:       #e07878;
       --fr:       #7eb8f7;
       --en:       #5ce08a;
@@ -38,6 +39,7 @@
     .lang-ES { background: var(--es);  color: #fff; }
     .lang-FR { background: var(--fr);  color: #000; }
     .lang-JA { background: var(--ja);  color: #000; }
+    .lang-ZH { background: var(--zh);  color: #fff; }
 
     /* ── Layout ── */
     .layout { display: grid; grid-template-columns: 420px 1fr; height: calc(100vh - 52px); }
@@ -65,6 +67,7 @@
     .lang-btn.active-ES { border-color: var(--es); color: var(--es); background: #2a1a1a; }
     .lang-btn.active-FR { border-color: var(--fr); color: var(--fr); background: #1a1e2a; }
     .lang-btn.active-JA { border-color: var(--ja); color: var(--ja); background: #2a261a; }
+    .lang-btn.active-ZH { border-color: var(--zh); color: var(--zh); background: #2a1810; }
     .lang-note { font-size: .7rem; color: var(--muted); margin-top: .4rem; line-height: 1.4; }
 
     /* ── Buttons ── */
@@ -115,6 +118,7 @@
     .sc-hiragana { color: var(--ok); }
     .sc-katakana { color: var(--es); }
     .sc-stroke   { color: var(--fr); }
+    .sc-hanzi    { color: var(--zh); }
 
     /* ── Z-score grid ── */
     .zscore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px,1fr)); gap: .45rem; }
@@ -292,12 +296,13 @@
     .oscillo-chart-wrap { position:relative; height:160px; }
     /* Window Span Map */
     .win-span-map { margin-top:.65rem; border-top:1px solid var(--border); padding-top:.5rem; }
-    .wsm-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.22rem; cursor:pointer; }
+    .wsm-row { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-bottom:.32rem; cursor:pointer; }
     .wsm-row:hover .wsm-bar-fill { opacity:.8; }
     .wsm-label { font-family:monospace; font-weight:700; font-size:.63rem; width:2.4rem; flex-shrink:0; text-align:right; }
     .wsm-bar-outer { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; position:relative; }
     .wsm-bar-fill { position:absolute; height:100%; border-radius:3px; transition:background .15s; }
     .wsm-range { font-family:monospace; font-size:.59rem; color:var(--muted); white-space:nowrap; min-width:7rem; }
+    .wsm-snippet { width:100%; padding-left:calc(2.4rem + .5rem); font-size:.58rem; color:var(--muted); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:-.05rem; opacity:.8; }
 
     /* Document Overview card */
     .overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.7rem; }
@@ -346,6 +351,36 @@
     .lfreq-cnt      { font-size:.65rem; color:var(--muted); font-family:monospace; min-width:3.8rem; text-align:right; }
     .lfreq-sort-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:.18rem .55rem; font-size:.67rem; font-weight:600; cursor:pointer; letter-spacing:.04em; transition:all .15s; }
     .lfreq-sort-btn.active { border-color:var(--accent); color:var(--accent); }
+    /* ── Letter Frequency — Compare Mode Inline Micro-Bars ── */
+    .lfreq-row-cmp  { display:flex; align-items:center; gap:.2rem; }
+    .lfreq-cell     { flex:1; position:relative; overflow:hidden; height:1.35rem; display:flex; align-items:center; border-radius:2px; }
+    .lfreq-cell-a   { justify-content:flex-end; }
+    .lfreq-cell-b   { justify-content:flex-start; }
+    .lfreq-bar      { position:absolute; top:0; bottom:0; border-radius:2px; transition:width .3s; }
+    .lfreq-bar-a    { right:0; background:rgba(0,255,255,0.15); }
+    .lfreq-bar-b    { left:0;  background:rgba(220,20,60,0.15); }
+    .lfreq-num-a    { position:relative; z-index:1; font-size:.68rem; font-family:monospace; color:var(--fg); padding-right:.3rem; white-space:nowrap; }
+    .lfreq-num-b    { position:relative; z-index:1; font-size:.68rem; font-family:monospace; color:var(--fg); padding-left:.3rem;  white-space:nowrap; }
+    .lfreq-char-ctr { font-family:monospace; font-weight:700; color:var(--accent); width:1rem; font-size:.85rem; flex-shrink:0; text-align:center; }
+    .lfreq-delta-ctr{ font-size:.6rem; font-family:monospace; font-weight:600; min-width:2.4rem; text-align:center; flex-shrink:0; }
+
+    /* ── v3.3 Steganographic Anomaly Warning ── */
+    .stego-warn-chip { display:flex; align-items:center; gap:.5rem; background:rgba(255,50,50,0.08); border:1px solid rgba(255,50,50,0.45); color:#ff4444; border-radius:4px; padding:.35rem .7rem; font-size:.72rem; font-weight:700; letter-spacing:.04em; margin-top:.5rem; }
+    .stego-warn-icon { font-size:.95rem; flex-shrink:0; }
+
+    /* ── v3.3 Linguistic Entropy stat row ── */
+    .entropy-stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin-top:.5rem; }
+
+    /* ── v3.3 Entity Polarity Map ── */
+    .entity-polarity-block { margin-top:.8rem; }
+    .entity-chip { display:flex; align-items:center; gap:.4rem; padding:.25rem .35rem; border-radius:4px; border:1px solid var(--border); margin-bottom:.28rem; font-size:.72rem; background:rgba(255,255,255,0.02); }
+    .entity-label-badge { font-size:.6rem; font-weight:700; padding:.08rem .32rem; border-radius:3px; border:1px solid; letter-spacing:.05em; flex-shrink:0; }
+    .entity-name  { font-family:monospace; font-weight:700; color:var(--fg); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .entity-arrow { color:var(--muted); flex-shrink:0; font-size:.75rem; }
+    .entity-driver{ font-family:monospace; font-size:.68rem; color:var(--purple); }
+
+    /* ── Punctuation Morse oscilloscope ── */
+    .punct-morse-sublbl { font-size:.62rem; color:var(--muted); margin-left:.5rem; }
 
     /* ── Sectional Summary Matrix ── */
     .sect-spark     { display:flex; align-items:flex-end; gap:3px; }
@@ -437,6 +472,7 @@
         <button class="lang-btn" data-lang="ES" onclick="selectLang('ES')">🇪🇸 ES</button>
         <button class="lang-btn" data-lang="FR" onclick="selectLang('FR')">🇫🇷 FR</button>
         <button class="lang-btn" data-lang="JA" onclick="selectLang('JA')">🇯🇵 JA</button>
+        <button class="lang-btn" data-lang="ZH" onclick="selectLang('ZH')">🇨🇳 ZH</button>
       </div>
       <div class="lang-note" id="lang-note">Latin BPV matrix · en_core_web_md</div>
     </div>
@@ -561,6 +597,10 @@
         <div class="script-grid" id="ja-script-grid"></div>
       </div>
 
+      <div id="zh-script-panel" style="display:none;">
+        <div class="script-grid" id="zh-script-grid"></div>
+      </div>
+
       <div class="radar-grid">
         <div class="radar-block">
           <div class="radar-label">Micro-Vector Fingerprint</div>
@@ -592,6 +632,8 @@
         <div class="telem-section">
           <div class="telem-section-hdr">A — Structural Baseline</div>
           <div class="telem-stat-row" id="telem-baseline"></div>
+          <div id="telem-stego-warn" style="display:none;"></div>
+          <div class="entropy-stat-row" id="telem-entropy-row"></div>
         </div>
 
         <!-- B: Frequency Leaders -->
@@ -626,6 +668,11 @@
             </thead>
             <tbody id="telem-driver-body"></tbody>
           </table>
+          <!-- D: Entity Polarity Map (v3.3) -->
+          <div class="entity-polarity-block" id="telem-entity-block" style="display:none;">
+            <div class="telem-freq-col-title" style="margin-top:.7rem;">D — Entity Polarity Map</div>
+            <div id="telem-entity-tags"></div>
+          </div>
         </div>
 
       </div><!-- /telem-body -->
@@ -707,6 +754,24 @@
             <span class="oscillo-sublbl" id="soma-micro-sublbl">current window · 256 raw letter values · no smoothing</span>
           </div>
           <div class="oscillo-chart-wrap"><canvas id="soma-wave-micro"></canvas></div>
+        </div>
+
+        <!-- Chart C: Structural Stroke-Count Physics (ZH only) -->
+        <div class="oscillo-block" id="soma-stroke-zh-block" style="display:none;">
+          <div class="oscillo-hdr">
+            <span class="oscillo-lbl" style="color:#ffd700;">Structural Stroke-Count Physics (Hanzi Mass)</span>
+            <span class="oscillo-sublbl" id="soma-stroke-zh-sublbl">ZH · stroke count per Hanzi · physical ink density</span>
+          </div>
+          <div class="oscillo-chart-wrap"><canvas id="soma-stroke-zh"></canvas></div>
+        </div>
+
+        <!-- Chart D: Punctuation Structural Morse (all languages) -->
+        <div class="oscillo-block" id="soma-punct-block" style="display:none;">
+          <div class="oscillo-hdr">
+            <span class="oscillo-lbl" style="color:#ff8c00;">Structural Morse · Punctuation Waveform</span>
+            <span class="oscillo-sublbl punct-morse-sublbl" id="soma-punct-sublbl"></span>
+          </div>
+          <div class="oscillo-chart-wrap"><canvas id="soma-punct"></canvas></div>
         </div>
 
       </div><!-- /oscillo-deck -->
@@ -812,12 +877,15 @@ let _cachedTotalCharsB = 0;
 let _cachedEnvActive       = null; // active doc's envelope — used for per-window slicing only
 let _cachedTotalCharsActive = 0;
 let _somaWaveMicro  = null;   // Chart B — per-window 256-point raw signal
+let _somaStrokeZh   = null;   // Chart C — ZH stroke-count waveform (Dual-Signal Engine)
+let _somaPunct      = null;   // Chart D — Punctuation Structural Morse waveform
 let _telwCharts        = [];   // Wavelength Telemetry chunk charts (one per window)
 let _telwFullDocChart  = null; // Single full-document telemetry chart (Σ summary)
 let _currentZMicro  = {};
 let _currentZMacro  = {};
 let _currentVectors = {};
 let _telemOpen  = true;
+let _winSize    = 1000;   // user's window_size param — stored at analysis time for x-axis locking
 
 /* ════════════════════════════════════════════════════════════
    Constants
@@ -828,6 +896,7 @@ const LANG_NOTES = {
   ES: "Latin BPV + RR×2.0 / LL×1.5 overrides · es_core_news_md",
   FR: "Latin BPV + Silent terminal suppression (S/T/X/D→0) · fr_core_news_md",
   JA: "Logographic matrix: Kanji/Hiragana/Katakana + Stroke density + Keigo · ja_core_news_md",
+  ZH: "Dual-Signal Engine: Hanzi → Pinyin → C++ BPV + Stroke-Count Waveform · jieba + pypinyin",
 };
 
 const MICRO_KEYS   = ['intensity','anxiety','attention','emotion','agitation','complexity'];
@@ -873,7 +942,7 @@ function selectLang(code) {
   });
   $('lang-note').textContent = LANG_NOTES[code] || '';
   const badge = $('hdr-lang-badge');
-  const names = { EN:'🇬🇧 English', DE:'🇩🇪 German', ES:'🇪🇸 Spanish', FR:'🇫🇷 French', JA:'🇯🇵 Japanese' };
+  const names = { EN:'🇬🇧 English', DE:'🇩🇪 German', ES:'🇪🇸 Spanish', FR:'🇫🇷 French', JA:'🇯🇵 Japanese', ZH:'🇨🇳 Chinese' };
   badge.textContent   = names[code];
   badge.className     = `badge-lang lang-${code}`;
   badge.style.display = '';
@@ -982,6 +1051,13 @@ function updateCharts(win) {
 /* ════════════════════════════════════════════════════════════
    Render: Window Pills
 ════════════════════════════════════════════════════════════ */
+function snippetLandmark(win) {
+  const s = (win && win.start_snippet) ? win.start_snippet.trim() : '';
+  if (!s) return '';
+  const words = s.split(/\s+/);
+  return words.slice(0, 3).join(' ') + '…';
+}
+
 function renderWindowPills(windows, unifiedMode = false) {
   const c = $('window-pills');
   c.innerHTML = '';
@@ -1008,8 +1084,8 @@ function renderWindowPills(windows, unifiedMode = false) {
     pill.className = ['window-pill', i === _activeWin ? 'active' : '', hasDis ? 'has-dis' : '', isReset ? 'reset' : ''].filter(Boolean).join(' ');
     pill.textContent = `W${i}${isReset ? ' ⟳' : ''}${hasDis ? ' ⚡' : ''}`;
     const lineInfo = (win.start_line && win.end_line) ? `Lines ${win.start_line}–${win.end_line}` : `chars ${win.start_char}–${win.end_char}`;
-    const snippetInfo = win.start_snippet ? `\n"${win.start_snippet.slice(0,40)}…"` : '';
-    pill.title = `${lineInfo}${snippetInfo}\n${win.reset_reason}`;
+    const landmark = snippetLandmark(win);
+    pill.title = `${lineInfo}${landmark ? `\n"${landmark}"` : ''}\n${win.reset_reason}`;
     pill.addEventListener('click', () => selectWindow(i));
     c.appendChild(pill);
   });
@@ -1034,12 +1110,15 @@ function renderWinSpanMap(windows) {
     const lineInfo = (win.start_line && win.end_line)
       ? `L${win.start_line}–L${win.end_line}`
       : `${win.start_char}–${win.end_char}`;
+    const landmark  = snippetLandmark(win);
+    const charRange = `chars ${win.start_char}–${win.end_char}`;
     return `<div class="wsm-row" onclick="selectWindow(${i})">
       <span class="wsm-label" style="color:${lblColor};">W${i}</span>
       <div class="wsm-bar-outer">
         <div class="wsm-bar-fill" style="left:${startPct}%;width:${widthPct}%;background:${barColor};"></div>
       </div>
       <span class="wsm-range">${lineInfo}${hasDis ? ' ⚡' : ''}</span>
+      ${landmark ? `<span class="wsm-snippet">“${landmark}” &nbsp;(${charRange})</span>` : ''}
     </div>`;
   }).join('');
   el.style.display = '';
@@ -1178,6 +1257,28 @@ function renderJaPanel(win) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Render: ZH Script Panel
+════════════════════════════════════════════════════════════ */
+function renderZhPanel(win) {
+  const panel = $('zh-script-panel');
+  const isZH  = win.language === 'ZH';
+  panel.style.display = isZH ? '' : 'none';
+  if (!isZH) return;
+  const raw = win.micro.raw || {};
+  const strokes = raw.stroke_count_array || [];
+  const avgStroke = strokes.length
+    ? (strokes.reduce((a, b) => a + b, 0) / strokes.length).toFixed(1)
+    : '—';
+  const maxStroke = strokes.length ? Math.max(...strokes) : '—';
+  $('zh-script-grid').innerHTML = `
+    <div class="script-cell"><div class="script-name">Hanzi Count</div><div class="script-pct sc-hanzi">${strokes.length}</div></div>
+    <div class="script-cell"><div class="script-name">Avg Strokes</div><div class="script-pct sc-stroke">${avgStroke}</div></div>
+    <div class="script-cell"><div class="script-name">Max Strokes</div><div class="script-pct" style="color:var(--warn)">${maxStroke}</div></div>
+    <div class="script-cell"><div class="script-name">Complexity</div><div class="script-pct sc-hanzi">${(+(win.micro.vectors.complexity||0)).toFixed(1)}</div></div>
+  `;
+}
+
+/* ════════════════════════════════════════════════════════════
    Render: Z-Scores
 ════════════════════════════════════════════════════════════ */
 function renderZScores(win) {
@@ -1221,6 +1322,43 @@ function renderTelemetry(win) {
     <div class="telem-stat-box">
       <div class="telem-stat-label">Avg Word Len</div>
       <div class="telem-stat-value">${(rt.avg_word_length ?? 0).toFixed(2)}</div>
+    </div>
+  `;
+
+  // ── Section A: Steganographic Anomaly Warning ──────────────────────────────
+  const stegoEl    = $('telem-stego-warn');
+  const stegoCount = rt.hidden_unicode_count || 0;
+  if (rt.stego_anomaly_flag && stegoCount > 0) {
+    stegoEl.style.display = '';
+    stegoEl.innerHTML = `<div class="stego-warn-chip">
+      <span class="stego-warn-icon">⚠</span>
+      STEGANOGRAPHIC ANOMALY — ${stegoCount} hidden Unicode character${stegoCount !== 1 ? 's' : ''} detected
+      &nbsp;(zero-width / BOM / trailing whitespace encoding)
+    </div>`;
+  } else {
+    stegoEl.style.display = 'none';
+  }
+
+  // ── Section A: Linguistic Entropy Metrics ─────────────────────────────────
+  const burst   = rt.burstiness          ?? null;
+  const entropy = rt.lexical_entropy     ?? null;
+  const aiProb  = rt.ai_probability_score ?? null;
+  const aiColor = aiProb === null ? 'var(--fg)'
+                : aiProb > 0.65   ? '#ff4444'
+                : aiProb > 0.40   ? '#ffd700'
+                : 'var(--accent)';
+  $('telem-entropy-row').innerHTML = `
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">Burstiness σ</div>
+      <div class="telem-stat-value" style="color:${burst !== null && burst < 2.0 ? '#ff4444' : 'var(--fg)'};">${burst !== null ? burst.toFixed(2) : '—'}</div>
+    </div>
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">Lexical Entropy</div>
+      <div class="telem-stat-value">${entropy !== null ? entropy.toFixed(3) : '—'}</div>
+    </div>
+    <div class="telem-stat-box">
+      <div class="telem-stat-label">AI Probability</div>
+      <div class="telem-stat-value" style="color:${aiColor};">${aiProb !== null ? (aiProb * 100).toFixed(1) + '%' : '—'}</div>
     </div>
   `;
 
@@ -1310,6 +1448,28 @@ function renderTelemetry(win) {
     `;
     tbody.appendChild(tr);
   });
+
+  // ── Section D: Entity Polarity Map ───────────────────────────────────────
+  const epm         = (win.macro || {}).entity_polarity_map || [];
+  const entityBlock = $('telem-entity-block');
+  const entityTags  = $('telem-entity-tags');
+  if (epm.length > 0) {
+    entityBlock.style.display = '';
+    entityTags.innerHTML = epm.map(e => {
+      const lc  = e.label === 'GPE'    ? '#00f0ff'
+                : e.label === 'ORG'    ? '#b088ff'
+                :                        '#ff9f40';   // PERSON
+      return `<div class="entity-chip">
+        <span class="entity-label-badge" style="background:${lc}22;color:${lc};border-color:${lc};">${e.label}</span>
+        <span class="entity-name" title="${e.entity}">${e.entity}</span>
+        <span class="entity-arrow">➜</span>
+        <span class="entity-driver">${e.driver}</span>
+        <span style="margin-left:auto;font-size:.65rem;color:var(--muted);font-family:monospace;">${e.weight.toFixed(3)}</span>
+      </div>`;
+    }).join('');
+  } else {
+    entityBlock.style.display = 'none';
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1441,6 +1601,7 @@ function initSomaticCharts() {
   if (_somaScatter)    { _somaScatter.destroy();     _somaScatter    = null; }
   if (_somaWaveGlobal) { _somaWaveGlobal.destroy();  _somaWaveGlobal = null; }
   if (_somaWaveMicro)  { _somaWaveMicro.destroy();   _somaWaveMicro  = null; }
+  if (_somaStrokeZh)   { _somaStrokeZh.destroy();    _somaStrokeZh   = null; }
 
   // ── Archetypal Radar ──────────────────────────────────────────────────────
   const radarCtx = document.getElementById('soma-radar').getContext('2d');
@@ -1513,6 +1674,13 @@ function initSomaticCharts() {
 
   // ── Chart B: Micro Oscilloscope (sharp, no smoothing, accent blue) ────────
   _somaWaveMicro  = _buildWaveChart('soma-wave-micro',  'rgba(79,142,247,1)', 0.0,  '0.07');
+
+  // ── Chart C: ZH Stroke-Count Waveform (neon gold, sharp) ─────────────────
+  _somaStrokeZh = _buildWaveChart('soma-stroke-zh', 'rgba(255,215,0,1)', 0.0, '0.05');
+
+  // ── Chart D: Punctuation Structural Morse (neon orange, stepped) ──────────
+  if (_somaPunct) { _somaPunct.destroy(); _somaPunct = null; }
+  _somaPunct = _buildWaveChart('soma-punct', 'rgba(255,140,0,1)', 0.0, '0.1');
 }
 
 // ── Cache envelope on analysis load ──────────────────────────────────────────
@@ -1555,40 +1723,46 @@ function _syncCompareWaveCharts() {
   const winB = _resultsB.windows[idxB];
   if (!winA || !winB) return;
 
-  const sc     = winA.start_char || 0;
-  const ec     = winA.end_char   || sc;
-  const winLen = Math.max(1, ec - sc);
+  // Dynamic ruler: x-axis spans exactly the character length of the active window.
+  const actualCharCount = Math.max(1, (winA.end_char || 0) - (winA.start_char || 0));
+  const xMax = actualCharCount;
 
-  // Proportional mapper: any length array → x-values spanning [sc, ec].
+  // Physical-ruler mapper: x = (i / (n-1)) * actualCharCount
   const toXY = arr => {
     const n = Math.max(1, arr.length - 1);
-    return arr.map((v, i) => ({ x: sc + Math.round(i * winLen / n), y: v }));
+    return arr.map((v, i) => ({ x: (i / n) * actualCharCount, y: v }));
   };
 
-  // ── Global Waveform: slice each 100-bucket envelope into this window ──────
+  // ── Global Waveform: slice each envelope using its OWN doc's char range ──
+  // Text A — slice proportional to winA's position in Text A's full char span
   if (_cachedEnvA && _cachedEnvA.length) {
-    const ta = _cachedTotalCharsA || 1;
-    const bs = Math.floor(sc / ta * _cachedEnvA.length);
-    const be = Math.min(_cachedEnvA.length, Math.ceil(ec / ta * _cachedEnvA.length));
+    const ta  = _cachedTotalCharsA || 1;
+    const scA = winA.start_char || 0;
+    const ecA = winA.end_char   || scA;
+    const bs  = Math.floor(scA / ta * _cachedEnvA.length);
+    const be  = Math.min(_cachedEnvA.length, Math.ceil(ecA / ta * _cachedEnvA.length));
     _somaWaveGlobal.data.datasets[0].data = toXY(_cachedEnvA.slice(bs, Math.max(bs + 1, be)));
   }
+  // Text B — slice proportional to winB's position in Text B's full char span
   if (_cachedEnvB && _cachedEnvB.length) {
-    const tb = _cachedTotalCharsB || 1;
-    const bs = Math.floor(sc / tb * _cachedEnvB.length);
-    const be = Math.min(_cachedEnvB.length, Math.ceil(ec / tb * _cachedEnvB.length));
+    const tb  = _cachedTotalCharsB || 1;
+    const scB = winB.start_char || 0;
+    const ecB = winB.end_char   || scB;
+    const bs  = Math.floor(scB / tb * _cachedEnvB.length);
+    const be  = Math.min(_cachedEnvB.length, Math.ceil(ecB / tb * _cachedEnvB.length));
     _somaWaveGlobal.data.datasets[1].data = toXY(_cachedEnvB.slice(bs, Math.max(bs + 1, be)));
   }
-  _setWaveBounds(_somaWaveGlobal, sc, ec);
+  _setWaveBounds(_somaWaveGlobal, 0, xMax);
   _somaWaveGlobal.update();
 
-  // ── Micro Oscilloscope: trim trailing zeros then map both wavelengths ─────
+  // ── Micro Oscilloscope: each window's own letter-value sequence ───────────
   if (_somaWaveMicro && _somaWaveMicro.data.datasets.length > 1) {
     const trim = mw => { let e = mw.length; while (e > 1 && mw[e - 1] === 0) e--; return mw.slice(0, e); };
     const tA = winA.somatic ? trim(winA.somatic.micro_wavelength || []) : [];
     const tB = winB.somatic ? trim(winB.somatic.micro_wavelength || []) : [];
     _somaWaveMicro.data.datasets[0].data = toXY(tA);
     _somaWaveMicro.data.datasets[1].data = toXY(tB);
-    _setWaveBounds(_somaWaveMicro, sc, ec);
+    _setWaveBounds(_somaWaveMicro, 0, xMax);
     _somaWaveMicro.update();
   }
 }
@@ -1723,6 +1897,46 @@ function renderSomatic(win) {
     }));
     $('soma-micro-sublbl').textContent =
       `chars ${startChar}–${win.end_char} · ${trimmed.length} letter values · no smoothing`;
+  }
+
+  // ── ZH Dual-Signal Stroke Oscilloscope (Chart C) ─────────────────────────
+  const strokeBlock = $('soma-stroke-zh-block');
+  const isZH = win.language === 'ZH';
+  if (strokeBlock) strokeBlock.style.display = isZH ? '' : 'none';
+  if (isZH && _somaStrokeZh) {
+    const rt          = win.raw_telemetry || {};
+    const strokes     = rt.stroke_count_array || [];
+    const startChar   = win.start_char || 0;
+    const winLen      = Math.max(1, (win.end_char || startChar) - startChar);
+    const n           = Math.max(1, strokes.length - 1);
+    _somaStrokeZh.data.datasets[0].data = strokes.map((v, i) => ({
+      x: startChar + Math.round(i * winLen / n),
+      y: v,
+    }));
+    _setWaveBounds(_somaStrokeZh, startChar, win.end_char || startChar + winLen);
+    $('soma-stroke-zh-sublbl').textContent =
+      `chars ${startChar}–${win.end_char} · ${strokes.length} Hanzi · avg ${
+        strokes.length ? (strokes.reduce((a, b) => a + b, 0) / strokes.length).toFixed(1) : 0
+      } strokes`;
+    _somaStrokeZh.update();
+  }
+
+  // ── Chart D: Punctuation Structural Morse ────────────────────────────────
+  const punctData  = (win.raw_telemetry || {}).punctuation_waveform || [];
+  const punctBlock = $('soma-punct-block');
+  if (punctBlock) punctBlock.style.display = punctData.length > 0 ? '' : 'none';
+  if (punctData.length > 0 && _somaPunct) {
+    const sc  = win.start_char || 0;
+    const ec  = win.end_char   || sc + 1;
+    const np  = Math.max(1, punctData.length - 1);
+    _somaPunct.data.datasets[0].data = punctData.map((v, i) => ({
+      x: sc + Math.round(i / np * (ec - sc)),
+      y: v,
+    }));
+    _setWaveBounds(_somaPunct, sc, ec);
+    $('soma-punct-sublbl').textContent =
+      `${punctData.length} punctuation marks · pause magnitudes 1–4`;
+    _somaPunct.update();
   }
 
   // ── Global Waveform + set shared x bounds + flush both charts ────────────
@@ -1911,15 +2125,18 @@ function selectWindow(idx) {
   const win = _results.windows[idx];
   renderWindowPills(_results.windows);
   renderJaPanel(win);
+  renderZhPanel(win);
   renderZScores(win);
   updateCharts(win);
   renderTelemetry(win);
   renderSomatic(win);
   if (_mode === 'reader') renderReaderProfile(win);
 
-  // Per-window letter frequency
-  const inputText = $('input-text').value;
-  renderLetterFreq(inputText.slice(win.start_char, win.end_char));
+  // Per-window letter frequency — prefer pre-computed phonetic freq from backend;
+  // fall back to counting A–Z from the raw text slice (Latin languages).
+  const _lfreqSrc = win.raw_telemetry?.letter_frequencies
+    || $('input-text').value.slice(win.start_char, win.end_char);
+  renderLetterFreq(_lfreqSrc);
   _setLfreqContext(`W${idx} · chars ${win.start_char}–${win.end_char}`);
 }
 
@@ -2091,9 +2308,10 @@ $('btn-run').addEventListener('click', async () => {
   const btn = $('btn-run');
   btn.disabled = true;
 
+  _winSize = +$('param-window').value;   // lock x-axis to this for all compare charts
   const params = {
     language_code:        _lang,
-    window_size:          +$('param-window').value,
+    window_size:          _winSize,
     stride:               +$('param-stride').value,
     dissonance_threshold: +$('param-threshold').value,
   };
@@ -2221,15 +2439,16 @@ $('btn-seed').addEventListener('click', async () => {
 ════════════════════════════════════════════════════════════ */
 
 /** Shared linear x-axis config used by all telemetry charts. */
-function _telwXScale(xMin, xMax) {
+function _telwXScale(xMin, xMax, titleText) {
   return {
     type: 'linear',
     min:  xMin,
     max:  xMax,
     display: true,
-    ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 7,
+    ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 10,
              maxRotation: 0, callback: v => `${v}c` },
     grid: { color: '#1e2332' },
+    title: { display: !!titleText, color: '#6b7394', font: { size: 8 }, text: titleText || '' },
   };
 }
 
@@ -2252,11 +2471,11 @@ function _telwDataset(color, label) {
 }
 
 /** Shared Chart.js options for all telemetry charts. */
-function _telwChartOptions(xMin, xMax, tooltipTitleFn) {
+function _telwChartOptions(xMin, xMax, tooltipTitleFn, xTitleText) {
   return {
     responsive: true, maintainAspectRatio: false,
     scales: {
-      x: _telwXScale(xMin, xMax),
+      x: _telwXScale(xMin, xMax, xTitleText),
       y: { min: 0, max: 27, grid: { color: '#1e2332' },
            ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 4 } },
     },
@@ -2292,18 +2511,19 @@ function _telwDestroyChunks() {
  * The x-axis uses absolute char positions (start_char → end_char) so it aligns
  * with the Global Waveform Envelope and Micro Oscilloscope charts.
  */
-function _telwBuildWindowPanels(envA, envB, windows, totalChars) {
+function _telwBuildWindowPanels(envA, envB, windows, totalChars, windowsB) {
   _telwDestroyChunks();
   const container = $('telw-chunks');
   container.innerHTML = '';
 
-  const maxLen = envB ? Math.max(envA.length, envB.length) : envA.length;
+  const maxLen    = envB ? Math.max(envA.length, envB.length) : envA.length;
+  const inCompare = !!(envB && windowsB && windowsB.length);
   if (maxLen === 0 || !windows.length) return;
 
   windows.forEach((win, wi) => {
-    // ── Resolve per-window envelope data ──────────────────────────────────
-    // Prefer the C++ window_envelope (exact letter-value buckets for this window).
-    // Fall back to a proportional slice of the global 100-bucket envelope.
+    // ── Resolve per-window envelope for Text A ────────────────────────────
+    // Prefer the C++ window_envelope (20 buckets, exact for this window).
+    // Fall back to a proportional slice of the 100-bucket global envelope.
     const winEnvA = (win.somatic && win.somatic.window_envelope && win.somatic.window_envelope.length)
       ? win.somatic.window_envelope
       : (() => {
@@ -2312,18 +2532,33 @@ function _telwBuildWindowPanels(envA, envB, windows, totalChars) {
           return envA.slice(bs, Math.max(bs + 1, be));
         })();
 
-    const winEnvB = envB
-      ? (() => {
-          const bs  = Math.floor(win.start_char / totalChars * envB.length);
-          const be  = Math.min(envB.length, Math.ceil(win.end_char / totalChars * envB.length));
-          return envB.slice(bs, Math.max(bs + 1, be));
-        })()
-      : null;
+    // ── Resolve per-window envelope for Text B ────────────────────────────
+    // In compare mode: prefer the corresponding B window's C++ window_envelope
+    // (scoped to Text B's own window boundaries). Fall back to a proportional
+    // slice of envB using Text B's own totalChars — never Text A's char range.
+    let winEnvB = null;
+    if (inCompare) {
+      const winB = windowsB[wi];
+      if (winB && winB.somatic && winB.somatic.window_envelope && winB.somatic.window_envelope.length) {
+        winEnvB = winB.somatic.window_envelope;
+      } else if (envB && envB.length) {
+        // Fallback: slice envB proportional to Text B's own window position
+        const totalCharsB = windowsB.length ? (windowsB[windowsB.length - 1].end_char || totalChars) : totalChars;
+        const refWin      = winB || win;
+        const bs  = Math.floor(refWin.start_char / totalCharsB * envB.length);
+        const be  = Math.min(envB.length, Math.ceil(refWin.end_char / totalCharsB * envB.length));
+        winEnvB   = envB.slice(bs, Math.max(bs + 1, be));
+      }
+    }
 
-    // ── Map to absolute char x-positions ─────────────────────────────────
-    const winLen = Math.max(1, win.end_char - win.start_char);
-    const toXY   = (arr) => arr.map((v, i) => ({
-      x: win.start_char + Math.round(i * winLen / Math.max(1, arr.length - 1)),
+    // ── Map to x-positions ────────────────────────────────────────────────
+    // Compare mode: physical ruler — x-axis spans exactly this window's char count.
+    // Single-doc mode: use absolute char positions for cross-chart alignment.
+    const actualCharCount = Math.max(1, (win.end_char || 0) - (win.start_char || 0));
+    const xMin  = inCompare ? 0                : win.start_char;
+    const xMax  = inCompare ? actualCharCount  : win.end_char;
+    const toXY  = (arr) => arr.map((v, i) => ({
+      x: xMin + (i / Math.max(1, arr.length - 1)) * actualCharCount,
       y: v,
     }));
 
@@ -2360,8 +2595,9 @@ function _telwBuildWindowPanels(envA, envB, windows, totalChars) {
     }
 
     const opts = _telwChartOptions(
-      win.start_char, win.end_char,
-      pts => `W${wi} · char ${pts[0].raw.x}`,
+      xMin, xMax,
+      pts => `W${wi} · ${inCompare ? 'pos' : 'char'} ${pts[0].raw.x}`,
+      inCompare ? `Character Position (Total: ${actualCharCount})` : null,
     );
     opts.plugins.legend.display = !!winEnvB;
 
@@ -2455,8 +2691,9 @@ function _telwFromAnalysis() {
   const windows    = srcA.windows || [];
 
   if (_compareMode && _resultsA && _resultsB) {
-    const envB = _resultsB.global_waveform_envelope || [];
-    _telwBuildWindowPanels(envA, envB, windows, totalChars);
+    const envB     = _resultsB.global_waveform_envelope || [];
+    const windowsB = _resultsB.windows || [];
+    _telwBuildWindowPanels(envA, envB, windows, totalChars, windowsB);
     _telwBuildFullDocChart(envA, envB, totalChars);
     legend.style.display = '';
     sublbl.textContent   =
@@ -2581,9 +2818,18 @@ function setLfreqSort(mode) {
   _renderLfreqBody();
 }
 
-function renderLetterFreq(textA, textB = null) {
-  _lfreqA = computeLetterFreq(textA || '');
-  _lfreqB = textB ? computeLetterFreq(textB) : null;
+function renderLetterFreq(srcA, srcB = null) {
+  // Accept either a raw text string (computed here) or a pre-computed freq dict
+  // (passed directly from raw_telemetry.letter_frequencies).
+  const _toFreq = s => {
+    if (!s) return computeLetterFreq('');
+    if (typeof s === 'string') return computeLetterFreq(s);
+    // Fill in any missing A–Z keys with 0 so _renderLfreqBody always sees all 26
+    const base = {}; for (let i = 65; i <= 90; i++) base[String.fromCharCode(i)] = 0;
+    return { ...base, ...s };
+  };
+  _lfreqA = _toFreq(srcA);
+  _lfreqB = srcB != null ? _toFreq(srcB) : null;
   $('card-letter-freq').style.display = '';
   _renderLfreqBody();
 }
@@ -2614,16 +2860,21 @@ function _renderLfreqBody() {
     </div>`;
     body.innerHTML = legend + `<div class="lfreq-grid-cmp">${keys.map(ch => {
       const cA = freqA[ch] || 0, cB = freqB[ch] || 0;
-      const pA = (cA / maxAll * 100).toFixed(0), pB = (cB / maxAll * 100).toFixed(0);
+      const pA = (cA / maxAll * 100).toFixed(1), pB = (cB / maxAll * 100).toFixed(1);
       const delta = cA - cB;
-      const deltaStr = delta === 0 ? '' : `<span style="font-size:.58rem;color:${delta>0?'#00f0ff':'#ff2040'};margin-left:.25rem;">${delta>0?'+':''}${delta}</span>`;
-      return `<div class="lfreq-row">
-        <span class="lfreq-char">${ch}</span>
-        <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
-          <div class="lfreq-track"><div style="height:100%;width:${pA}%;background:#00f0ff;border-radius:2px;transition:width .3s;"></div></div>
-          <div class="lfreq-track"><div style="height:100%;width:${pB}%;background:#ff2040;border-radius:2px;transition:width .3s;"></div></div>
+      const deltaTxt = delta === 0 ? '' : (delta > 0 ? `+${delta}` : `${delta}`);
+      const deltaClr = delta > 0 ? '#00f0ff' : '#ff2040';
+      return `<div class="lfreq-row-cmp">
+        <div class="lfreq-cell lfreq-cell-a">
+          <div class="lfreq-bar lfreq-bar-a" style="width:${pA}%;"></div>
+          <span class="lfreq-num-a">${cA}</span>
         </div>
-        <div class="lfreq-cnt">${cA}&nbsp;<span style="color:var(--border);">|</span>&nbsp;${cB}${deltaStr}</div>
+        <span class="lfreq-char-ctr">${ch}</span>
+        <span class="lfreq-delta-ctr" style="color:${deltaTxt?deltaClr:'var(--border)'};">${deltaTxt||'·'}</span>
+        <div class="lfreq-cell lfreq-cell-b">
+          <div class="lfreq-bar lfreq-bar-b" style="width:${pB}%;"></div>
+          <span class="lfreq-num-b">${cB}</span>
+        </div>
       </div>`;
     }).join('')}</div>`;
   } else {
@@ -2792,6 +3043,8 @@ function initSomaticChartsUnified() {
   if (_somaScatter)    { _somaScatter.destroy();     _somaScatter    = null; }
   if (_somaWaveGlobal) { _somaWaveGlobal.destroy();  _somaWaveGlobal = null; }
   if (_somaWaveMicro)  { _somaWaveMicro.destroy();   _somaWaveMicro  = null; }
+  if (_somaStrokeZh)   { _somaStrokeZh.destroy();    _somaStrokeZh   = null; }
+  if (_somaPunct)      { _somaPunct.destroy();        _somaPunct      = null; }
 
   // Archetypal Radar — 2 datasets
   _somaRadar = new Chart(document.getElementById('soma-radar').getContext('2d'), {
@@ -2869,6 +3122,44 @@ function initSomaticChartsUnified() {
       plugins:{legend:_LEGEND_BOTTOM,tooltip:{backgroundColor:_DARK,bodyColor:'#dce3f5',borderColor:'#2e3550',borderWidth:1,
         callbacks:{title:pts=>`pos ${pts[0].raw.x}`,label:pt=>` ${pt.dataset.label} = ${(+pt.raw.y).toFixed(2)}`}}},
       animation:{duration:200}},
+  });
+
+  // ZH Stroke-Count Waveform — dual dataset (A=cyan, B=crimson) for compare mode
+  _somaStrokeZh = new Chart(document.getElementById('soma-stroke-zh').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [
+      { label:'Text A', data:[], parsing:false, borderColor:UNIFIED_A, backgroundColor:UNIFIED_A.replace(',1)',',0.05)'), borderWidth:1.6, fill:true,  tension:0, pointRadius:0 },
+      { label:'Text B', data:[], parsing:false, borderColor:UNIFIED_B, backgroundColor:UNIFIED_B.replace(',1)',',0.05)'), borderWidth:1.6, fill:false, tension:0, pointRadius:0 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { ..._WAVE_X_OPTS },
+        y: { grid:{ color:_DARK }, ticks:{ color:'#6b7394', font:{ size:8 }, maxTicksLimit:6 }, min:0 },
+      },
+      plugins: { legend:_LEGEND_BOTTOM, tooltip:{ backgroundColor:_DARK, bodyColor:'#dce3f5',
+        borderColor:'#2e3550', borderWidth:1,
+        callbacks:{ title: pts=>`char ${pts[0].raw.x}`, label: pt=>` ${pt.dataset.label} = ${(+pt.raw.y)} strokes` }}},
+      animation:{ duration:200 },
+    },
+  });
+
+  // Punctuation Morse — dual dataset (A=neon-orange, B=crimson)
+  _somaPunct = new Chart(document.getElementById('soma-punct').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [
+      { label:'Text A', data:[], parsing:false, borderColor:'rgba(255,140,0,1)',  backgroundColor:'rgba(255,140,0,0.08)', borderWidth:1.4, fill:true,  tension:0, pointRadius:0, stepped:'before' },
+      { label:'Text B', data:[], parsing:false, borderColor:UNIFIED_B, backgroundColor:UNIFIED_B.replace(',1)',',0.05)'), borderWidth:1.4, fill:false, tension:0, pointRadius:0, stepped:'before' },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { ..._WAVE_X_OPTS },
+        y: { grid:{color:_DARK}, ticks:{color:'#6b7394',font:{size:8},maxTicksLimit:5}, min:0, max:5 },
+      },
+      plugins: { legend:_LEGEND_BOTTOM, tooltip:{ backgroundColor:_DARK, bodyColor:'#dce3f5',
+        borderColor:'#2e3550', borderWidth:1,
+        callbacks:{ title:pts=>`char ${pts[0].raw.x}`, label:pt=>` ${pt.dataset.label} = pause ${(+pt.raw.y)}` }}},
+      animation:{ duration:200 },
+    },
   });
 }
 
@@ -2976,6 +3267,47 @@ function renderSomaticUnified(winA, winB) {
       `A: ${tA.length} letters \u2502 B: ${tB.length} letters \u2014 proportional overlay`;
   }
 
+  // ZH Stroke-Count dual-signal oscilloscope — Dynamic Absolute-Length Scaling
+  const _zhBlock = $('soma-stroke-zh-block');
+  const _isZH    = winA.language === 'ZH' || winB.language === 'ZH';
+  if (_zhBlock) _zhBlock.style.display = _isZH ? '' : 'none';
+  if (_isZH && _somaStrokeZh && _somaStrokeZh.data.datasets.length >= 2) {
+    const strokesA   = (winA.raw_telemetry || {}).stroke_count_array || [];
+    const strokesB   = (winB.raw_telemetry || {}).stroke_count_array || [];
+    const charCountA = Math.max(1, (winA.end_char || 0) - (winA.start_char || 0));
+    const charCountB = Math.max(1, (winB.end_char || 0) - (winB.start_char || 0));
+    const _sXY = (arr, cc) => arr.map((v, i) => ({
+      x: (i / Math.max(1, arr.length - 1)) * cc,
+      y: v,
+    }));
+    _somaStrokeZh.data.datasets[0].data = _sXY(strokesA, charCountA);
+    _somaStrokeZh.data.datasets[1].data = _sXY(strokesB, charCountB);
+    _setWaveBounds(_somaStrokeZh, 0, Math.max(charCountA, charCountB));
+    $('soma-stroke-zh-sublbl').textContent =
+      `A: ${strokesA.length} Hanzi \u2502 B: ${strokesB.length} Hanzi — stroke density`;
+    _somaStrokeZh.update();
+  }
+
+  // Punctuation Morse dual-signal (Chart D — compare mode)
+  const punctAr = (winA.raw_telemetry || {}).punctuation_waveform || [];
+  const punctBr = (winB.raw_telemetry || {}).punctuation_waveform || [];
+  const _pBlock = $('soma-punct-block');
+  const _hasPunct = punctAr.length > 0 || punctBr.length > 0;
+  if (_pBlock) _pBlock.style.display = _hasPunct ? '' : 'none';
+  if (_hasPunct && _somaPunct && _somaPunct.data.datasets.length >= 2) {
+    const ccA = Math.max(1, (winA.end_char || 0) - (winA.start_char || 0));
+    const ccB = Math.max(1, (winB.end_char || 0) - (winB.start_char || 0));
+    const _pXY = (arr, cc) => arr.map((v, i) => ({
+      x: (i / Math.max(1, arr.length - 1)) * cc, y: v,
+    }));
+    _somaPunct.data.datasets[0].data = _pXY(punctAr, ccA);
+    _somaPunct.data.datasets[1].data = _pXY(punctBr, ccB);
+    _setWaveBounds(_somaPunct, 0, Math.max(ccA, ccB));
+    $('soma-punct-sublbl').textContent =
+      `A: ${punctAr.length} marks │ B: ${punctBr.length} marks — pause magnitudes`;
+    _somaPunct.update();
+  }
+
   // FFT — show both
   const hA = sA.top_harmonics||[], hB = sB.top_harmonics||[];
   const fftEl = $('soma-fft-chips');
@@ -3062,11 +3394,15 @@ function renderUnified(winIdx) {
   renderZScoresUnified(winA, winB);
   renderTelemetry(winA);
   renderJaPanel(winA);
+  renderZhPanel(winA);
 
-  // Per-window letter frequency — both slices
-  const tA = $('input-text').value.slice(winA.start_char, winA.end_char);
-  const tB = $('input-text-b') ? $('input-text-b').value.slice(winB.start_char, winB.end_char) : '';
-  renderLetterFreq(tA, tB || null);
+  // Per-window letter frequency — use pre-computed phonetic dicts when available
+  // (always present from backend v3.2+); fall back to raw text slicing.
+  const _lfreqSrcA = winA.raw_telemetry?.letter_frequencies
+    || $('input-text').value.slice(winA.start_char, winA.end_char);
+  const _lfreqSrcB = winB.raw_telemetry?.letter_frequencies
+    || ($('input-text-b') ? $('input-text-b').value.slice(winB.start_char, winB.end_char) : '');
+  renderLetterFreq(_lfreqSrcA, _lfreqSrcB || null);
   _setLfreqContext(`W${winIdx} · A:${winA.start_char}–${winA.end_char} / B:${winB.start_char}–${winB.end_char}`);
 }
 

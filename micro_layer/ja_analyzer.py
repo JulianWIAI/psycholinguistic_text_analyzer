@@ -17,10 +17,37 @@ Character range references:
 """
 
 import unicodedata
+import warnings
 from dataclasses import dataclass, field
 from typing import Dict, List
 
 from micro_layer.base_analyzer import BaseMicroAnalyzer, MicroResult
+
+# ---------------------------------------------------------------------------
+# Optional C++ core (used by RomajiCppJapaneseAnalyzer)
+# ---------------------------------------------------------------------------
+try:
+    import psycho_core as _core
+    _CPP_AVAILABLE = True
+except ImportError:
+    _core = None
+    _CPP_AVAILABLE = False
+
+# ---------------------------------------------------------------------------
+# Optional pykakasi Romaji converter
+# ---------------------------------------------------------------------------
+try:
+    from pykakasi import kakasi as _Kakasi
+    _kks = _Kakasi()
+    _KAKASI_AVAILABLE = True
+except ImportError:
+    _kks = None
+    _KAKASI_AVAILABLE = False
+    warnings.warn(
+        "pykakasi not installed — JA Romaji path unavailable. "
+        "Install with: pip install pykakasi",
+        RuntimeWarning, stacklevel=2,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -195,3 +222,104 @@ class JapaneseLogographicAnalyzer(BaseMicroAnalyzer):
             for ch in text if _is_kanji(ch)
         ]
         return sum(counts) / len(counts) if counts else 0.0
+
+
+# ---------------------------------------------------------------------------
+# Universal Tokenization Override — Romaji + C++ BPV path
+# ---------------------------------------------------------------------------
+
+class RomajiCppJapaneseAnalyzer(BaseMicroAnalyzer):
+    """
+    Japanese micro-layer analyzer — Universal Tokenization Override.
+
+    Pipeline
+    --------
+    1. Native script counts via JapaneseLogographicAnalyzer helpers
+       → true_native_char_count (Kanji + Hiragana + Katakana)
+    2. Romanize entire window to Hepburn Romaji via pykakasi,
+       preserving morpheme boundaries as word spaces
+    3. C++ BPV engine on the Romaji string → psychological vectors
+    4. Merge: replace C++ structural counts with native counts;
+       preserve all script-ratio metadata for the JA script panel
+
+    Falls back to JapaneseLogographicAnalyzer when C++ or pykakasi
+    are unavailable.
+    """
+
+    def __init__(self) -> None:
+        self._logographic = JapaneseLogographicAnalyzer()
+
+    @property
+    def language_code(self) -> str:
+        return "JA"
+
+    def analyze(self, text: str) -> MicroResult:
+        # ── 1. Native character/script counts ─────────────────────────────────
+        counts                    = self._logographic._count_scripts(text)
+        true_native_char_count    = counts["total"]
+
+        if not _CPP_AVAILABLE or not _KAKASI_AVAILABLE:
+            result = self._logographic.analyze(text)
+            return result
+
+        # ── 2. Romanize to Hepburn via pykakasi ───────────────────────────────
+        converted    = _kks.convert(text)
+        romaji_parts = []
+        for item in converted:
+            hep  = item.get("hepburn", "").strip()
+            orig = item.get("orig", "").strip()
+            if hep:
+                romaji_parts.append(hep)
+            elif orig and orig not in (" ", "\n", "\t"):
+                romaji_parts.append(orig)
+
+        romaji_str = " ".join(romaji_parts)
+
+        # pykakasi conversion segments ≈ morpheme count
+        true_tokenized_word_count = max(
+            1,
+            len([p for p in romaji_parts if p]),
+        )
+
+        if not romaji_str.strip():
+            result = self._logographic.analyze(text)
+            result.raw["total_chars"] = true_native_char_count
+            result.raw["total_words"] = true_tokenized_word_count
+            return result
+
+        # ── 3. C++ BPV on Romaji ──────────────────────────────────────────────
+        n       = len(romaji_str) + 1
+        results = _core.analyze(romaji_str, n, 1)
+
+        if not results:
+            result = self._logographic.analyze(text)
+            result.raw["total_chars"] = true_native_char_count
+            result.raw["total_words"] = true_tokenized_word_count
+            return result
+
+        win = results[0]
+        rt  = win.get("raw_telemetry", {})
+
+        # ── 4. Merge — native counts + script ratios + C++ vectors ────────────
+        total    = max(1, true_native_char_count)
+        stroke_d = self._logographic._mean_stroke_count(text)
+
+        return MicroResult(
+            vectors=dict(win["vectors"]),
+            raw={
+                "total_chars":             true_native_char_count,
+                "total_words":             true_tokenized_word_count,
+                "avg_word_length":         round(true_native_char_count / true_tokenized_word_count, 2),
+                "phonetic_text":           romaji_str,
+                "kanji_count":             counts["kanji"],
+                "hiragana_count":          counts["hiragana"],
+                "katakana_count":          counts["katakana"],
+                "kanji_ratio":             round(counts["kanji"]    / total, 4),
+                "hiragana_ratio":          round(counts["hiragana"] / total, 4),
+                "katakana_ratio":          round(counts["katakana"] / total, 4),
+                "stroke_density":          round(stroke_d, 2),
+                "top_micro_chars":         rt.get("top_micro_chars", {}),
+                "double_letter_anomalies": rt.get("double_letter_anomalies", {}),
+            },
+            language="JA",
+        )

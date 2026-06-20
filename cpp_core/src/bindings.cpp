@@ -93,6 +93,20 @@ static py::dict window_result_to_dict(const WindowResult& wr) {
     telem["double_letter_anomalies"] = dl_anom;
 
     telem["macro_drivers"] = py::dict();
+
+    py::list sw;
+    for (int v : wr.structural_waveform) sw.append(v);
+    telem["structural_waveform"] = sw;
+
+    // v3.3 — steganographic anomaly detection
+    telem["hidden_unicode_count"] = wr.hidden_unicode_count;
+    telem["stego_anomaly_flag"]   = wr.stego_anomaly_flag;
+
+    // v3.3 — punctuation structural waveform
+    py::list pw;
+    for (int v : wr.punctuation_waveform) pw.append(v);
+    telem["punctuation_waveform"] = pw;
+
     d["raw_telemetry"] = telem;
     return d;
 }
@@ -205,6 +219,35 @@ static py::dict compare_texts(
 }
 
 
+// ---------------------------------------------------------------------------
+// Exported: analyze_with_strokes — single doc + injected structural waveform
+// For logographic languages: Python passes the phonetic (Romaji/Pinyin) string
+// plus the pre-computed stroke count array for the native characters.
+// C++ runs the BPV pipeline on the phonetic string and stores the stroke array
+// in WindowResult::structural_waveform so it round-trips back to Python/UI.
+// ---------------------------------------------------------------------------
+static py::list analyze_with_strokes(
+    const std::string&      text,
+    int                     window_size,
+    int                     stride,
+    const std::vector<int>& structural_waveform
+) {
+    std::vector<WindowResult> results;
+    {
+        py::gil_scoped_release release;
+        results = run_pipeline(text, window_size, stride);
+    }
+    if (!structural_waveform.empty() && !results.empty()) {
+        results[0].structural_waveform = structural_waveform;
+    }
+    py::list out;
+    for (const auto& wr : results) {
+        out.append(window_result_to_dict(wr));
+    }
+    return out;
+}
+
+
 // ===========================================================================
 // Module
 // ===========================================================================
@@ -246,7 +289,19 @@ PYBIND11_MODULE(psycho_core, m) {
         )pbdoc"
     );
 
+    m.def("analyze_with_strokes", &analyze_with_strokes,
+        py::arg("text"),
+        py::arg("window_size") = 1000,
+        py::arg("stride")      = 500,
+        py::arg("structural_waveform"),
+        R"pbdoc(
+            Like analyze(), but accepts a pre-computed stroke count array from Python.
+            The array is stored in the first WindowResult and returned in raw_telemetry
+            as structural_waveform so the UI can render the Dual-Signal oscilloscope.
+        )pbdoc"
+    );
+
     m.attr("DEFAULT_WINDOW_SIZE") = 1000;
     m.attr("DEFAULT_STRIDE")      = 500;
-    m.attr("VERSION")             = "3.1.0";
+    m.attr("VERSION")             = "3.3.0";
 }

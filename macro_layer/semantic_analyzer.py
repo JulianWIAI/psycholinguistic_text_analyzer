@@ -181,6 +181,9 @@ class MacroScore:
     cluster_scores: Dict[str, Dict[str, float]] = field(default_factory=dict)
     total_words: int = 0
     hits: List[ClusterHit] = field(default_factory=list)
+    # v3.3 — Named Entity Targeting: top-5 entities mapped to dominant driver
+    # Each entry: {entity, label, driver, weight}
+    entity_polarity_map: List[Dict] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -298,6 +301,47 @@ class VectorClusterScorer:
 
 
 # ---------------------------------------------------------------------------
+# v3.3 — Named Entity Targeting (shared helper, used by both analyzers)
+# ---------------------------------------------------------------------------
+
+_ENTITY_TARGET_LABELS = {"GPE", "ORG", "PERSON"}
+
+
+def extract_entity_polarity(doc, scorer: "VectorClusterScorer") -> List[Dict]:
+    """
+    For each GPE / ORG / PERSON entity in *doc*, score the sentence it belongs to
+    and record the dominant macro driver.  Returns the top-5 entities by weight.
+    """
+    seen: Dict[str, Dict] = {}
+
+    for ent in doc.ents:
+        if ent.label_ not in _ENTITY_TARGET_LABELS:
+            continue
+
+        sent_tokens = [t for t in ent.sent if t.is_alpha and not t.is_stop]
+        if not sent_tokens:
+            continue
+
+        _, sent_hits = scorer.score_tokens(sent_tokens)
+        if not sent_hits:
+            continue
+
+        best   = max(sent_hits, key=lambda h: h.weight)
+        key    = ent.text.strip()
+        driver = f"{best.cluster}/{best.pole}"
+
+        if key not in seen or best.weight > seen[key]["weight"]:
+            seen[key] = {
+                "entity": key,
+                "label":  ent.label_,
+                "driver": driver,
+                "weight": round(best.weight, 4),
+            }
+
+    return sorted(seen.values(), key=lambda x: x["weight"], reverse=True)[:5]
+
+
+# ---------------------------------------------------------------------------
 # English Semantic Analyzer
 # ---------------------------------------------------------------------------
 
@@ -335,4 +379,11 @@ class SemanticAnalyzer:
             for cluster, poles in raw.items()
         }
 
-        return MacroScore(cluster_scores=normalized, total_words=total_words, hits=hits)
+        entity_polarity_map = extract_entity_polarity(doc, self._scorer)
+
+        return MacroScore(
+            cluster_scores=normalized,
+            total_words=total_words,
+            hits=hits,
+            entity_polarity_map=entity_polarity_map,
+        )

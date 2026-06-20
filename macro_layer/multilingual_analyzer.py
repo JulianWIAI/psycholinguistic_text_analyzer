@@ -17,6 +17,7 @@ from macro_layer.semantic_analyzer import (
     ClusterHit,
     VectorClusterScorer,
     _load_spacy,
+    extract_entity_polarity,
 )
 
 
@@ -59,7 +60,14 @@ class MultilingualSemanticAnalyzer:
             for cluster, poles in raw.items()
         }
 
-        return MacroScore(cluster_scores=normalized, total_words=total_words, hits=hits)
+        entity_polarity_map = extract_entity_polarity(doc, self._scorer)
+
+        return MacroScore(
+            cluster_scores=normalized,
+            total_words=total_words,
+            hits=hits,
+            entity_polarity_map=entity_polarity_map,
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers

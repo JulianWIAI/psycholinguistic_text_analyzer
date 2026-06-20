@@ -26,6 +26,7 @@ SUPPORTED_LANGUAGES: Dict[str, str] = {
     "ES": "Spanish",
     "FR": "French",
     "JA": "Japanese",
+    "ZH": "Chinese",
 }
 
 
@@ -89,8 +90,12 @@ class LanguageRouter:
             return FrenchOrthographicAnalyzer()
 
         if code == "JA":
-            from micro_layer.ja_analyzer import JapaneseLogographicAnalyzer
-            return JapaneseLogographicAnalyzer()
+            from micro_layer.ja_analyzer import RomajiCppJapaneseAnalyzer
+            return RomajiCppJapaneseAnalyzer()
+
+        if code == "ZH":
+            from micro_layer.zh_analyzer import ChineseOrthographicAnalyzer
+            return ChineseOrthographicAnalyzer()
 
         raise ValueError(f"No micro analyzer registered for language code: {code!r}")
 
@@ -117,6 +122,10 @@ class LanguageRouter:
         if code == "JA":
             from macro_layer.ja_clusters import JapaneseSemanticAnalyzer
             return JapaneseSemanticAnalyzer()
+
+        if code == "ZH":
+            from macro_layer.zh_clusters import ChineseSemanticAnalyzer
+            return ChineseSemanticAnalyzer()
 
         raise ValueError(f"No macro analyzer registered for language code: {code!r}")
 

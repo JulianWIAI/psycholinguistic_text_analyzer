@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <string_view>
+#include <vector>
 #include <cstdint>
 
 namespace psycho {
@@ -100,6 +101,22 @@ struct WindowResult {
 
     // Double-letter pairs found: {"SS": 3, "LL": 1, …}
     std::map<std::string, int> double_letter_anomalies;
+
+    // Optional stroke-count waveform injected by Python for logographic languages.
+    // Empty for Latin-script windows; populated by analyze_with_strokes() for ZH.
+    std::vector<int> structural_waveform;
+
+    // ── v3.3: Steganographic anomaly detection ───────────────────────────────
+    // hidden_unicode_count: ZW-space/ZWNJ/ZWJ/Word-Joiner/BOM occurrences +
+    //   trailing whitespace chars (space/tab before newline — binary pacing cue)
+    int  hidden_unicode_count = 0;
+    bool stego_anomaly_flag   = false;   // true when hidden_unicode_count > 0
+
+    // ── v3.3: Punctuation structural waveform ───────────────────────────────
+    // Ordered magnitude values for every punctuation mark in the window:
+    //   ','=1  '.'=2  ':'=2  '-'=2  en-dash=2  ';'=3  em-dash=3  '!'=4  '?'=4
+    // Maps syntactic pause strength; sparse waveform encodes "Morse pacing".
+    std::vector<int> punctuation_waveform;
 };
 
 } // namespace psycho
