@@ -1,4 +1,4 @@
-# PsychoLinguistic Analysis Engine v3.6
+# PsychoLinguistic Analysis Engine v3.7
 
 A real-time psycholinguistic profiling system that detects **steganographic layering**, **subconscious signal patterns**, and **authorial intent divergence** in text. Combines a compiled C++20 orthographic core with spaCy vector-similarity macro analysis and a full Somatic/Archetypal Cipher layer across ten languages spanning Latin, Cyrillic, Abjad RTL, and Hangul Jamo scripts.
 
@@ -46,6 +46,8 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 - **Korean Hangul Jamo BPV engine** (`analyze_ko`) — 24-bin matrix (14 basic consonants + 10 basic vowels); Python `unpack_hangul_to_jamo()` decomposes syllable blocks (U+AC00–U+D7A3) into conjoining Jamo before C++ processing; tense consonants (ㄲ ㄸ ㅃ ㅆ ㅉ) fold to base consonant bin with BPV=9; compound codas fold to primary consonant bin; `total_chars` overridden with native syllable count; whitespace tokenizer override for whole-eojeol macro seed matching
 - **Arabic / Korean punctuation in C++ waveform** — `build_punct_waveform()` handles Arabic comma ، (U+060C, D8 8C → magnitude 1) and Arabic question mark ؟ (U+061F, D8 9F → magnitude 4) as 2-byte UTF-8 sequences alongside the standard ASCII and 3-byte en/em-dash punctuation
 - **Vector similarity macro scoring** — spaCy `_md` models with cosine similarity against pre-built cluster centroids (25 seed words × 12 poles × 6+ languages); falls back to exact-match on `_sm` models
+- **AR/FA macro POS fallback** — when `xx_ent_wiki_sm` returns zero cluster hits (no word vectors), `apply_pos_fallback()` extracts NOUN/VERB/ADJ/PROPN tokens and injects them into the baseline/structural cluster; guarantees a non-empty Driver Matrix on short intercepts; Arabic diacritic stripping, ZWNJ normalization, and 9-prefix clitic expansion registered in the exact-match lookup
+- **Z-score bootstrap guard** — `BaselineStats.z_score()` returns the raw value when `n < 2` so the first observation produces a visible signal rather than a silent zero
 - **Welford online baseline tracking** — running mean/σ per variable; statistically comparable Z-scores across documents
 - **Somatic/Archetypal Cipher** — full A–Z letter-value matrix with 5 archetypal categories, Quersumme (digital root) archetype classification, 3-tier complexity system, and FFT harmonic detection
 - **Three aligned waveform charts** — Global Waveform Envelope, Micro Oscilloscope, and Wavelength Telemetry all share the same linear char-position x-axis so features can be compared directly across charts
@@ -65,6 +67,8 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 - **FFT spectral analysis** — Radix-2 Cooley-Tukey FFT with DC offset removal; returns top 5 harmonic peaks
 - **Author / Reader profile toggle** — Reader Profile inverts the Z-score space to model the psychological deficits the target audience brings to the text
 - **Raw Telemetry drawer** — structural baseline (chars/words/avg length), BPV character frequency bars, double-letter anomaly chips, full 12-pole driver matrix, steganographic anomaly warning chip, three entropy stat boxes, and Entity Polarity Map
+- **Archetypal Legend panel** — fixed floating panel (bottom-right) with 3 tabs: Shape (26-letter 2-column grid with form-to-archetype meanings), Lines (survival metric groupings), Space (spatial orientation groupings); toggled via header button
+- **Contextual Help System** — `[?]` icons next to Raw Telemetry, Burstiness σ, Macro Framing, Global Waveform, and Somatic Cipher; hover shows a 1-sentence CSS tooltip; clicking opens a 450px frosted-glass slide-out drawer with 4 beginner-friendly methodology sections and click-to-scroll routing
 - **Bulk export** — JSON (full telemetry, all windows) and flat CSV (SPSS/R compatible)
 - **Entity ledger** — persistent JSON database tracking baseline drift and dissonance event history across sessions
 - **Rolling window tokenizer** — structural boundary detection with configurable window size and stride
@@ -99,7 +103,10 @@ psycholinguistic/
 │   └── somatic_engine.py          # Layer 3: Somatic Cipher, FFT, envelope
 ├── macro_layer/
 │   ├── semantic_analyzer.py       # VectorClusterScorer + SemanticAnalyzer (EN)
+│   │                              # apply_pos_fallback() — POS-based injection for
+│   │                              # zero-hit intercepts; _surface() for empty-lemma models
 │   ├── multilingual_analyzer.py   # Generic multilingual wrapper (auto-sentencizer inject)
+│   │                              # AR/FA: diacritic strip, ZWNJ strip, 9-prefix clitic expansion
 │   ├── {de,es,fr}_clusters.py     # 25 words × 12 poles per language
 │   ├── ja_clusters.py             # JapaneseSemanticAnalyzer + Keigo formality
 │   ├── zh_clusters.py             # ChineseSemanticAnalyzer + jieba tokenization
@@ -111,6 +118,7 @@ psycholinguistic/
 ├── entropy_engine.py              # Burstiness, lexical entropy, AI probability
 ├── dissonance/
 │   └── engine.py                  # Welford stats + Z-scores + EMA + event detection
+│                                  # z_score() returns raw value when n < 2 (bootstrap guard)
 ├── tokenizer/
 │   └── rolling_window.py          # Structural boundary tokenizer
 ├── database/
@@ -155,6 +163,8 @@ psycholinguistic/
 │   └── index.html                 # Single-page dashboard (Chart.js, vanilla JS)
 │                                  # ALPHABET.{LATIN,CYRILLIC,ARABIC,FARSI,HANGUL}
 │                                  # dir="rtl" injection for AR/FA textareas
+│                                  # Archetypal Legend panel (Shape/Lines/Space tabs)
+│                                  # Contextual Help drawer (4 methodology sections)
 └── entity_db.json                 # Persistent entity + baseline store
 ```
 
@@ -200,6 +210,30 @@ When Arabic or Farsi is selected, `dir="rtl"` is injected on the intercept texta
 ### Chinese Script Panel (ZH)
 
 When the active window is Chinese, a dedicated **ZH script panel** shows Hanzi count, average stroke count, max strokes, and complexity index. Below it, the **Dual-Signal Stroke-Count Oscilloscope** renders `stroke_count_array` in neon gold.
+
+### Archetypal Legend Panel
+
+A fixed floating panel (bottom-right, toggled via the **⊕ Legend** header button) with a dark amber theme and three tabs:
+
+| Tab | Content |
+|---|---|
+| **Shape** | 26-letter grid mapping each letterform's geometry to its somatic archetype and associated concepts |
+| **Lines** | Groups letters by line count (1-line abstract, 2-line structural, 3-line systematic, 4-line material) |
+| **Space** | Groups letters by spatial orientation (vertical axis, horizontal, diagonal, enclosed, open arc) |
+
+### Contextual Help System
+
+`[?]` icons (grey-blue, brightening on hover with a 1-sentence CSS tooltip) appear next to five major dashboard headers:
+
+| Icon location | Links to drawer section |
+|---|---|
+| Raw Telemetry & Attribution | Raw Telemetry & Structural Baseline |
+| Burstiness σ | Raw Telemetry & Structural Baseline |
+| Macro — Conscious Framing · 6-Cluster | Dissonance Radars |
+| Global Waveform Envelope | The Waveform Physics |
+| Somatic Cipher & Wavelength Physics | Layer 3 · Somatic Cipher & FFT |
+
+Clicking any icon (or the **? Methodology / Docs** sidebar button) opens a 450 px frosted-glass slide-out drawer from the right edge with four beginner-friendly sections. Each section explains concepts, defines key terms, and contextualizes the output for non-specialist readers without removing any analytical depth from the interface.
 
 ---
 
@@ -266,8 +300,8 @@ Before running the FFT on the 256-letter micro array, the engine subtracts the *
 | JA | Japanese | Logographic | pykakasi → Hepburn Romaji → C++ BPV | `ja_core_news_md` | Script ratios + stroke density + Keigo formality layer |
 | ZH | Chinese | Logographic | jieba → pypinyin → Pinyin → C++ BPV + Hanzi stroke array | `zh_core_web_md` | Dual-Signal Engine; `analyze_with_strokes()` |
 | RU | Russian | Cyrillic | `sanitize_ru()` + C++ `analyze_ru()` (33-bin UTF-8) | `ru_core_news_md` | 33 Cyrillic bins А–Я; pharyngeal/sibilant interaction pairs |
-| AR | Arabic | Abjad RTL | `sanitize_abjad()` + C++ `analyze_ar()` (28-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Pharyngeal/emphatic BPV 8–9; dir=rtl on UI textareas; sentencizer auto-injected |
-| FA | Farsi | Abjad RTL | `sanitize_abjad()` + C++ `analyze_fa()` (32-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Extends AR with پ(28) چ(29) ژ(30) گ(31) |
+| AR | Arabic | Abjad RTL | `sanitize_abjad()` + C++ `analyze_ar()` (28-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Pharyngeal/emphatic BPV 8–9; dir=rtl on UI textareas; sentencizer auto-injected; POS fallback + diacritic/clitic normalization for macro |
+| FA | Farsi | Abjad RTL | `sanitize_abjad()` + C++ `analyze_fa()` (32-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Extends AR with پ(28) چ(29) ژ(30) گ(31); ZWNJ compound-word normalization |
 | KO | Korean | Hangul | `unpack_hangul_to_jamo()` + C++ `analyze_ko()` (24-bin Jamo) | `ko_core_news_sm` | Syllable blocks decomposed to conjoining Jamo; tense consonants fold to base bin with BPV=9; whitespace tokenizer for whole-eojeol macro matching |
 
 ---
@@ -408,6 +442,8 @@ Open `http://localhost:8000` in a browser.
 7. Use the **Window Span Map** below the pills to see at a glance which character range each window covers
 8. Toggle **Reader Profile** to switch from authorial signal analysis to target audience profiling
 9. Export results via **↓ JSON** or **↓ CSV**
+10. Click **⊕ Legend** (header) to open the Archetypal Letter Legend panel
+11. Click **? Methodology / Docs** (sidebar) or any `[?]` icon to open the contextual help drawer
 
 ---
 
@@ -506,7 +542,7 @@ POST /api/analyze
 For each analysis window the engine:
 
 1. Updates a **Welford online mean/σ** for every micro and macro variable
-2. Computes **Z-scores** — how many standard deviations each observation sits from the running baseline
+2. Computes **Z-scores** — how many standard deviations each observation sits from the running baseline; returns the raw value on the first observation (n < 2) so bootstrap windows are never silently zeroed
 3. Tracks an **EMA** (α = 0.1) for drift visualization
 4. Evaluates **11 semantic bridge pairs** linking micro vectors to macro poles
 5. Fires a **DissonanceEvent** when |Z_macro − Z_micro| exceeds the configured threshold (default 2.5σ)
@@ -518,11 +554,19 @@ Events are persisted to the entity ledger and accumulate a **baseline confidence
 
 ## Changelog
 
+### v3.7
+- **Contextual Help System** — `[?]` icons (grey-blue, CSS tooltip on hover) injected next to Raw Telemetry, Burstiness σ, Macro Conscious Framing, Global Waveform Envelope, and Somatic Cipher; click-to-scroll routing to the correct drawer section; `openHelp(sectionId)` / `closeHelp()` JS
+- **Methodology slide-out drawer** — 450 px frosted-glass panel (`backdrop-filter:blur(10px)`, `rgba(14,17,26,.96)`) with `.3s cubic-bezier` open/close animation and neon-accented scrollbar; z-index 10000 (above Legend panel); four beginner-friendly sections: Raw Telemetry & Structural Baseline, Dissonance Radars, The Waveform Physics, Layer 3 Somatic Cipher & FFT
+- **? Methodology / Docs** button added to left sidebar panel
+- **Archetypal Legend floating panel** — fixed bottom-right panel (332×430 px, dark amber theme) with three tabs: Shape (26-letter form-to-archetype grid), Lines (line-count survival groupings), Space (spatial orientation groupings); toggled via **⊕ Legend** header button
+
 ### v3.6
 - **Korean (KO) Hangul Jamo support** — C++ `analyze_ko()` pipeline with 24-bin matrix (14 basic consonants ㄱ–ㅎ + 10 basic vowels ㅏ–ㅣ); `ko_bpv_table.h` with ONSET[19] / NUCLEUS[21] / CODA[27] conjoining Jamo dispatch tables and `jamo_lookup()`; tense consonants (ㄲ ㄸ ㅃ ㅆ ㅉ) fold to base bin with BPV=9; compound codas fold to primary consonant bin; 5-category archetypal mapping (Origin/Kinetic/Resonant/Liminal/Sovereign); 7 interaction pairs
 - **Python Jamo decomposition bridge** — `unpack_hangul_to_jamo()` in `micro_layer/ko_analyzer.py` decomposes syllable blocks U+AC00–U+D7A3 into conjoining Onset/Nucleus/Coda Jamo via standard Unicode offset formula; `sanitize_ko()` Stream B pre-processor; `KoreanOrthographicAnalyzer` overrides `total_chars` with native syllable count (not inflated Jamo count)
 - **Korean macro layer** — `KoreanSemanticAnalyzer` in `macro_layer/ko_clusters.py` with 300 Korean seed words; spaCy whitespace tokenizer override for whole-eojeol seed matching (avoids MeCab-Ko morpheme fragmentation); sentencizer auto-injected when model lacks a parser
 - **Korean letter frequency** — `_compute_korean_freq()` in `routes.py` decomposes each syllable block and maps Onset/Nucleus/Coda to 24 Jamo bins; `ALPHABET.HANGUL` (24 glyphs) + Hangul decomposition branch in `computeLetterFreq()` JS; 🇰🇷 KO button with `--ko: #f06890` theme
+- **AR/FA macro flatline fix** — `apply_pos_fallback()` in `semantic_analyzer.py` fires when zero cluster hits are returned; injects NOUN/VERB/ADJ/PROPN tokens into `baseline/structural`; `_surface()` helper uses `(token.lemma_ or token.text).lower()` to handle `xx_ent_wiki_sm`'s empty-lemma behavior; Arabic diacritic stripping (U+064B–U+065F), Farsi ZWNJ stripping (U+200C), and 9 clitic prefix variants registered in `_build_lookup()`
+- **Z-score bootstrap guard** — `BaselineStats.z_score()` returns raw `value` when `n < 2` so first-window Z-scores are never silently zeroed
 
 ### v3.5
 - **Arabic (AR) and Farsi (FA) Abjad RTL support** — C++ `analyze_ar()` (28-bin) and `analyze_fa()` (32-bin) pipelines; `ar_bpv_table.h` with 36-slot codepoint dispatch table and `arabic_index()` mapping U+0627–U+064A; Farsi-specific letters پ(28) چ(29) ژ(30) گ(31) handled as early special cases; pharyngeal/emphatic letters score 8–9 BPV; byte stream processed in logical order — no RTL reversal in C++
