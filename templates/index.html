@@ -618,6 +618,76 @@
       line-height: 1.4;
     }
 
+    /* ── Lexical Affinity Radar ── */
+    .lexical-section {
+      margin-top: 1rem;
+      padding-top: .9rem;
+      border-top: 1px solid var(--border);
+    }
+    .lexical-section-title {
+      font-size: .67rem;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--muted);
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+    }
+    .lexical-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .lexical-radar-wrap {
+      width: 100%;
+      max-width: 260px;
+      margin: 0 auto .65rem;
+      aspect-ratio: 1 / 1;
+    }
+    .lexical-dominant-chip {
+      display: inline-block;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .15em .6em;
+      border-radius: 3px;
+      background: rgba(92,224,216,.1);
+      color: var(--cyan);
+      border: 1px solid rgba(92,224,216,.28);
+      margin-bottom: .45rem;
+    }
+    .lexical-profile-text {
+      font-size: .76rem;
+      color: var(--text);
+      line-height: 1.6;
+      padding: .5rem .7rem;
+      background: rgba(79,142,247,.05);
+      border-left: 2px solid var(--accent);
+      border-radius: 3px;
+    }
+    .posturing-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      background: rgba(224,168,92,.07);
+      border: 1px solid rgba(224,168,92,.4);
+      border-radius: 5px;
+      padding: .55rem .75rem;
+      margin-top: .65rem;
+      font-size: .73rem;
+      color: var(--warn);
+      line-height: 1.5;
+      animation: posturing-pulse 2.8s ease-in-out infinite;
+    }
+    .posturing-banner-icon { font-size: .95rem; flex-shrink: 0; padding-top: .1rem; }
+    @keyframes posturing-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(224,168,92,0); }
+      50%       { box-shadow: 0 0 10px 2px rgba(224,168,92,.2); }
+    }
+
     /* ── Contextual Help Icons ── */
     .help-icon {
       display: inline-flex;
@@ -962,6 +1032,13 @@
           <div class="radar-canvas-wrap"><canvas id="macro-radar"></canvas></div>
         </div>
       </div>
+
+      <!-- Lexical Affinity — Author Profile -->
+      <div class="lexical-section" id="lexical-author-section" style="display:none;">
+        <div class="lexical-section-title">Lexical Affinity — Graphemic Iconicity · Author State</div>
+        <div class="lexical-radar-wrap"><canvas id="lexical-radar-author"></canvas></div>
+        <div id="lexical-author-body"></div>
+      </div>
     </div>
 
     <!-- 3. Z-Score Dashboard -->
@@ -1169,6 +1246,13 @@
         Only traits with |Z| &gt; 1.0 are flagged as active.
       </div>
       <div id="reader-profile-grid"></div>
+
+      <!-- Lexical Affinity — Reader Deficit Profile -->
+      <div class="lexical-section" id="lexical-reader-section" style="display:none;">
+        <div class="lexical-section-title">Lexical Affinity — Graphemic Iconicity · Reader Deficit</div>
+        <div class="lexical-radar-wrap"><canvas id="lexical-radar-reader"></canvas></div>
+        <div id="lexical-reader-body"></div>
+      </div>
     </div>
 
     <!-- 6. Dissonance Events -->
@@ -1248,6 +1332,8 @@ let _mode        = "author";
 
 let _microChart = null;
 let _macroChart = null;
+let _lexicalChartAuthor = null;
+let _lexicalChartReader = null;
 let _somaRadar      = null;
 let _somaScatter    = null;
 let _somaWaveGlobal = null;   // Chart A — per-window slice of 100-bucket envelope
@@ -1355,7 +1441,10 @@ function setMode(mode) {
   $('btn-author').classList.toggle('active', mode === 'author');
   $('btn-reader').classList.toggle('active', mode === 'reader');
   $('card-reader').style.display = (mode === 'reader' && _results) ? '' : 'none';
-  if (mode === 'reader' && _results) renderReaderProfile(_results.windows[_activeWin]);
+  if (_results) {
+    if (mode === 'reader') renderReaderProfile(_results.windows[_activeWin]);
+    renderLexicalAffinity(_results.windows[_activeWin]);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2403,6 +2492,92 @@ function renderReaderProfile(win) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Render: Lexical Affinity Radar
+════════════════════════════════════════════════════════════ */
+const _LAR_LABELS = ['Structural','Kinetic','Fluid','Expansive','Directional','Orthogonal','Complex'];
+const _LAR_KEYS   = ['structural','kinetic','fluid','expansive','directional','orthogonal','complex'];
+
+function _buildLexicalChart(canvasId, existingChart, dataValues) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return existingChart;
+  if (existingChart) existingChart.destroy();
+  return new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: _LAR_LABELS,
+      datasets: [{
+        data: dataValues,
+        backgroundColor: 'rgba(92,224,216,.12)',
+        borderColor: 'rgba(92,224,216,.75)',
+        borderWidth: 1.5,
+        pointBackgroundColor: 'rgba(92,224,216,.9)',
+        pointBorderColor: '#0d0f14',
+        pointRadius: 3,
+        pointHoverRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ` ${ctx.parsed.r.toFixed(1)}%` }
+      }},
+      scales: { r: {
+        min: 0,
+        suggestedMax: 50,
+        ticks: { display: false, stepSize: 10 },
+        grid:        { color: 'rgba(255,255,255,.05)' },
+        angleLines:  { color: 'rgba(255,255,255,.07)' },
+        pointLabels: { color: 'rgba(220,227,245,.6)', font: { size: 8.5, family: 'monospace', weight: '600' } },
+      }}
+    }
+  });
+}
+
+function renderLexicalAffinity(win) {
+  const la = win && win.lexical_affinity;
+  const authorSec = $('lexical-author-section');
+  const readerSec = $('lexical-reader-section');
+
+  if (!la) {
+    if (authorSec) authorSec.style.display = 'none';
+    if (readerSec) readerSec.style.display = 'none';
+    return;
+  }
+
+  const values   = _LAR_KEYS.map(k => la.clusters[k] ?? 0);
+  const dom      = la.dominant || 'structural';
+  const domLabel = dom.charAt(0).toUpperCase() + dom.slice(1);
+
+  const posturingHtml = la.is_posturing
+    ? `<div class="posturing-banner">
+         <span class="posturing-banner-icon">⚠</span>
+         <span><strong>PSYCHOLOGICAL POSTURING DETECTED</strong> — Macro-semantic framing projects kinetic aggression, but subconscious graphemic affinity reveals a desire for structural safety and containment.</span>
+       </div>`
+    : '';
+
+  // Author section
+  if (authorSec) {
+    authorSec.style.display = '';
+    $('lexical-author-body').innerHTML = `
+      <span class="lexical-dominant-chip">${domLabel}</span>
+      <div class="lexical-profile-text">${la.author_reality}</div>
+      ${posturingHtml}`;
+    _lexicalChartAuthor = _buildLexicalChart('lexical-radar-author', _lexicalChartAuthor, values);
+  }
+
+  // Reader section
+  if (readerSec) {
+    readerSec.style.display = '';
+    $('lexical-reader-body').innerHTML = `
+      <span class="lexical-dominant-chip">${domLabel}</span>
+      <div class="lexical-profile-text">${la.reader_deficit}</div>
+      ${posturingHtml}`;
+    _lexicalChartReader = _buildLexicalChart('lexical-radar-reader', _lexicalChartReader, values);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
    Render: Dissonance Events
 ════════════════════════════════════════════════════════════ */
 /* ── Classify trigger → CSS class + label ────────────────────────── */
@@ -2529,6 +2704,7 @@ function selectWindow(idx) {
   updateCharts(win);
   renderTelemetry(win);
   renderSomatic(win);
+  renderLexicalAffinity(win);
   if (_mode === 'reader') renderReaderProfile(win);
 
   // Per-window letter frequency — prefer pre-computed phonetic freq from backend;
@@ -2572,6 +2748,7 @@ function renderResults(data) {
     $('card-reader').style.display = '';
     renderReaderProfile(data.windows[0]);
   }
+  renderLexicalAffinity(data.windows[0]);
 
   const total = data.windows.reduce((n, w) => n + w.dissonance_events.length, 0);
   setStatus(

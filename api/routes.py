@@ -33,6 +33,7 @@ import database.schema as db
 from dissonance.engine import DissonanceEngine
 from entropy_engine import compute_entropy_metrics, sanitize_for_entropy
 from language.router import LanguageRouter, SUPPORTED_LANGUAGES
+from micro_layer.lexical_affinity import LexicalAffinityRadar
 from micro_layer.somatic_engine import SomaticEngine
 from tokenizer.rolling_window import RollingWindowTokenizer
 
@@ -79,6 +80,9 @@ class EntityCreateRequest(BaseModel):
 
 _WORD_RE   = re.compile(r"[A-Za-z]+")
 _LETTER_RE = re.compile(r"[A-Za-z]")
+
+# Languages for which Lexical Affinity Radar is meaningful (Latin script, spaCy POS)
+_LAR_LANGS = frozenset({"EN", "DE", "ES", "FR"})
 
 # Zero-width / invisible Unicode byte sequences (UTF-8 encoded)
 _HIDDEN_SEQS = [
@@ -527,6 +531,19 @@ def _run_pipeline(
                 if key in micro_result.raw:
                     raw_telem[key] = micro_result.raw[key]
 
+        # ── Lexical Affinity Radar (Latin-script languages only) ─────────────
+        # Runs spaCy POS tagging on the window text via the macro analyzer's
+        # already-loaded NLP pipeline to avoid a second model load.
+        if language_code in _LAR_LANGS:
+            try:
+                spacy_doc = macro_analyzer._nlp(win.text)
+                lar = LexicalAffinityRadar(spacy_doc, macro_result.cluster_scores)
+                lexical_affinity = lar.analyze()
+            except Exception:
+                lexical_affinity = None
+        else:
+            lexical_affinity = None
+
         # ── Letter frequencies ────────────────────────────────────────────────
         # RU:     count Cyrillic А–Я directly from window text.
         # AR:     count 28 Arabic consonants (abjadi order) from window text.
@@ -589,7 +606,8 @@ def _run_pipeline(
                 }
                 for e in dis.dissonance_events
             ],
-            "raw_telemetry": raw_telem,
+            "raw_telemetry":     raw_telem,
+            "lexical_affinity":  lexical_affinity,
         })
 
     return {
