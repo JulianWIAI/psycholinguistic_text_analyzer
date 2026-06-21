@@ -1,4 +1,4 @@
-# PsychoLinguistic Analysis Engine v3.7
+# PsychoLinguistic Analysis Engine v3.8
 
 A real-time psycholinguistic profiling system that detects **steganographic layering**, **subconscious signal patterns**, and **authorial intent divergence** in text. Combines a compiled C++20 orthographic core with spaCy vector-similarity macro analysis and a full Somatic/Archetypal Cipher layer across ten languages spanning Latin, Cyrillic, Abjad RTL, and Hangul Jamo scripts.
 
@@ -67,7 +67,7 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 - **FFT spectral analysis** — Radix-2 Cooley-Tukey FFT with DC offset removal; returns top 5 harmonic peaks
 - **Author / Reader profile toggle** — Reader Profile inverts the Z-score space to model the psychological deficits the target audience brings to the text
 - **Raw Telemetry drawer** — structural baseline (chars/words/avg length), BPV character frequency bars, double-letter anomaly chips, full 12-pole driver matrix, steganographic anomaly warning chip, three entropy stat boxes, and Entity Polarity Map
-- **Archetypal Legend panel** — fixed floating panel (bottom-right) with 3 tabs: Shape (26-letter 2-column grid with form-to-archetype meanings), Lines (survival metric groupings), Space (spatial orientation groupings); toggled via header button
+- **Archetypal Legend panel** — fixed floating panel (bottom-right) with 4 tabs: Shape (26-letter 2-column grid with form-to-archetype meanings), Lines (survival metric groupings), Space (spatial orientation groupings), Initials (graphemic iconicity dictionary — all 26 letters with geometric-psychological descriptor and dominant trait); toggled via header button
 - **Contextual Help System** — `[?]` icons next to Raw Telemetry, Burstiness σ, Macro Framing, Global Waveform, and Somatic Cipher; hover shows a 1-sentence CSS tooltip; clicking opens a 450px frosted-glass slide-out drawer with 4 beginner-friendly methodology sections and click-to-scroll routing
 - **Bulk export** — JSON (full telemetry, all windows) and flat CSV (SPSS/R compatible)
 - **Entity ledger** — persistent JSON database tracking baseline drift and dissonance event history across sessions
@@ -213,13 +213,14 @@ When the active window is Chinese, a dedicated **ZH script panel** shows Hanzi c
 
 ### Archetypal Legend Panel
 
-A fixed floating panel (bottom-right, toggled via the **⊕ Legend** header button) with a dark amber theme and three tabs:
+A fixed floating panel (bottom-right, toggled via the **⊕ Legend** header button) with a dark amber theme and four tabs:
 
 | Tab | Content |
 |---|---|
 | **Shape** | 26-letter grid mapping each letterform's geometry to its somatic archetype and associated concepts |
 | **Lines** | Groups letters by line count (1-line abstract, 2-line structural, 3-line systematic, 4-line material) |
 | **Space** | Groups letters by spatial orientation (vertical axis, horizontal, diagonal, enclosed, open arc) |
+| **Initials** | Graphemic iconicity dictionary — all 26 letters with geometric label (e.g. "Kinetic Strike", "Open Vessel") and dominant psychological trait; cross-reference for the Lexical Affinity Radar cluster assignments |
 
 ### Contextual Help System
 
@@ -553,6 +554,9 @@ Events are persisted to the entity ledger and accumulate a **baseline confidence
 ---
 
 ## Changelog
+
+### v3.8
+- **Legend panel — Initials tab (4th tab)** — graphemic iconicity dictionary for all 26 Latin letters in the same `.leg-shape-grid` two-column format as the Shape tab; each entry has a geometric label (e.g. "Kinetic Strike", "Open Vessel") and italic dominant trait; serves as a visual cross-reference for the Lexical Affinity Radar cluster assignments; `legendTab(3)` handled automatically by the existing generic tab switcher with no JS changes
 
 ### v3.7
 - **Contextual Help System** — `[?]` icons (grey-blue, CSS tooltip on hover) injected next to Raw Telemetry, Burstiness σ, Macro Conscious Framing, Global Waveform Envelope, and Somatic Cipher; click-to-scroll routing to the correct drawer section; `openHelp(sectionId)` / `closeHelp()` JS
