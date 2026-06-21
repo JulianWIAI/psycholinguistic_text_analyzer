@@ -458,6 +458,165 @@
     .cmp-anomaly-hdr    { font-size:.65rem; text-transform:uppercase; letter-spacing:.07em; font-weight:700; padding-bottom:.3rem; border-bottom:1px solid var(--border); margin-bottom:.5rem; }
     .cmp-anomaly-hdr-a  { color:rgba(0,240,255,.85); }
     .cmp-anomaly-hdr-b  { color:rgba(255,32,64,.85); }
+
+    /* ══════════════════════════════════════════════════════════
+       Archetypal Legend — floating reference panel
+    ══════════════════════════════════════════════════════════ */
+
+    /* Header toggle button */
+    .btn-legend-toggle {
+      background: rgba(160,130,80,.1);
+      border: 1px solid rgba(160,130,80,.3);
+      color: #907840;
+      border-radius: 5px;
+      padding: .25rem .75rem;
+      font-size: .7rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: all .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-legend-toggle:hover { background:rgba(160,130,80,.2); border-color:rgba(160,130,80,.6); color:#c0a050; }
+    .btn-legend-toggle.legend-active { background:rgba(160,130,80,.18); border-color:rgba(160,130,80,.65); color:#d0b060; }
+
+    /* Floating panel container */
+    #legend-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9000;
+      width: 332px;
+      max-height: 430px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(20, 15, 6, 0.97);
+      border: 1px solid rgba(160,130,80,.38);
+      border-radius: 10px;
+      box-shadow: 0 8px 36px rgba(0,0,0,.75), 0 0 0 1px rgba(160,130,80,.07);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Panel header row */
+    .leg-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .5rem .85rem .38rem;
+      border-bottom: 1px solid rgba(160,130,80,.18);
+      flex-shrink: 0;
+    }
+    .leg-title {
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #987840;
+      font-weight: 700;
+    }
+    .leg-close {
+      background: none;
+      border: none;
+      color: #5a6080;
+      cursor: pointer;
+      font-size: .9rem;
+      padding: 0 .1rem;
+      line-height: 1;
+      transition: color .15s;
+    }
+    .leg-close:hover { color: #c0aa78; }
+
+    /* 3-tab navigation */
+    .leg-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(160,130,80,.14);
+      flex-shrink: 0;
+    }
+    .leg-tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #5a6080;
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      padding: .42rem .25rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .leg-tab-btn:hover { color: #b09a70; }
+    .leg-tab-btn.leg-tab-active { color: #d0a860; border-bottom-color: #987840; }
+
+    /* Scrollable content area */
+    .leg-body {
+      overflow-y: auto;
+      padding: .6rem .82rem .7rem;
+      flex: 1;
+      min-height: 0;
+    }
+    .leg-body::-webkit-scrollbar { width: 3px; }
+    .leg-body::-webkit-scrollbar-thumb { background: rgba(160,130,80,.22); border-radius: 2px; }
+
+    /* ── Tab 1: Shape grid ── */
+    .leg-shape-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: .65rem;
+      row-gap: 1px;
+    }
+    .leg-se {
+      display: flex;
+      align-items: baseline;
+      gap: .38rem;
+      padding: 2.5px 0;
+      border-bottom: 1px solid rgba(160,130,80,.07);
+    }
+    .leg-se:nth-child(even) { padding-left: .45rem; border-left: 1px solid rgba(160,130,80,.07); }
+    .leg-let {
+      font-family: monospace;
+      font-weight: 800;
+      font-size: .84rem;
+      color: #e0c060;
+      min-width: 1rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .leg-trig {
+      font-size: .62rem;
+      color: #a08a5c;
+      line-height: 1.25;
+    }
+    .leg-trig em { font-style: normal; color: #786448; }
+
+    /* ── Tab 2 & 3: group blocks ── */
+    .leg-group { margin-bottom: .72rem; }
+    .leg-group:last-child { margin-bottom: 0; }
+    .leg-group-hdr { margin-bottom: .3rem; display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
+    .leg-group-key {
+      font-size: .72rem;
+      font-weight: 800;
+      color: #d0a860;
+      font-family: monospace;
+      white-space: nowrap;
+    }
+    .leg-group-sub { font-size: .61rem; color: #7a6440; line-height: 1.3; }
+    .leg-chips { display: flex; flex-wrap: wrap; gap: .22rem; }
+    .leg-chip {
+      font-family: monospace;
+      font-weight: 800;
+      font-size: .76rem;
+      color: #d8b858;
+      background: rgba(160,130,80,.1);
+      border: 1px solid rgba(160,130,80,.22);
+      border-radius: 3px;
+      padding: .05em .32em;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -467,6 +626,7 @@
   <h1>PsychoLinguistic Analysis Engine</h1>
   <span class="badge-risk">STEGANOGRAPHY RISK: HIGH</span>
   <span id="hdr-lang-badge" class="badge-lang lang-EN" style="display:none;"></span>
+  <button class="btn-legend-toggle" id="btn-legend" onclick="toggleLegend()" title="Archetypal Letter Legend">⊕ Legend</button>
   <span id="entity-name" style="margin-left:auto;font-size:.78rem;color:var(--muted);">entity: —</span>
 </header>
 
@@ -3697,10 +3857,178 @@ function renderDelta(delta) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Archetypal Legend — toggle & tab logic
+════════════════════════════════════════════════════════════ */
+function toggleLegend() {
+  const panel = document.getElementById('legend-panel');
+  const btn   = document.getElementById('btn-legend');
+  const open  = panel.style.display === 'none' || panel.style.display === '';
+  panel.style.display = open ? 'flex' : 'none';
+  btn.classList.toggle('legend-active', open);
+}
+
+function legendTab(idx) {
+  document.querySelectorAll('.leg-tab-btn').forEach((b, i) =>
+    b.classList.toggle('leg-tab-active', i === idx));
+  document.querySelectorAll('.leg-pane').forEach((p, i) =>
+    (p.style.display = i === idx ? 'block' : 'none'));
+}
+
+/* ════════════════════════════════════════════════════════════
    Init
 ════════════════════════════════════════════════════════════ */
 selectLang('EN');
 loadEntity();
 </script>
+
+<!-- ══════════════════════ ARCHETYPAL LEGEND PANEL ══════════════════════ -->
+<div id="legend-panel" style="display:none;" role="dialog" aria-label="Archetypal Letter Legend">
+
+  <!-- Header -->
+  <div class="leg-hdr">
+    <span class="leg-title">Archetypal Letter Legend</span>
+    <button class="leg-close" onclick="toggleLegend()" aria-label="Close">✕</button>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="leg-tabs" role="tablist">
+    <button class="leg-tab-btn leg-tab-active" onclick="legendTab(0)" role="tab">Shape</button>
+    <button class="leg-tab-btn"                onclick="legendTab(1)" role="tab">Lines</button>
+    <button class="leg-tab-btn"                onclick="legendTab(2)" role="tab">Space</button>
+  </div>
+
+  <!-- ── TAB 0 · Geometrical Shape ── -->
+  <div class="leg-body leg-pane" style="display:block;">
+    <div class="leg-shape-grid">
+      <div class="leg-se"><span class="leg-let">A</span><span class="leg-trig">Sharp apex · <em>Attention, Action</em></span></div>
+      <div class="leg-se"><span class="leg-let">B</span><span class="leg-trig">Back loops · <em>Body, Containment</em></span></div>
+      <div class="leg-se"><span class="leg-let">C</span><span class="leg-trig">Open arc · <em>Catch, Consume</em></span></div>
+      <div class="leg-se"><span class="leg-let">D</span><span class="leg-trig">Wall+curve · <em>Drive, Dominance</em></span></div>
+      <div class="leg-se"><span class="leg-let">E</span><span class="leg-trig">Shelf stack · <em>Earth, Systematic</em></span></div>
+      <div class="leg-se"><span class="leg-let">F</span><span class="leg-trig">Top-heavy · <em>Force, Directional</em></span></div>
+      <div class="leg-se"><span class="leg-let">G</span><span class="leg-trig">Hooked arc · <em>Guard, Grasp</em></span></div>
+      <div class="leg-se"><span class="leg-let">H</span><span class="leg-trig">Bridged pillars · <em>Hold, Harmony</em></span></div>
+      <div class="leg-se"><span class="leg-let">I</span><span class="leg-trig">Single line · <em>Intellect, Identity</em></span></div>
+      <div class="leg-se"><span class="leg-let">J</span><span class="leg-trig">Vertical hook · <em>Jump, Journey</em></span></div>
+      <div class="leg-se"><span class="leg-let">K</span><span class="leg-trig">Wall+wedge · <em>Kinetic, Kill</em></span></div>
+      <div class="leg-se"><span class="leg-let">L</span><span class="leg-trig">Right angle · <em>Level, Life</em></span></div>
+      <div class="leg-se"><span class="leg-let">M</span><span class="leg-trig">Zigzag peaks · <em>Mass, Might</em></span></div>
+      <div class="leg-se"><span class="leg-let">N</span><span class="leg-trig">Diagonal slash · <em>Nature, Node</em></span></div>
+      <div class="leg-se"><span class="leg-let">O</span><span class="leg-trig">Full circle · <em>Origin, Orbit</em></span></div>
+      <div class="leg-se"><span class="leg-let">P</span><span class="leg-trig">Top curve · <em>Plan, Politics</em></span></div>
+      <div class="leg-se"><span class="leg-let">Q</span><span class="leg-trig">Punctured O · <em>Quest, Catalyst</em></span></div>
+      <div class="leg-se"><span class="leg-let">R</span><span class="leg-trig">Loop+leg · <em>Run, Primal</em></span></div>
+      <div class="leg-se"><span class="leg-let">S</span><span class="leg-trig">Serpentine · <em>Stream, Shifting</em></span></div>
+      <div class="leg-se"><span class="leg-let">T</span><span class="leg-trig">Crossbar · <em>Tower, Tension</em></span></div>
+      <div class="leg-se"><span class="leg-let">U</span><span class="leg-trig">Open vessel · <em>Universe, Under</em></span></div>
+      <div class="leg-se"><span class="leg-let">V</span><span class="leg-trig">Sharp wedge · <em>Vector, Vision</em></span></div>
+      <div class="leg-se"><span class="leg-let">W</span><span class="leg-trig">Twin valleys · <em>World, Expansive</em></span></div>
+      <div class="leg-se"><span class="leg-let">X</span><span class="leg-trig">Cross diag. · <em>X-factor, Blockade</em></span></div>
+      <div class="leg-se"><span class="leg-let">Y</span><span class="leg-trig">Funnel · <em>Yield, Channeling</em></span></div>
+      <div class="leg-se"><span class="leg-let">Z</span><span class="leg-trig">Snapping · <em>Zap, Shifts</em></span></div>
+    </div>
+  </div>
+
+  <!-- ── TAB 1 · Count of Lines (Survival Metric) ── -->
+  <div class="leg-body leg-pane" style="display:none;">
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">1 Line</span>
+        <span class="leg-group-sub">Abstract · fluid · ubiquitous states</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">C</span><span class="leg-chip">I</span><span class="leg-chip">O</span><span class="leg-chip">S</span><span class="leg-chip">U</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">2 Lines</span>
+        <span class="leg-group-sub">Duality · transition · connection</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">D</span><span class="leg-chip">J</span><span class="leg-chip">L</span><span class="leg-chip">P</span><span class="leg-chip">Q</span><span class="leg-chip">T</span><span class="leg-chip">V</span><span class="leg-chip">X</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">3 Lines</span>
+        <span class="leg-group-sub">High importance · complex · life-sustaining</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">A</span><span class="leg-chip">B</span><span class="leg-chip">F</span><span class="leg-chip">H</span><span class="leg-chip">K</span><span class="leg-chip">N</span><span class="leg-chip">R</span><span class="leg-chip">Y</span><span class="leg-chip">Z</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">4 Lines</span>
+        <span class="leg-group-sub">Maximum importance · monumental constants</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">E</span><span class="leg-chip">M</span><span class="leg-chip">W</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2 · Proportion & Space (Magnitude Metric) ── -->
+  <div class="leg-body leg-pane" style="display:none;">
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Massive</span>
+        <span class="leg-group-sub">Global scale · expansive concepts</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">M</span><span class="leg-chip">W</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Solid Block</span>
+        <span class="leg-group-sub">Structural · permanent · balanced</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">A</span><span class="leg-chip">H</span><span class="leg-chip">N</span><span class="leg-chip">O</span><span class="leg-chip">U</span><span class="leg-chip">X</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Grounded Brick</span>
+        <span class="leg-group-sub">Boundaries · building blocks · containment</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">B</span><span class="leg-chip">D</span><span class="leg-chip">E</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Top-Heavy</span>
+        <span class="leg-group-sub">Cognitive weight · looming concepts</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">F</span><span class="leg-chip">P</span><span class="leg-chip">T</span><span class="leg-chip">Y</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Dynamic</span>
+        <span class="leg-group-sub">Kinetics · action · friction</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">C</span><span class="leg-chip">G</span><span class="leg-chip">K</span><span class="leg-chip">Q</span><span class="leg-chip">R</span><span class="leg-chip">S</span><span class="leg-chip">V</span><span class="leg-chip">Z</span>
+      </div>
+    </div>
+    <div class="leg-group">
+      <div class="leg-group-hdr">
+        <span class="leg-group-key">Narrow</span>
+        <span class="leg-group-sub">Internal logic · easily overlooked</span>
+      </div>
+      <div class="leg-chips">
+        <span class="leg-chip">I</span><span class="leg-chip">J</span><span class="leg-chip">L</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ══════════════════════ END LEGEND PANEL ══════════════════════ -->
+
 </body>
 </html>
