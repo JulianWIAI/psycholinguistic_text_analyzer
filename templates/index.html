@@ -1249,7 +1249,7 @@
 
       <!-- Lexical Affinity — Reader Deficit Profile -->
       <div class="lexical-section" id="lexical-reader-section" style="display:none;">
-        <div class="lexical-section-title">Lexical Affinity — Graphemic Iconicity · Reader Deficit</div>
+        <div class="lexical-section-title" style="color:var(--warn);">Lexical Affinity — Graphemic Iconicity · Reader Deficit</div>
         <div class="lexical-radar-wrap"><canvas id="lexical-radar-reader"></canvas></div>
         <div id="lexical-reader-body"></div>
       </div>
@@ -2497,20 +2497,27 @@ function renderReaderProfile(win) {
 const _LAR_LABELS = ['Structural','Kinetic','Fluid','Expansive','Directional','Orthogonal','Complex'];
 const _LAR_KEYS   = ['structural','kinetic','fluid','expansive','directional','orthogonal','complex'];
 
-function _buildLexicalChart(canvasId, existingChart, dataValues) {
+// palette: 'author' = neon cyan (state of presence), 'reader' = amber (state of deficit/desire)
+const _LAR_PALETTE = {
+  author: { bg: 'rgba(92,224,216,.12)', border: 'rgba(92,224,216,.78)', point: 'rgba(92,224,216,.95)' },
+  reader: { bg: 'rgba(224,168,92,.11)', border: 'rgba(224,168,92,.78)', point: 'rgba(224,168,92,.95)' },
+};
+
+function _buildLexicalChart(canvasId, existingChart, dataValues, mode) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return existingChart;
   if (existingChart) existingChart.destroy();
+  const pal = _LAR_PALETTE[mode] || _LAR_PALETTE.author;
   return new Chart(canvas.getContext('2d'), {
     type: 'radar',
     data: {
       labels: _LAR_LABELS,
       datasets: [{
         data: dataValues,
-        backgroundColor: 'rgba(92,224,216,.12)',
-        borderColor: 'rgba(92,224,216,.75)',
+        backgroundColor: pal.bg,
+        borderColor:     pal.border,
         borderWidth: 1.5,
-        pointBackgroundColor: 'rgba(92,224,216,.9)',
+        pointBackgroundColor: pal.point,
         pointBorderColor: '#0d0f14',
         pointRadius: 3,
         pointHoverRadius: 5,
@@ -2556,24 +2563,24 @@ function renderLexicalAffinity(win) {
        </div>`
     : '';
 
-  // Author section
+  // Author section — cyan (State of Presence)
   if (authorSec) {
     authorSec.style.display = '';
     $('lexical-author-body').innerHTML = `
       <span class="lexical-dominant-chip">${domLabel}</span>
       <div class="lexical-profile-text">${la.author_reality}</div>
       ${posturingHtml}`;
-    _lexicalChartAuthor = _buildLexicalChart('lexical-radar-author', _lexicalChartAuthor, values);
+    _lexicalChartAuthor = _buildLexicalChart('lexical-radar-author', _lexicalChartAuthor, values, 'author');
   }
 
-  // Reader section
+  // Reader section — amber (State of Deficit / Desire)
   if (readerSec) {
     readerSec.style.display = '';
     $('lexical-reader-body').innerHTML = `
-      <span class="lexical-dominant-chip">${domLabel}</span>
-      <div class="lexical-profile-text">${la.reader_deficit}</div>
+      <span class="lexical-dominant-chip" style="background:rgba(224,168,92,.12);color:var(--warn);border-color:rgba(224,168,92,.3);">${domLabel} · Deficit</span>
+      <div class="lexical-profile-text" style="border-color:var(--warn);background:rgba(224,168,92,.04);">${la.reader_deficit}</div>
       ${posturingHtml}`;
-    _lexicalChartReader = _buildLexicalChart('lexical-radar-reader', _lexicalChartReader, values);
+    _lexicalChartReader = _buildLexicalChart('lexical-radar-reader', _lexicalChartReader, values, 'reader');
   }
 }
 
