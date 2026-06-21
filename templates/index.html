@@ -617,6 +617,180 @@
       padding: .05em .32em;
       line-height: 1.4;
     }
+
+    /* ── Contextual Help Icons ── */
+    .help-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.15em;
+      height: 1.15em;
+      border-radius: 50%;
+      border: 1px solid rgba(100,130,200,.3);
+      background: transparent;
+      color: rgba(100,140,210,.4);
+      font-size: .58rem;
+      font-weight: 700;
+      cursor: pointer;
+      vertical-align: middle;
+      margin-left: .4rem;
+      position: relative;
+      transition: color .15s, border-color .15s, background .15s;
+      padding: 0;
+      line-height: 1;
+    }
+    .help-icon:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(79,142,247,.1);
+    }
+    .help-icon::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14,17,26,.97);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .67rem;
+      font-weight: 400;
+      white-space: nowrap;
+      max-width: 280px;
+      white-space: normal;
+      text-align: center;
+      padding: .35em .65em;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 20000;
+      letter-spacing: .02em;
+      line-height: 1.45;
+    }
+    .help-icon:hover::after { opacity: 1; }
+
+    /* ── Help/Docs sidebar button ── */
+    .btn-help-docs {
+      background: transparent;
+      border: 1px solid rgba(79,142,247,.28);
+      color: rgba(79,142,247,.55);
+      border-radius: 6px;
+      padding: .45rem 1rem;
+      font-size: .78rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all .15s;
+      letter-spacing: .04em;
+    }
+    .btn-help-docs:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(79,142,247,.07);
+    }
+
+    /* ── Help Slide-out Drawer ── */
+    #help-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 450px;
+      z-index: 10000;
+      transform: translateX(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      background: rgba(14,17,26,.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #help-drawer.open { transform: translateX(0); }
+    .help-drawer-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.2rem .85rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .help-drawer-title {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .help-drawer-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: .2rem .55rem;
+      font-size: .85rem;
+      transition: all .15s;
+    }
+    .help-drawer-close:hover { border-color: var(--danger); color: var(--danger); }
+    .help-drawer-body {
+      overflow-y: auto;
+      flex: 1;
+      padding: 1.2rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--bg);
+    }
+    .help-drawer-body::-webkit-scrollbar { width: 5px; }
+    .help-drawer-body::-webkit-scrollbar-track { background: var(--bg); }
+    .help-drawer-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+    .help-section {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .help-section:last-child { border-bottom: none; }
+    .help-section-title {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+    .help-section-sub {
+      display: block;
+      font-size: .7rem;
+      color: var(--muted);
+      letter-spacing: .04em;
+      margin-bottom: .9rem;
+    }
+    .help-p {
+      font-size: .81rem;
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: .7rem;
+    }
+    .help-term { color: var(--accent); font-weight: 600; }
+    .help-kv {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .45rem .85rem;
+      margin-bottom: .8rem;
+    }
+    .help-kv-key {
+      font-size: .7rem;
+      color: var(--cyan);
+      font-family: monospace;
+      font-weight: 700;
+      white-space: nowrap;
+      padding-top: .07em;
+    }
+    .help-kv-val {
+      font-size: .77rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
   </style>
 </head>
 <body>
@@ -678,6 +852,7 @@
 
     <button class="btn-run"  id="btn-run">Run Analysis</button>
     <button class="btn-seed" id="btn-seed">Seed Baselines from Text</button>
+    <button class="btn-help-docs" onclick="openHelp(null)">? Methodology / Docs</button>
 
     <div id="status-bar" class="info">Ready. Select language, paste intercept, run analysis.</div>
 
@@ -798,7 +973,7 @@
     <!-- 4. Raw Telemetry & Attribution (collapsible) -->
     <div class="card" id="card-telemetry" style="display:none;">
       <div class="telem-toggle-hdr" onclick="toggleTelemetry()">
-        <span class="card-title" style="margin:0;">Raw Telemetry &amp; Attribution</span>
+        <span class="card-title" style="margin:0;">Raw Telemetry &amp; Attribution<button class="help-icon" data-tip="Statistical breakdown of the text's orthographic and linguistic signature." onclick="event.stopPropagation();openHelp('help-raw-telemetry')">?</button></span>
         <span class="telem-caret" id="telem-caret">▼</span>
       </div>
 
@@ -857,7 +1032,7 @@
     <!-- Layer 3: Somatic / Archetypal Cipher -->
     <div class="card" id="card-somatic" style="display:none;">
       <div class="somatic-header">
-        <span class="somatic-card-title">Somatic Cipher &amp; Wavelength Physics</span>
+        <span class="somatic-card-title">Somatic Cipher &amp; Wavelength Physics<button class="help-icon" data-tip="Subconscious letter-energy archetypes mapped to a 5-axis somatic profile." onclick="openHelp('help-somatic')">?</button></span>
         <span class="somatic-layer-badge">LAYER 3</span>
       </div>
 
@@ -917,7 +1092,7 @@
         <!-- Chart A: Global Waveform Envelope (100-bucket, smooth) -->
         <div class="oscillo-block">
           <div class="oscillo-hdr">
-            <span class="oscillo-lbl oscillo-lbl-global">Global Waveform Envelope</span>
+            <span class="oscillo-lbl oscillo-lbl-global">Global Waveform Envelope<button class="help-icon" data-tip="100-bucket bezier-smoothed BPV energy envelope across the entire document." onclick="openHelp('help-waveform')">?</button></span>
             <span class="oscillo-sublbl" id="soma-global-sublbl">current window · energy buckets · bezier smooth</span>
           </div>
           <div class="oscillo-chart-wrap"><canvas id="soma-wave-global"></canvas></div>
@@ -1511,7 +1686,7 @@ function renderZScores(win) {
   function addSection(label, scores) {
     const hdr = document.createElement('div');
     hdr.className = 'zscore-section-hdr';
-    hdr.textContent = label;
+    hdr.innerHTML = label;
     grid.appendChild(hdr);
     Object.entries(scores).forEach(([key, val]) => {
       const cell = document.createElement('div');
@@ -1523,7 +1698,7 @@ function renderZScores(win) {
     });
   }
   addSection('Micro — Subconscious Signal', win.z_scores_micro);
-  addSection('Macro — Conscious Framing · 6-Cluster', win.z_scores_macro);
+  addSection('Macro — Conscious Framing · 6-Cluster<button class="help-icon" data-tip="6-axis semantic cluster scores: Power, Resources, Visibility, Temporal, Cognitive, Kinetic." onclick="openHelp(\'help-dissonance\')">?</button>', win.z_scores_macro);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1573,7 +1748,7 @@ function renderTelemetry(win) {
                 : 'var(--accent)';
   $('telem-entropy-row').innerHTML = `
     <div class="telem-stat-box">
-      <div class="telem-stat-label">Burstiness σ</div>
+      <div class="telem-stat-label">Burstiness σ<button class="help-icon" data-tip="Sentence-length variance — low σ (&lt;2.0) is a strong AI-generation indicator." onclick="openHelp('help-raw-telemetry')">?</button></div>
       <div class="telem-stat-value" style="color:${burst !== null && burst < 2.0 ? '#ff4444' : 'var(--fg)'};">${burst !== null ? burst.toFixed(2) : '—'}</div>
     </div>
     <div class="telem-stat-box">
@@ -3626,7 +3801,7 @@ function renderZScoresUnified(winA, winB) {
   function addSection(label, scoresA, scoresB) {
     const hdr = document.createElement('div');
     hdr.className = 'zscore-section-hdr';
-    hdr.textContent = label;
+    hdr.innerHTML = label;
     grid.appendChild(hdr);
     const keys = [...new Set([...Object.keys(scoresA), ...Object.keys(scoresB)])];
     keys.forEach(key => {
@@ -3875,11 +4050,101 @@ function legendTab(idx) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   Contextual Help Drawer
+════════════════════════════════════════════════════════════ */
+function openHelp(sectionId) {
+  document.getElementById('help-drawer').classList.add('open');
+  if (sectionId) {
+    setTimeout(() => {
+      const target = document.getElementById(sectionId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 320);
+  } else {
+    document.getElementById('help-drawer-body').scrollTop = 0;
+  }
+}
+function closeHelp() {
+  document.getElementById('help-drawer').classList.remove('open');
+}
+
+/* ════════════════════════════════════════════════════════════
    Init
 ════════════════════════════════════════════════════════════ */
 selectLang('EN');
 loadEntity();
 </script>
+
+<!-- ══════════════════════ HELP DRAWER ══════════════════════ -->
+<div id="help-drawer" role="dialog" aria-label="Methodology Documentation">
+  <div class="help-drawer-hdr">
+    <span class="help-drawer-title">Methodology &amp; Documentation</span>
+    <button class="help-drawer-close" onclick="closeHelp()">✕</button>
+  </div>
+  <div class="help-drawer-body" id="help-drawer-body">
+
+    <div class="help-section" id="help-raw-telemetry">
+      <div class="help-section-title">Raw Telemetry &amp; Structural Baseline</div>
+      <span class="help-section-sub">Layer 1 · Orthographic Fingerprint</span>
+      <p class="help-p">Every text leaves a <span class="help-term">physical signature</span> in its character distribution, sentence rhythm, and word-length variance — patterns the conscious author rarely controls.</p>
+      <div class="help-kv">
+        <span class="help-kv-key">AI Probability</span>
+        <span class="help-kv-val">Combines burstiness σ and lexical entropy into a 0–100% score. Values above 65% indicate statistically flat text consistent with LLM output.</span>
+        <span class="help-kv-key">Burstiness σ</span>
+        <span class="help-kv-val">Standard deviation of sentence lengths. Natural human writing is bursty (high σ). A σ below 2.0 is a strong AI-generation flag.</span>
+        <span class="help-kv-key">Lexical Entropy</span>
+        <span class="help-kv-val">Shannon entropy of the word distribution. Low entropy means repeated, predictable vocabulary — a sign of constrained or templated authorship.</span>
+      </div>
+      <p class="help-p">The <span class="help-term">Driver Matrix</span> (section C) shows which specific words were the heaviest contributors to each psychological cluster, ranked by weight and Z-score divergence.</p>
+    </div>
+
+    <div class="help-section" id="help-dissonance">
+      <div class="help-section-title">Dissonance Radars</div>
+      <span class="help-section-sub">Layer 2 · Macro / Micro Conflict Detection</span>
+      <p class="help-p">The engine separates cognition into two parallel channels: the <span class="help-term">Micro layer</span> (subconscious letter-physics) and the <span class="help-term">Macro layer</span> (conscious semantic framing). When these channels diverge beyond the threshold, a dissonance event is logged.</p>
+      <div class="help-kv">
+        <span class="help-kv-key">Micro · Subconscious</span>
+        <span class="help-kv-val">BPV (Bio-Psycho-Vibrational) scores derived from letter shapes, pen pressure, and kinetic energy. Reflects the writer's autonomic state rather than deliberate intent.</span>
+        <span class="help-kv-key">Macro · Conscious</span>
+        <span class="help-kv-val">Semantic cluster scores across 6 axes — Power, Resources, Visibility, Temporal, Cognitive, Kinetic. Reflects deliberate word choice and conscious framing.</span>
+        <span class="help-kv-key">Dissonance Alert</span>
+        <span class="help-kv-val">Fires when |Z_macro − Z_micro| exceeds the Δ threshold. Three classifications: <em>Psychological Fracture</em> (&gt;4σ), <em>Posturing</em> (macro &gt; micro), or <em>Suppressed Signal</em> (micro &gt; macro).</span>
+      </div>
+    </div>
+
+    <div class="help-section" id="help-waveform">
+      <div class="help-section-title">The Waveform Physics</div>
+      <span class="help-section-sub">Layer 2.5 · Oscilloscopic Signal Display</span>
+      <p class="help-p">The text is treated as a <span class="help-term">physical signal</span>. Each character's BPV value contributes energy to a running waveform — the same way audio amplitude is visualised on an oscilloscope.</p>
+      <div class="help-kv">
+        <span class="help-kv-key">Global Waveform</span>
+        <span class="help-kv-val">100-bucket bezier-smoothed envelope of the entire document's BPV energy. Flat lines suggest uniform authorship; sharp peaks indicate emotional escalation.</span>
+        <span class="help-kv-key">Micro Oscilloscope</span>
+        <span class="help-kv-val">256-point raw BPV trace of the current analysis window — no smoothing. Allows detection of rhythmic patterns, repetition artefacts, or templated structure.</span>
+        <span class="help-kv-key">Structural Morse</span>
+        <span class="help-kv-val">Punctuation events plotted as a binary waveform. Dense punctuation clusters correlate with high emotional arousal or deliberate syntactic control.</span>
+        <span class="help-kv-key">Wavelength Telemetry</span>
+        <span class="help-kv-val">Full-document energy split across dominant frequency bands. Imbalance between low / mid / high BPV bands reveals tonal suppression or register manipulation.</span>
+      </div>
+    </div>
+
+    <div class="help-section" id="help-somatic">
+      <div class="help-section-title">Layer 3 · Somatic Cipher &amp; FFT</div>
+      <span class="help-section-sub">Archetypal Letter Profiles &amp; Steganographic Frequency Analysis</span>
+      <p class="help-p">The Somatic Cipher maps the letter distribution to a <span class="help-term">5-axis archetypal profile</span>: Sovereign (authority), Origin (grounding), Kinetic (movement), Resonant (connection), Liminal (transition). These archetypes derive from the somatic geometries of the letterforms themselves.</p>
+      <div class="help-kv">
+        <span class="help-kv-key">Tier Badge</span>
+        <span class="help-kv-val">T1 (Universal) to T5 (Extreme Cipher) — how far the letter distribution deviates from natural language norms. T4+ may indicate intentional encoding.</span>
+        <span class="help-kv-key">Quersumme</span>
+        <span class="help-kv-val">Digit-sum of the dominant BPV scores — a single-digit compression of the text's psychoacoustic fingerprint, used in comparative analysis.</span>
+        <span class="help-kv-key">FFT Harmonics</span>
+        <span class="help-kv-val">Fast Fourier Transform of the BPV waveform. Dominant frequency peaks can reveal periodic encoding, templated sentence injection, or machine-inserted steganographic payloads.</span>
+      </div>
+      <p class="help-p">A flat or single-peaked FFT spectrum is normal for human writing. Multiple sharp harmonics above the noise floor suggest <span class="help-term">structured non-human authorship</span> or covert data embedding.</p>
+    </div>
+
+  </div>
+</div>
+<!-- ══════════════════════ END HELP DRAWER ══════════════════════ -->
 
 <!-- ══════════════════════ ARCHETYPAL LEGEND PANEL ══════════════════════ -->
 <div id="legend-panel" style="display:none;" role="dialog" aria-label="Archetypal Letter Legend">
