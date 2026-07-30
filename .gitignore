@@ -22,6 +22,11 @@ CMakeFiles/
 Makefile
 cmake_install.cmake
 
+# NRC Lexicon Data Files
+# These are third-party datasets that must be obtained separately.
+# See README.md § Lexicon Data Files for download links and naming convention.
+vad_layer/lexicons/
+
 # Local Target Databases
 *.json
 database/*.json

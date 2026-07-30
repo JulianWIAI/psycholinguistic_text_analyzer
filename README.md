@@ -1,4 +1,4 @@
-# PsychoLinguistic Analysis Engine v3.8
+# PsychoLinguistic Analysis Engine v3.9
 
 A real-time psycholinguistic profiling system that detects **steganographic layering**, **subconscious signal patterns**, and **authorial intent divergence** in text. Combines a compiled C++20 orthographic core with spaCy vector-similarity macro analysis and a full Somatic/Archetypal Cipher layer across ten languages spanning Latin, Cyrillic, Abjad RTL, and Hangul Jamo scripts.
 
@@ -35,6 +35,13 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 ## Features
 
 - **10-language analysis** — English, German, Spanish, French, Japanese, Chinese, Russian, Arabic, Farsi, Korean
+- **Psychological Payload (VAD) module** — NRC Valence-Arousal-Dominance lexicon analysis; per-word V/A/D scores aggregated into means and σ across any length of text (single word to full book chapters); scatter plot with dominance-coded dot colour; quadrant labels (Panic/Distress, Excitement/Joy, Depression/Sadness, Calm/Contentment)
+- **Ousiometric Payload (PDS) module** — mathematically rotates VAD into Power-Danger-Structure space (Dodds et al.); scatter plot with quadrant labels (Desperate Panic, Apex Threat, Benevolent Authority, Composed Dominance); narrative assessment text auto-generated per quadrant
+- **8-Axis NRC Emotion Intensity (NRC-EIL) module** — cross-references every VAD-matched word against the full NRC Emotion Intensity Lexicon: Anger, Fear, Anticipation, Trust, Surprise, Sadness, Joy, Disgust; per-axis mean and σ available for every supported language
+- **Raw Lexicon Telemetry table** — per-word breakdown with 11 sortable columns: P, D, S (PDS axes) + all 8 emotion intensity axes; quadratic heatmap cell colouring; term-count chip
+- **Compound psychological trigger banners** — three independently-evaluated alert conditions derived from PDS + affect scores (see Trigger Banners section below)
+- **Multilingual NRC lexicon pipeline** — `vad_layer/lexicons/` stores `nrc_vad_{lang}.txt` (10 languages) and `intensity_{lang}.txt` (10 languages); translated-word column used as lookup key for non-English so spaCy lemmas in the target language match correctly; EN fallback if a language file is absent; no sentence limit — processes news articles and book chapters equally
+- **Lexicon Ingestion Layer** (`lexicon_layer/`) — `LexiconIngestionEngine` with 3-gate `TokenCleanser` (empty / n-gram / noise-ratio); instance-level cache; handles both 4-column intensity format and 5-column VAD format including legacy 4-column EN-only files
 - **C++20 compiled micro-core** — pybind11 BPV engine with `std::jthread` worker pool, zero-copy window sliding; covers Latin (EN/DE), Cyrillic (RU), Abjad RTL (AR/FA), and Hangul Jamo (KO); JA/ZH pass phonetic romanization through C++ for full BPV scoring
 - **Universal Tokenization Override (JA/ZH)** — native morpheme/character counts from pykakasi (JA) and jieba (ZH) are used for structural telemetry; phonetic Romaji/Pinyin string passed to C++ BPV so psychological vectors remain on the same A–Z basis as Latin languages
 - **Chinese Dual-Signal Stroke-Count Physics Engine** — every Hanzi maps to a stroke count via a 150+ entry lookup table; the ordered `stroke_count_array` is returned per window as a physical ink-density signal; a sudden stroke-density spike signals a switch to complex ideograms
@@ -45,7 +52,7 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 - **Farsi Abjad BPV engine** (`analyze_fa`) — extends Arabic 28-bin core with 4 Farsi-specific letters (پ=28 چ=29 ژ=30 گ=31); same logical-order processing; spaCy `sentencizer` auto-injected when model lacks a parser (e.g. `xx_ent_wiki_sm`)
 - **Korean Hangul Jamo BPV engine** (`analyze_ko`) — 24-bin matrix (14 basic consonants + 10 basic vowels); Python `unpack_hangul_to_jamo()` decomposes syllable blocks (U+AC00–U+D7A3) into conjoining Jamo before C++ processing; tense consonants (ㄲ ㄸ ㅃ ㅆ ㅉ) fold to base consonant bin with BPV=9; compound codas fold to primary consonant bin; `total_chars` overridden with native syllable count; whitespace tokenizer override for whole-eojeol macro seed matching
 - **Arabic / Korean punctuation in C++ waveform** — `build_punct_waveform()` handles Arabic comma ، (U+060C, D8 8C → magnitude 1) and Arabic question mark ؟ (U+061F, D8 9F → magnitude 4) as 2-byte UTF-8 sequences alongside the standard ASCII and 3-byte en/em-dash punctuation
-- **Vector similarity macro scoring** — spaCy `_md` models with cosine similarity against pre-built cluster centroids (25 seed words × 12 poles × 6+ languages); falls back to exact-match on `_sm` models
+- **Vector similarity macro scoring** — spaCy `_sm` models with cosine similarity against pre-built cluster centroids (25 seed words × 12 poles × 6+ languages); falls back to exact-match when model has no word vectors
 - **AR/FA macro POS fallback** — when `xx_ent_wiki_sm` returns zero cluster hits (no word vectors), `apply_pos_fallback()` extracts NOUN/VERB/ADJ/PROPN tokens and injects them into the baseline/structural cluster; guarantees a non-empty Driver Matrix on short intercepts; Arabic diacritic stripping, ZWNJ normalization, and 9-prefix clitic expansion registered in the exact-match lookup
 - **Z-score bootstrap guard** — `BaselineStats.z_score()` returns the raw value when `n < 2` so the first observation produces a visible signal rather than a silent zero
 - **Welford online baseline tracking** — running mean/σ per variable; statistically comparable Z-scores across documents
@@ -75,6 +82,136 @@ A high dissonance delta indicates one of three conditions: **Posturing** (consci
 
 ---
 
+## Psychological Payload Modules
+
+### VAD — Valence · Arousal · Dominance
+
+The VAD module loads the NRC-VAD lexicon for the selected language, tokenises the input through the project-wide spaCy model, and computes aggregate emotional coordinates.
+
+| Step | Detail |
+|---|---|
+| Tokenisation | spaCy pipeline for the selected language; stop-words, punctuation, and numbers skipped |
+| Lookup | Per-token lemma → lexicon; falls back to lowercased surface form |
+| Key used | English: column 0 (English word). Non-English: column 4 (translated word), falls back to column 0 if empty |
+| Aggregation | Population mean (μ) and σ for V, A, D across all matched tokens |
+| Coverage | Typical: 50–80% of content tokens; improves with longer text |
+| Scale | No sentence limit; processes articles and book chapters in < 3 s |
+
+**Output fields:** `valence_mean`, `valence_sigma`, `arousal_mean`, `arousal_sigma`, `dominance_mean`, `dominance_sigma`, `matched_count`, `total_tokens`, `words` (scatter payload, all matched tokens), `language`, `error`.
+
+### PDS — Power · Danger · Structure (Ousiometrics)
+
+Applies the Ousiometrics rotation (Dodds et al.) to VAD coordinates:
+
+```
+Power     =  Dominance (centred)
+Danger    = −Valence × 0.70 + Arousal × 0.30
+Structure = −Arousal
+```
+
+Scores are in [−1, +1]. The scatter plot places words by (P, D) with Structure encoded as dot colour (amber = chaotic, green = composed).
+
+**Quadrant classification:**
+
+| Quadrant | Condition | Label |
+|---|---|---|
+| Q1 | P > 0, D > 0 | Apex Threat |
+| Q2 | P > 0, D < 0 | Benevolent Authority |
+| Q3 | P < 0, D < 0 | Composed Submission |
+| Q4 | P < 0, D > 0 | Desperate Panic |
+
+### 8-Axis Emotion Intensity (NRC-EIL)
+
+Every word matched by the VAD lookup is cross-referenced against the NRC Emotion Intensity Lexicon for the same language. The intensity scores (0–1) are averaged across all matched words.
+
+| Short key | Emotion | Trigger role |
+|---|---|---|
+| `anger` | Anger | Weaponized Escalation, Weaponized Contempt |
+| `fear` | Fear | Paranoia / Hyper-Vigilance |
+| `ant` | Anticipation | Paranoia / Hyper-Vigilance |
+| `tru` | Trust | — |
+| `sur` | Surprise | — |
+| `sad` | Sadness | — |
+| `joy` | Joy | — |
+| `dis` | Disgust | Weaponized Contempt |
+
+### Compound Trigger Banners
+
+Three banners are evaluated independently after every analysis. Each shows/hides autonomously; multiple can be active simultaneously.
+
+| Banner | Condition | Visual |
+|---|---|---|
+| **Weaponized Escalation** | Apex Threat (+P, +D) AND (anger_μ > 0.750 OR anger_σ > 0.40) | Red flash |
+| **Weaponized Contempt** | Apex Threat (+P, +D) AND anger_μ > 0.60 AND disgust_μ > 0.50 | Red flash |
+| **Paranoia / Hyper-Vigilance** | Desperate Panic (−P, +D) AND fear_μ > 0.60 AND anticipation_μ > 0.60 | Amber glow |
+
+### Raw Lexicon Telemetry Table
+
+Sortable per-word table in the PDS panel. All matched words are included in aggregate statistics; the display is capped at the 60 most extreme words (ranked by Euclidean distance from the PDS origin).
+
+| Column | Colour accent | Range |
+|---|---|---|
+| P (Power) | Cyan/red bidirectional bar | [−1, +1] |
+| D (Danger) | Cyan/red bidirectional bar | [−1, +1] |
+| S (Structure) | Cyan/red bidirectional bar | [−1, +1] |
+| Anger | Crimson heatmap | [0, 1] |
+| Fear | Violet heatmap | [0, 1] |
+| Ant | Amber heatmap | [0, 1] |
+| Tru | Cyan heatmap | [0, 1] |
+| Sur | Magenta heatmap | [0, 1] |
+| Sad | Deep-blue heatmap | [0, 1] |
+| Joy | Gold heatmap | [0, 1] |
+| Dis | Toxic-green heatmap | [0, 1] |
+
+---
+
+## Lexicon Data Files
+
+All NRC lexicon files live in `vad_layer/lexicons/`. The directory must be populated before the VAD/PDS/EIL modules produce output; all other engine layers are unaffected if lexicons are absent.
+
+### File naming
+
+| Language | NRC-VAD file | NRC-EIL file |
+|---|---|---|
+| English | `nrc_vad_en.txt` | `intensity_en.txt` |
+| German | `nrc_vad_de.txt` | `intensity_de.txt` |
+| Russian | `nrc_vad_ru.txt` | `intensity_ru.txt` |
+| Arabic | `nrc_vad_ar.txt` | `intensity_ar.txt` |
+| Farsi | `nrc_vad_fa.txt` | `intensity_fa.txt` |
+| Chinese | `nrc_vad_zh.txt` | `intensity_zh.txt` |
+| Korean | `nrc_vad_ko.txt` | `intensity_ko.txt` |
+| Spanish | `nrc_vad_es.txt` | `intensity_es.txt` |
+| French | `nrc_vad_fr.txt` | `intensity_fr.txt` |
+| Japanese | `nrc_vad_ja.txt` | `intensity_ja.txt` |
+
+### Column formats
+
+**NRC-VAD** (`nrc_vad_{lang}.txt`) — tab-separated, no header required (auto-detected):
+
+```
+English Word    Valence    Arousal    Dominance    Translated Word
+abandon         0.173      0.541      0.244        бросать
+```
+
+English file is 4-column (no Translated Word column). All other languages are 5-column.
+
+**NRC-EIL** (`intensity_{lang}.txt`) — tab-separated, one row per word-emotion pair:
+
+```
+English Word    Emotion          Score    Translated Word
+abandon         anger            0.812    бросать
+abandon         fear             0.650    бросать
+accept          trust            0.720    принять
+```
+
+English file is 3-column (no Translated Word column). Valid emotion labels: `anger`, `fear`, `anticipation`, `trust`, `surprise`, `sadness`, `joy`, `disgust`.
+
+### Fallback chain
+
+If a language-specific file is missing the engine automatically falls back to the English base file and uses English word keys. The VAD/PDS/EIL modules always return a valid response — a missing lexicon degrades to 0.0 scores rather than an error.
+
+---
+
 ## Architecture
 
 ```
@@ -87,7 +224,7 @@ psycholinguistic/
 │   └── compare_routes.py          # Compare-mode endpoints
 ├── language/
 │   ├── router.py                  # Language factory + analyzer cache (10 languages)
-│   └── registry.py                # spaCy model registry with _md/_sm fallback
+│   └── registry.py                # spaCy model registry; en_core_web_sm universal fallback
 ├── micro_layer/
 │   ├── base_analyzer.py           # MicroResult + BaseMicroAnalyzer ABC
 │   ├── cpp_analyzer.py            # C++ adapter (EN, DE) with Python fallback
@@ -159,12 +296,50 @@ psycholinguistic/
 │   ├── CMakeLists.txt
 │   ├── setup.py
 │   └── build.sh
+├── vad_layer/
+│   ├── vad_analyzer.py            # NRC-VAD loader + spaCy tokenisation + V/A/D aggregation
+│   │                              # _load_lexicon(): lru_cache per lang; translated-word key for non-EN
+│   │                              # _get_nlp(): ModelRegistry lookup with en_core_web_sm fallback
+│   ├── __init__.py
+│   └── lexicons/                  # ── Lexicon data files (not in git, user-supplied) ──
+│       ├── nrc_vad_en.txt         # 4-col: word | V | A | D
+│       ├── nrc_vad_{lang}.txt     # 5-col: EN word | V | A | D | translated word  (DE/RU/AR/…)
+│       ├── intensity_en.txt       # 3-col: word | emotion | score
+│       └── intensity_{lang}.txt   # 4-col: EN word | emotion | score | translated word
+├── pds_layer/
+│   ├── pds_analyzer.py            # VAD → PDS rotation + 8-axis affect cross-reference + aggregation
+│   │                              # _AFFECT_AXES registry; _TOP_N_WORDS=60 scatter cap
+│   │                              # analyze_ousiometrics(text, lang) → full payload dict
+│   ├── pds_transformer.py         # Pure maths: vad_to_pds() rotation formula + AXIS_LABELS
+│   ├── affect_loader.py           # load_affect_pack(lang): lru_cache(maxsize=16), one slot per lang
+│   │                              # load_affect_lexicon(affect, lang): compat shim → pack slice
+│   ├── affect_parser.py           # parse_combined_affect_file(fh, lang): pure 4-col TSV parser
+│   │                              # EMOTION_LABELS, EMOTION_LABELS_ORDERED, AffectPack type alias
+│   │                              # empty_affect_pack(): all 8 keys → {}
+│   ├── affect_path_resolver.py    # resolve_combined_affect_path(lang): Tier1 lang file, Tier2 EN
+│   │                              # resolve_affect_path(affect, lang): per-affect two-tier fallback
+│   │                              # list_combined_available_langs(), list_available_langs(affect)
+│   └── __init__.py
+├── lexicon_layer/
+│   ├── token_cleanser.py          # TokenCleanser: 3-gate validation (empty / n-gram / noise ratio)
+│   │                              # Gate 3 uses [^\W_] — Unicode letters+digits, excludes underscore
+│   │                              # MIN_WORD_CHAR_RATIO = 0.5; stateless, thread-safe
+│   ├── lexicon_ingestion_engine.py # LexiconIngestionEngine(lexicon_dir=None)
+│   │                              # load_intensity_lexicon(lang) → IntensityLexicon
+│   │                              # load_ousiometric_lexicon(lang) → VADLexicon
+│   │                              # Instance-level cache dicts; 3-tier path fallback for both formats
+│   │                              # _parse_intensity_file(): max-wins duplicate handling
+│   │                              # _parse_vad_file(): first-wins; legacy 4-col EN support
+│   └── __init__.py
 ├── templates/
 │   └── index.html                 # Single-page dashboard (Chart.js, vanilla JS)
 │                                  # ALPHABET.{LATIN,CYRILLIC,ARABIC,FARSI,HANGUL}
 │                                  # dir="rtl" injection for AR/FA textareas
 │                                  # Archetypal Legend panel (Shape/Lines/Space tabs)
 │                                  # Contextual Help drawer (4 methodology sections)
+│                                  # PdsModule IIFE: fetchAndRender, evaluatePDSState, sortBy
+│                                  # _checkEscalation / _checkContempt / _checkParanoia banners
+│                                  # Quadratic heatmap alpha: α = 0.04 + v²×0.78
 └── entity_db.json                 # Persistent entity + baseline store
 ```
 
@@ -292,18 +467,20 @@ Before running the FFT on the 256-letter micro array, the engine subtracts the *
 
 ## Language Support
 
-| Code | Language | Script | Micro Pipeline | Macro Model | Notes |
-|---|---|---|---|---|---|
-| EN | English | Latin | C++ BPV core (26-bin) | `en_core_web_md` | Full C++ acceleration |
-| DE | German | Latin | C++ BPV + umlaut/ß normalisation | `de_core_news_md` | ä→ae ö→oe ü→ue ß→ss; Ä/Ö/Ü scored separately in somatic |
-| ES | Spanish | Latin | Python BPV + RR×2.0 / LL×1.5 | `es_core_news_md` | Vibrante múltiple override |
-| FR | French | Latin | Python BPV + silent terminal (S/T/X/D→0) | `fr_core_news_md` | Psychological trail-off model |
-| JA | Japanese | Logographic | pykakasi → Hepburn Romaji → C++ BPV | `ja_core_news_md` | Script ratios + stroke density + Keigo formality layer |
-| ZH | Chinese | Logographic | jieba → pypinyin → Pinyin → C++ BPV + Hanzi stroke array | `zh_core_web_md` | Dual-Signal Engine; `analyze_with_strokes()` |
-| RU | Russian | Cyrillic | `sanitize_ru()` + C++ `analyze_ru()` (33-bin UTF-8) | `ru_core_news_md` | 33 Cyrillic bins А–Я; pharyngeal/sibilant interaction pairs |
-| AR | Arabic | Abjad RTL | `sanitize_abjad()` + C++ `analyze_ar()` (28-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Pharyngeal/emphatic BPV 8–9; dir=rtl on UI textareas; sentencizer auto-injected; POS fallback + diacritic/clitic normalization for macro |
-| FA | Farsi | Abjad RTL | `sanitize_abjad()` + C++ `analyze_fa()` (32-bin UTF-8, logical order) | `xx_ent_wiki_sm` | Extends AR with پ(28) چ(29) ژ(30) گ(31); ZWNJ compound-word normalization |
-| KO | Korean | Hangul | `unpack_hangul_to_jamo()` + C++ `analyze_ko()` (24-bin Jamo) | `ko_core_news_sm` | Syllable blocks decomposed to conjoining Jamo; tense consonants fold to base bin with BPV=9; whitespace tokenizer for whole-eojeol macro matching |
+| Code | Language | Script | Micro Pipeline | spaCy Model | NRC-VAD | NRC-EIL |
+|---|---|---|---|---|---|---|
+| EN | English | Latin | C++ BPV core (26-bin) | `en_core_web_sm` | `nrc_vad_en.txt` | `intensity_en.txt` |
+| DE | German | Latin | C++ BPV + umlaut/ß normalisation | `de_core_news_sm` | `nrc_vad_de.txt` | `intensity_de.txt` |
+| ES | Spanish | Latin | Python BPV + RR×2.0 / LL×1.5 | `es_core_news_sm` | `nrc_vad_es.txt` | `intensity_es.txt` |
+| FR | French | Latin | Python BPV + silent terminal (S/T/X/D→0) | `fr_core_news_sm` | `nrc_vad_fr.txt` | `intensity_fr.txt` |
+| JA | Japanese | Logographic | pykakasi → Hepburn Romaji → C++ BPV | `ja_core_news_sm` | `nrc_vad_ja.txt` | `intensity_ja.txt` |
+| ZH | Chinese | Logographic | jieba → pypinyin → Pinyin → C++ BPV + stroke array | `zh_core_web_sm` | `nrc_vad_zh.txt` | `intensity_zh.txt` |
+| RU | Russian | Cyrillic | `sanitize_ru()` + C++ `analyze_ru()` (33-bin) | `ru_core_news_sm` | `nrc_vad_ru.txt` | `intensity_ru.txt` |
+| AR | Arabic | Abjad RTL | `sanitize_abjad()` + C++ `analyze_ar()` (28-bin) | `xx_ent_wiki_sm` | `nrc_vad_ar.txt` | `intensity_ar.txt` |
+| FA | Farsi | Abjad RTL | `sanitize_abjad()` + C++ `analyze_fa()` (32-bin) | `xx_ent_wiki_sm` | `nrc_vad_fa.txt` | `intensity_fa.txt` |
+| KO | Korean | Hangul | `unpack_hangul_to_jamo()` + C++ `analyze_ko()` (24-bin Jamo) | `ko_core_news_sm` | `nrc_vad_ko.txt` | `intensity_ko.txt` |
+
+> The engine falls back to `en_core_web_sm` automatically if a language model is unavailable. Macro scoring falls back to exact-match if the model has no word vectors. VAD/EIL modules fall back to English lexicons if a language-specific file is absent.
 
 ---
 
@@ -331,25 +508,28 @@ Each language has 25 seed words per pole (300 total), used to build L2-normalize
 pip install -r requirements.txt
 
 # 2. Install spaCy models
-# Latin languages
-python -m spacy download en_core_web_md
-python -m spacy download de_core_news_md
-python -m spacy download es_core_news_md
-python -m spacy download fr_core_news_md
-# Logographic
-python -m spacy download ja_core_news_md
-python -m spacy download zh_core_web_md
-# Cyrillic
-python -m spacy download ru_core_news_md
-# Abjad RTL (shared model for AR + FA)
-python -m spacy download xx_ent_wiki_sm
-# Hangul
-python -m spacy download ko_core_news_sm
+python -m spacy download en_core_web_sm    # English (also used as universal fallback)
+python -m spacy download de_core_news_sm   # German
+python -m spacy download es_core_news_sm   # Spanish
+python -m spacy download fr_core_news_sm   # French
+python -m spacy download ja_core_news_sm   # Japanese  (also: pip install fugashi ipadic)
+python -m spacy download zh_core_web_sm    # Chinese
+python -m spacy download ru_core_news_sm   # Russian
+python -m spacy download xx_ent_wiki_sm    # Arabic + Farsi (shared multilingual model)
+python -m spacy download ko_core_news_sm   # Korean
+
+# 3. Place NRC lexicon files in vad_layer/lexicons/
+#    Required files (one set per language):
+#      nrc_vad_{lang}.txt      — NRC Valence-Arousal-Dominance
+#      intensity_{lang}.txt    — NRC Emotion Intensity (all 8 emotions, one file per language)
+#    Where {lang} ∈ { en, de, es, fr, ja, zh, ru, ar, fa, ko }
+#    Download from: https://saifmohammad.com/WebPages/nrc-vad.html
+#                   https://saifmohammad.com/WebPages/AffectIntensity.htm
 ```
 
 `requirements.txt` includes: `fastapi`, `uvicorn`, `spacy`, `numpy>=1.24.0`, `pybind11>=2.11.0`, `pykakasi>=2.2.1`, `jieba>=0.42.1`, `pypinyin>=0.49.0`.
 
-> The engine falls back to `_sm` models automatically if an `_md` model is unavailable, and falls back to exact-match scoring if the model has no word vectors. The Python somatic fallback (numpy FFT) is used automatically if `_somatic_core` is not compiled.
+> If a language lexicon file is absent, the VAD/PDS/EIL modules fall back to English scores (all scores will use English word matches). The macro/micro/dissonance layers are unaffected — they do not require the NRC files. The Python somatic fallback (numpy FFT) is used automatically if `_somatic_core` is not compiled.
 
 ---
 
@@ -554,6 +734,16 @@ Events are persisted to the entity ledger and accumulate a **baseline confidence
 ---
 
 ## Changelog
+
+### v3.9
+- **NRC-VAD Psychological Payload module** — `vad_layer/vad_analyzer.py` loads `nrc_vad_{lang}.txt` (5-column multilingual format or 4-column English), tokenises text through spaCy, and computes V/A/D means and σ; translated-word column (col 4) used as lexicon key for non-English so target-language lemmas match; EN word key for English and as fallback when translated column is empty; `lru_cache` per language; auto-detects and skips header rows; processes any text length from single words to full book chapters
+- **Ousiometric PDS module** — `pds_layer/pds_analyzer.py` applies the Power-Danger-Structure rotation to every VAD-matched word; scatter plot capped at top-60 words by PDS distance (all words used for aggregates); narrative assessment auto-generated per quadrant; Structure axis encoded as dot colour on scatter plot
+- **8-Axis Emotion Intensity module** — `pds_layer/affect_loader.py` / `affect_parser.py` load `intensity_{lang}.txt` (4-column combined format, all 8 NRC emotions in one file per language); `lru_cache(maxsize=16)` keyed on language; every VAD-matched word cross-referenced against all 8 emotion axes; per-axis mean and σ in the API response
+- **Three compound trigger banners** — Weaponized Escalation (red flash), Weaponized Contempt (red flash), Paranoia / Hyper-Vigilance (amber glow); each evaluated independently from PDS quadrant + affect means; all three can be active simultaneously
+- **Raw Lexicon Telemetry table** — 11 sortable columns (P, D, S + 8 affect axes) with per-emotion colour-coded quadratic heatmap cells; bidirectional progress bars for PDS axes; term-count chip
+- **Lexicon Ingestion Layer** (`lexicon_layer/`) — new package: `TokenCleanser` (3-gate: empty → n-gram whitespace detection → noise-ratio `[^\W_]` < 0.5); `LexiconIngestionEngine` with `load_intensity_lexicon()` (max-wins duplicate) and `load_ousiometric_lexicon()` (first-wins; legacy 4-column EN support); 3-tier path fallback for both formats; instance-level cache; full logging with diagnostic counters
+- **Multilingual lexicon routing** — `pds_layer/affect_path_resolver.py` extended with `resolve_combined_affect_path()` and `list_combined_available_langs()`; Tier 1: language-specific file, Tier 2: English base file, Tier 3: empty pack (graceful degradation)
+- **spaCy model alignment** — all language models aligned to `_sm` variants (previously requested `_md` which was not installed); fallback model changed from `xx_ent_wiki_sm` to `en_core_web_sm` (always-installed baseline); all 9 language models now confirmed installed
 
 ### v3.8
 - **Legend panel — Initials tab (4th tab)** — graphemic iconicity dictionary for all 26 Latin letters in the same `.leg-shape-grid` two-column format as the Shape tab; each entry has a geometric label (e.g. "Kinetic Strike", "Open Vessel") and italic dominant trait; serves as a visual cross-reference for the Lexical Affinity Radar cluster assignments; `legendTab(3)` handled automatically by the existing generic tab switcher with no JS changes
