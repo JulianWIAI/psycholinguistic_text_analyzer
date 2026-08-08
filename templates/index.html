@@ -861,6 +861,500 @@
       color: var(--text);
       line-height: 1.55;
     }
+
+    /* ── VAD Psychological Payload ─────────────────────────────────────── */
+
+    /* Three-row V/A/D progress bars */
+    .vad-bars { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem; }
+    .vad-bar-row {
+      display: grid;
+      grid-template-columns: 82px 1fr 88px;
+      align-items: center;
+      gap: .6rem;
+    }
+    .vad-bar-label {
+      font-size: .68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+    .vad-bar-track {
+      height: 7px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .vad-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .45s cubic-bezier(.4,0,.2,1);
+      min-width: 2px;
+    }
+    /* Color scheme — muted but distinct on a dark dashboard */
+    .vad-bar-fill-valence   { background: linear-gradient(90deg, #7f3ff7 0%, #5ce08a 100%); }
+    .vad-bar-fill-arousal   { background: linear-gradient(90deg, #c03010 0%, #e05c5c 100%); }
+    .vad-bar-fill-dominance { background: linear-gradient(90deg, #1844c0 0%, #5ce0d8 100%); }
+    .vad-bar-meta {
+      font-size: .7rem;
+      color: var(--text);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+    .vad-bar-sigma {
+      color: var(--muted);
+      margin-left: .35rem;
+      font-size: .65rem;
+    }
+
+    /* Scatter plot container — fixed height so Chart.js can size the canvas */
+    .vad-scatter-wrap {
+      position: relative;
+      height: 240px;
+      margin-bottom: .9rem;
+    }
+
+    /* Quadrant axis labels drawn over the scatter */
+    .vad-axis-label {
+      position: absolute;
+      font-size: .6rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+      pointer-events: none;
+      user-select: none;
+    }
+    .vad-axis-label-bl { bottom: 20px; left:  6px; }
+    .vad-axis-label-br { bottom: 20px; right: 6px; }
+    .vad-axis-label-tl { top: 4px;    left:  6px; }
+    .vad-axis-label-tr { top: 4px;    right: 6px; }
+
+    /* Match metadata strip */
+    .vad-meta-row {
+      display: flex;
+      gap: 1.2rem;
+      margin-bottom: .65rem;
+      font-size: .7rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .vad-meta-val { color: var(--cyan); font-family: monospace; margin-left: .2rem; }
+
+    /* Psychological state assessment box */
+    .vad-assessment {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .75rem 1rem;
+      line-height: 1.65;
+    }
+    .vad-assessment-state {
+      font-size: .82rem;
+      font-weight: 700;
+      margin-bottom: .35rem;
+      letter-spacing: .02em;
+    }
+    .vad-assessment-desc { font-size: .78rem; color: var(--text); }
+
+    /* Scatter section sub-label */
+    .vad-scatter-label {
+      font-size: .63rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: .35rem;
+    }
+
+    /* Loading / error placeholder */
+    .vad-placeholder {
+      font-size: .8rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.2rem;
+      font-style: italic;
+    }
+
+    /* ── Ousiometric PDS Payload ──────────────────────────────────────── */
+
+    /* ── Bidirectional progress bars (-1.0 … +1.0) ── */
+    .pds-bars { display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1rem; }
+
+    .pds-bar-row {
+      display: grid;
+      grid-template-columns: 82px 1fr 96px;
+      align-items: center;
+      gap: .6rem;
+    }
+    .pds-bar-label {
+      font-size: .68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+
+    /* Track: full-width rail with a hairline centre marker */
+    .pds-bar-track {
+      position: relative;
+      height: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;     /* clips the fill to the rounded track */
+    }
+    /* Centre-zero reference line — rendered above the fill */
+    .pds-bar-track::after {
+      content: '';
+      position: absolute;
+      left: calc(50% - 1px);
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: rgba(107,115,148,.55);
+      z-index: 2;
+      pointer-events: none;
+    }
+    /* Fill element — JS sets `left` + `width` to achieve bidirectional fill */
+    .pds-bar-fill {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-radius: 2px;
+      transition: left .4s cubic-bezier(.4,0,.2,1), width .4s cubic-bezier(.4,0,.2,1);
+      z-index: 1;
+    }
+    /* Per-axis colour schemes */
+    .pds-fill-power     { background: linear-gradient(90deg, #1844c0 0%, #5ce0d8 100%); }
+    .pds-fill-danger    { background: linear-gradient(90deg, #c05020 0%, #e05c5c 100%); }
+    .pds-fill-structure { background: linear-gradient(90deg, #4b7394 0%, #5ce08a 100%); }
+
+    /* Value label + σ displayed to the right of each bar */
+    .pds-bar-meta {
+      font-size: .7rem;
+      color: var(--text);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+    .pds-bar-sigma { color: var(--muted); margin-left: .3rem; font-size: .64rem; }
+
+    /* Axis polarity hints rendered below bar track */
+    .pds-bar-hints {
+      grid-column: 2;           /* aligns under the track in the grid */
+      display: flex;
+      justify-content: space-between;
+      font-size: .58rem;
+      color: var(--muted);
+      margin-top: .1rem;
+      padding: 0 1px;
+      opacity: .7;
+    }
+
+    /* ── Scatter: The Plane of Meaning ── */
+    .pds-scatter-wrap {
+      position: relative;
+      height: 280px;
+      margin-bottom: .9rem;
+    }
+    /* Quadrant label overlays — absolutely positioned over the canvas */
+    .pds-quad-label {
+      position: absolute;
+      font-size: .58rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      pointer-events: none;
+      user-select: none;
+      padding: 3px 6px;
+      border-radius: 3px;
+      line-height: 1.2;
+    }
+    .pds-quad-tl {
+      top: 6px; left: 6px;
+      color: var(--danger);
+      background: rgba(224,92,92,.10);
+      border: 1px solid rgba(224,92,92,.25);
+    }
+    .pds-quad-tr {
+      top: 6px; right: 6px;
+      color: #e05c5c;
+      background: rgba(224,92,92,.08);
+      border: 1px solid rgba(224,92,92,.2);
+    }
+    .pds-quad-bl {
+      bottom: 20px; left: 6px;
+      color: var(--muted);
+      background: rgba(107,115,148,.10);
+      border: 1px solid rgba(107,115,148,.2);
+    }
+    .pds-quad-br {
+      bottom: 20px; right: 6px;
+      color: var(--cyan);
+      background: rgba(92,224,216,.08);
+      border: 1px solid rgba(92,224,216,.2);
+    }
+
+    /* ── Scatter sub-label ── */
+    .pds-scatter-label {
+      font-size: .62rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: .38rem;
+    }
+
+    /* ── Coverage metadata row ── */
+    .pds-meta-row {
+      display: flex;
+      gap: 1.1rem;
+      margin-bottom: .65rem;
+      font-size: .7rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .pds-meta-val { color: var(--cyan); font-family: monospace; margin-left: .15rem; }
+
+    /* ── Tactical assessment box ── */
+    .pds-assessment {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .8rem 1rem;
+      line-height: 1.65;
+    }
+    .pds-assessment-quadrant {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .25rem;
+    }
+    .pds-assessment-state {
+      font-size: .85rem;
+      font-weight: 700;
+      margin-bottom: .35rem;
+      letter-spacing: .02em;
+    }
+    .pds-assessment-desc  { font-size: .78rem; color: var(--text); }
+    .pds-assessment-struct {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .5rem;
+      padding-top: .45rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Loading / error placeholder (shared with VAD) */
+    .pds-placeholder {
+      font-size: .8rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.2rem;
+      font-style: italic;
+    }
+
+    /* ── Weaponized Escalation Banner ─────────────────────────────────── */
+    /* Injected above the PDS scatter when: Apex Threat quadrant (+P, +D)  */
+    /* AND (anger_mean > 0.750 OR anger_sigma > 0.4).                      */
+    @keyframes pds-flash {
+      0%,  100% { border-color: rgba(224, 30, 30, .55); background: rgba(224, 30, 30, .10); }
+      50%        { border-color: rgba(255, 60, 60, .95); background: rgba(224, 30, 30, .22); }
+    }
+    .pds-escalation-banner {
+      display: none;               /* shown/hidden by JS — never remove via CSS */
+      border: 1px solid rgba(224, 30, 30, .55);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+      margin-bottom: .75rem;
+      animation: pds-flash 1.1s ease-in-out infinite;
+      font-size: .8rem;
+      line-height: 1.6;
+    }
+    .pds-escalation-title {
+      font-size: .88rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: #ff4040;
+      margin-bottom: .3rem;
+    }
+    .pds-escalation-detail {
+      color: var(--text);
+      opacity: .9;
+    }
+
+    /* ── Weaponized Contempt Banner ────────────────────────────────────
+       Same red-flash animation as Escalation.  Triggered when:
+         Apex Threat (+P, +D) AND anger_μ > 0.6 AND disgust_μ > 0.5      */
+    .pds-contempt-banner {
+      display: none;
+      border: 1px solid rgba(224, 30, 30, .55);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+      margin-bottom: .75rem;
+      animation: pds-flash 1.1s ease-in-out infinite;
+      font-size: .8rem;
+      line-height: 1.6;
+    }
+    .pds-contempt-title {
+      font-size: .88rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: #ff4040;
+      margin-bottom: .3rem;
+    }
+    .pds-contempt-detail { color: var(--text); opacity: .9; }
+
+    /* ── Paranoia / Hyper-Vigilance Banner ──────────────────────────────
+       Amber glow (distinct hue from red Escalation/Contempt).  Triggered when:
+         Desperate Panic (−P, +D) AND fear_μ > 0.6 AND anticipation_μ > 0.6  */
+    @keyframes pds-amber-glow {
+      0%,  100% { border-color: rgba(200, 130, 20, .55); background: rgba(200, 130, 20, .10); }
+      50%        { border-color: rgba(240, 170, 40, .95); background: rgba(200, 130, 20, .22); }
+    }
+    .pds-paranoia-banner {
+      display: none;
+      border: 1px solid rgba(200, 130, 20, .55);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+      margin-bottom: .75rem;
+      animation: pds-amber-glow 1.4s ease-in-out infinite;
+      font-size: .8rem;
+      line-height: 1.6;
+    }
+    .pds-paranoia-title {
+      font-size: .88rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: #e09020;
+      margin-bottom: .3rem;
+    }
+    .pds-paranoia-detail { color: var(--text); opacity: .9; }
+
+    /* ── Raw Lexicon Telemetry Table ─────────────────────────────────── */
+
+    /* Outer container — thin border, rounded, clips the sticky header */
+    .pds-lexicon-wrap {
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;   /* keeps sticky thead inside the rounded box */
+    }
+
+    /* Title bar above the scroll area */
+    .pds-lexicon-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .4rem .75rem;
+      background: rgba(79, 142, 247, .07);
+      border-bottom: 1px solid var(--border);
+    }
+    .pds-lexicon-hdr-title {
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .pds-lexicon-hdr-count {
+      font-size: .62rem;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Scrollable tbody container — fixed max-height with thin scrollbar.
+       overflow-x: auto allows the 12-column table to scroll horizontally
+       on narrower viewports without breaking the card layout.              */
+    .pds-lexicon-scroll {
+      max-height: 250px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+    .pds-lexicon-scroll::-webkit-scrollbar       { width: 4px; }
+    .pds-lexicon-scroll::-webkit-scrollbar-track  { background: var(--bg); }
+    .pds-lexicon-scroll::-webkit-scrollbar-thumb  { background: var(--accent); border-radius: 2px; }
+
+    /* Table itself — full-width, collapsed borders */
+    .pds-lex-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    /* Sticky header — stays visible while body scrolls */
+    .pds-lex-table thead tr {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--surface);   /* solid bg prevents row bleed-through */
+    }
+    .pds-lex-table th {
+      padding: .38rem .55rem;
+      font-size: .6rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+      user-select: none;
+    }
+    /* Term column — compact to accommodate 11 score columns */
+    .pds-lex-table th:first-child { width: 16%; }
+    /* Score columns — 11 cols × 7.6% = 83.6%, remainder to term column  */
+    .pds-lex-table th:not(:first-child) {
+      text-align: right;
+      width: 7.6%;
+    }
+
+    /* Sortable column header interactivity */
+    .pds-th-sort {
+      cursor: pointer;
+      transition: color .12s;
+    }
+    .pds-th-sort:hover { color: var(--text); }
+    .pds-th-active     { color: var(--accent) !important; }
+    .pds-sort-arrow {
+      display: inline-block;
+      margin-left: .25em;
+      font-size: .8em;
+      opacity: .75;
+      transition: opacity .12s;
+    }
+    .pds-th-active .pds-sort-arrow { opacity: 1; color: var(--accent); }
+
+    /* ── Table body rows ── */
+    .pds-lex-table tbody tr { transition: background .1s; }
+    .pds-lex-table tbody tr:nth-child(even) { background: rgba(255,255,255,.012); }
+    .pds-lex-table tbody tr:hover           { background: rgba(79,142,247,.07) !important; }
+
+    /* Term cell — word text */
+    .pds-td-term {
+      padding: .27rem .55rem;
+      font-size: .73rem;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid rgba(30,35,50,.55);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Score cells — monospace, right-aligned, heatmap bg set by JS.
+       Horizontal padding is tightened (.28rem) to fit 11 score columns. */
+    .pds-td-score {
+      padding: .27rem .28rem;
+      font-family: monospace;
+      font-size: .68rem;
+      font-weight: 700;
+      text-align: right;
+      color: var(--text);          /* always legible — JS only changes background */
+      border-bottom: 1px solid rgba(30,35,50,.55);
+      border-left: 1px solid rgba(30,35,50,.35);
+      white-space: nowrap;
+      transition: background-color .25s;
+    }
   </style>
 </head>
 <body>
@@ -1254,6 +1748,267 @@
         <div id="lexical-reader-body"></div>
       </div>
     </div>
+
+    <!-- ══ VAD Psychological Payload ══════════════════════════════════════ -->
+    <!--
+      Shown after a successful /api/vad call.  Hidden on first load;
+      VadModule.fetchAndRender() manages visibility once data arrives.
+    -->
+    <div class="card" id="card-vad" style="display:none;">
+
+      <!-- Card header with contextual help trigger -->
+      <div class="card-title" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;">
+        Psychological Payload (VAD)
+        <button
+          class="help-icon"
+          data-tip="Valence, Arousal &amp; Dominance: the three axes of human emotional state derived from the NRC lexicon."
+          onclick="openHelp('help-vad')"
+          style="margin-left:auto;"
+        >?</button>
+      </div>
+
+      <!-- Progress bars — one per dimension, colour-coded -->
+      <div class="vad-bars" id="vad-bars">
+        <div class="vad-placeholder">Awaiting VAD analysis…</div>
+      </div>
+
+      <!-- Lexicon coverage metadata (matches / tokens / %) -->
+      <div class="vad-meta-row" id="vad-meta"></div>
+
+      <!-- 2D Scatter plot: X = Valence, Y = Arousal
+           Dot colour encodes Dominance (blue-to-cyan gradient).       -->
+      <div class="vad-scatter-label">
+        V / A Scatter — X: Valence (Negative → Positive) · Y: Arousal (Calm → Agitated)
+        · Dot colour: Dominance (dark blue = low · cyan = high)
+      </div>
+      <div class="vad-scatter-wrap" id="vad-scatter-wrap">
+        <!-- Corner quadrant labels rendered over the canvas -->
+        <span class="vad-axis-label vad-axis-label-tl">Panic / Distress</span>
+        <span class="vad-axis-label vad-axis-label-tr">Excitement / Joy</span>
+        <span class="vad-axis-label vad-axis-label-bl">Depression / Sadness</span>
+        <span class="vad-axis-label vad-axis-label-br">Calm / Contentment</span>
+        <canvas id="vad-scatter"></canvas>
+      </div>
+
+      <!-- Plain-language psychological state assessment -->
+      <div class="vad-assessment" id="vad-assessment"></div>
+
+    </div>
+    <!-- ══ END VAD Psychological Payload ════════════════════════════════ -->
+
+    <!-- ══ PDS Ousiometric Payload ═════════════════════════════════════ -->
+    <!--
+      Shown after a successful /api/pds call.  Hidden on first load;
+      PdsModule.fetchAndRender() manages visibility once data arrives.
+
+      Layout:
+        1. Three bidirectional bars  — Power / Danger / Structure
+        2. Coverage metadata strip   — matches / tokens / coverage %
+        3. "Plane of Meaning" scatter — X=Power, Y=Danger, colour=Structure
+        4. Tactical state assessment — quadrant + plain-English analysis
+    -->
+    <div class="card" id="card-pds" style="display:none;">
+
+      <!-- Card header -->
+      <div class="card-title" style="display:flex;align-items:center;gap:.6rem;margin-bottom:.95rem;">
+        Ousiometric Payload (PDS)
+        <button
+          class="help-icon"
+          data-tip="Power-Danger-Structure: a rotated emotional coordinate system that supersedes VAD for tactical text analysis."
+          onclick="openHelp('help-pds')"
+          style="margin-left:auto;"
+        >?</button>
+      </div>
+
+      <!-- ── Bidirectional bars ──────────────────────────────────── -->
+      <!--
+        Each bar spans from -1.0 (left extreme) through 0 (centre) to
+        +1.0 (right extreme).  A hairline centre-mark at 50% anchors
+        zero.  JS positions the coloured fill left or right of centre
+        according to the mean score.
+      -->
+      <div class="pds-bars" id="pds-bars">
+        <div class="pds-placeholder">Awaiting PDS analysis…</div>
+      </div>
+
+      <!-- ── Coverage metadata ──────────────────────────────────── -->
+      <div class="pds-meta-row" id="pds-meta"></div>
+
+      <!-- ── The Plane of Meaning — 2D Scatter ─────────────────── -->
+      <!--
+        X-axis = Power  (-1 Weak  … +1 Dominant)
+        Y-axis = Danger (-1 Safe  … +1 Threatening)
+        Dot colour encodes Structure (amber=chaotic, green=composed).
+
+        Four quadrant labels identify the psychological territories:
+          TL (–P, +D) Desperate Panic      TR (+P, +D) Apex Threat
+          BL (–P, –D) Submissive/Neutral   BR (+P, –D) Benevolent Authority
+      -->
+      <div class="pds-scatter-label">
+        Plane of Meaning — X: Power (Weak → Dominant) · Y: Danger (Safe → Threatening)
+        · Dot colour: Structure (amber = chaotic · green = composed)
+      </div>
+
+      <!-- ── Weaponized Escalation Banner ─────────────────────────────
+           Revealed by PdsModule._checkEscalation() when:
+             • Text is in Apex Threat quadrant  (power > 0 AND danger > 0)
+             • AND (anger_mean > 0.750 OR anger_sigma > 0.4)
+           Hidden on every new analysis reset and on any non-qualifying result.
+      -->
+      <div id="pds-escalation-banner" class="pds-escalation-banner">
+        <div class="pds-escalation-title">⚠ CRITICAL: Weaponized Escalation Detected</div>
+        <div class="pds-escalation-detail" id="pds-escalation-detail"></div>
+      </div>
+
+      <!-- ── Weaponized Contempt Banner ─────────────────────────────────
+           Revealed by PdsModule._checkContempt() when:
+             • Apex Threat quadrant  (power > 0 AND danger > 0)
+             • AND anger_mean > 0.6  AND disgust_mean > 0.5
+           Indicates dehumanization precursor language pattern.
+      -->
+      <div id="pds-contempt-banner" class="pds-contempt-banner">
+        <div class="pds-contempt-title">⚠ CRITICAL: Weaponized Contempt Detected</div>
+        <div class="pds-contempt-detail" id="pds-contempt-detail">
+          High structural power combined with anger and disgust (Dehumanization precursor).
+        </div>
+      </div>
+
+      <!-- ── Paranoia / Hyper-Vigilance Banner ──────────────────────────
+           Revealed by PdsModule._checkParanoia() when:
+             • Desperate Panic quadrant  (power < 0 AND danger > 0)
+             • AND fear_mean > 0.6  AND anticipation_mean > 0.6
+           Indicates subject is projecting desperate danger while
+           actively anticipating kinetic impact.
+      -->
+      <div id="pds-paranoia-banner" class="pds-paranoia-banner">
+        <div class="pds-paranoia-title">⚠ ALERT: Paranoia / Hyper-Vigilance Detected</div>
+        <div class="pds-paranoia-detail" id="pds-paranoia-detail">
+          Target is projecting desperate danger while actively anticipating kinetic impact.
+        </div>
+      </div>
+
+      <div class="pds-scatter-wrap" id="pds-scatter-wrap">
+        <!-- Quadrant semantic labels overlaid on the canvas -->
+        <span class="pds-quad-label pds-quad-tl">Desperate<br>Panic</span>
+        <span class="pds-quad-label pds-quad-tr">Apex<br>Threat</span>
+        <span class="pds-quad-label pds-quad-bl">Submissive/<br>Neutral</span>
+        <span class="pds-quad-label pds-quad-br">Benevolent<br>Authority</span>
+        <canvas id="pds-scatter"></canvas>
+      </div>
+
+      <!-- ── Tactical state assessment ─────────────────────────── -->
+      <div class="pds-assessment" id="pds-assessment"></div>
+
+      <!-- ── Raw Lexicon Telemetry table ──────────────────────────
+           Populated by PdsModule._buildLexiconTable().
+           Column headers are clickable: each click cycles between
+           descending (↓) and ascending (↑) sort on that axis.
+           The tbody scrolls independently; the thead is sticky.
+      ─────────────────────────────────────────────────────────── -->
+      <div class="pds-lexicon-wrap" id="pds-lexicon-wrap" style="display:none;">
+
+        <!-- Title bar: label + live word-count badge -->
+        <div class="pds-lexicon-hdr">
+          <span class="pds-lexicon-hdr-title">Raw Lexicon Telemetry</span>
+          <span class="pds-lexicon-hdr-count" id="pds-lex-count"></span>
+        </div>
+
+        <!-- Scrollable region -->
+        <div class="pds-lexicon-scroll">
+          <table class="pds-lex-table" id="pds-lex-table">
+            <thead>
+              <tr>
+                <!-- Term column: not sortable -->
+                <th>Term</th>
+                <!-- Score columns: click to sort -->
+                <th class="pds-th-sort pds-th-active"
+                    id="pds-th-p"
+                    onclick="PdsModule.sortBy('p')"
+                    title="Sort by Power score">
+                  Power <span class="pds-sort-arrow">↓</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-d"
+                    onclick="PdsModule.sortBy('d')"
+                    title="Sort by Danger score">
+                  Danger <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-s"
+                    onclick="PdsModule.sortBy('s')"
+                    title="Sort by Structure score">
+                  Structure <span class="pds-sort-arrow">↕</span>
+                </th>
+                <!-- Affect Intensity columns — NRC Affect Intensity Lexicon -->
+                <th class="pds-th-sort"
+                    id="pds-th-anger"
+                    onclick="PdsModule.sortBy('anger')"
+                    title="Sort by Anger intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#e05555;">
+                  Anger <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-fear"
+                    onclick="PdsModule.sortBy('fear')"
+                    title="Sort by Fear intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#a060e0;">
+                  Fear <span class="pds-sort-arrow">↕</span>
+                </th>
+                <!-- Extended 6-axis affect columns (Session 5) -->
+                <th class="pds-th-sort"
+                    id="pds-th-ant"
+                    onclick="PdsModule.sortBy('ant')"
+                    title="Sort by Anticipation intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#d08820;">
+                  Ant <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-tru"
+                    onclick="PdsModule.sortBy('tru')"
+                    title="Sort by Trust intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#20c8dc;">
+                  Tru <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-sur"
+                    onclick="PdsModule.sortBy('sur')"
+                    title="Sort by Surprise intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#c028c0;">
+                  Sur <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-sad"
+                    onclick="PdsModule.sortBy('sad')"
+                    title="Sort by Sadness intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#4060d0;">
+                  Sad <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-joy"
+                    onclick="PdsModule.sortBy('joy')"
+                    title="Sort by Joy intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#d0c020;">
+                  Joy <span class="pds-sort-arrow">↕</span>
+                </th>
+                <th class="pds-th-sort"
+                    id="pds-th-dis"
+                    onclick="PdsModule.sortBy('dis')"
+                    title="Sort by Disgust intensity (NRC Affect Intensity, 0–1)"
+                    style="color:#40c428;">
+                  Dis <span class="pds-sort-arrow">↕</span>
+                </th>
+              </tr>
+            </thead>
+            <!-- JS writes one <tr> per word into this tbody -->
+            <tbody id="pds-lex-tbody"></tbody>
+          </table>
+        </div>
+
+      </div>
+      <!-- ── END Raw Lexicon Telemetry ─────────────────────────── -->
+
+    </div>
+    <!-- ══ END PDS Ousiometric Payload ══════════════════════════════════ -->
 
     <!-- 6. Dissonance Events -->
     <div class="card" id="card-dissonance" style="display:none;">
@@ -2980,6 +3735,12 @@ $('btn-run').addEventListener('click', async () => {
       _resultsA = null; _resultsB = null;
       $('ab-tabs').style.display = 'none';
       renderResults(await res.json());
+      // Fire VAD analysis on the full document text (non-blocking — separate endpoint).
+      // Uses the text and lang that were captured at the top of this handler.
+      VadModule.fetchAndRender(text, _lang);
+      // Fire PDS analysis immediately after VAD — uses the same lexicon cache
+      // on the backend so the second call is near-instant.
+      PdsModule.fetchAndRender(text, _lang);
     }
 
     await loadEntity();
@@ -4236,6 +4997,1067 @@ function legendTab(idx) {
 /* ════════════════════════════════════════════════════════════
    Contextual Help Drawer
 ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+   VAD Module — Psychological Payload (NRC Valence-Arousal-Dominance)
+   ════════════════════════════════════════════════════════════════════════
+   Encapsulates all frontend logic for the VAD card:
+     - fetchAndRender(text, lang)  — POST /api/vad then populate the card
+     - _buildBars(data)            — render the three V/A/D progress bars
+     - _buildMeta(data)            — coverage metadata strip
+     - _buildScatter(words)        — Chart.js scatter plot (V × A, colour = D)
+     - _buildAssessment(v, a, d)   — plain-language psychological evaluation
+     - evaluateVADState(v, a, d)   — public state classifier (returns {state, desc, color})
+*/
+const VadModule = (() => {
+
+  // Chart.js instance — destroyed and re-created on every new analysis.
+  let _scatterChart = null;
+
+  // ── Public: fetch VAD data from backend and populate the card ──────────
+  async function fetchAndRender(text, lang) {
+    // Make the card visible immediately so the user sees activity.
+    $('card-vad').style.display = '';
+    $('vad-bars').innerHTML = '<div class="vad-placeholder"><span class="spinner"></span> Analysing emotional payload…</div>';
+    $('vad-meta').innerHTML = '';
+    $('vad-assessment').innerHTML = '';
+
+    // Destroy any previous scatter chart so Chart.js doesn't complain.
+    if (_scatterChart) { _scatterChart.destroy(); _scatterChart = null; }
+
+    try {
+      const res = await fetch('/api/vad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, language_code: lang }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`VAD API returned HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Backend surfaces lexicon errors in the ``error`` field (not HTTP 4xx).
+      if (data.error) {
+        $('vad-bars').innerHTML =
+          `<div class="vad-placeholder" style="color:var(--warn);">${data.error}</div>`;
+        return;
+      }
+
+      _render(data);
+    } catch (err) {
+      $('vad-bars').innerHTML =
+        `<div class="vad-placeholder" style="color:var(--danger);">VAD error: ${err.message}</div>`;
+    }
+  }
+
+  // ── Private: orchestrate all sub-renders ──────────────────────────────
+  function _render(data) {
+    _buildBars(data);
+    _buildMeta(data);
+    _buildScatter(data.words || []);
+    _buildAssessment(data.valence_mean, data.arousal_mean, data.dominance_mean);
+  }
+
+  // ── Private: three horizontal progress bars ───────────────────────────
+  function _buildBars(d) {
+    // Descriptor tuples: [dimension key, display label, fill CSS class, tooltip]
+    const DIMS = [
+      ['valence',   'Valence',   'vad-bar-fill-valence',
+       'Positive vs. Negative emotional tone (0 = maximally negative, 1 = maximally positive)'],
+      ['arousal',   'Arousal',   'vad-bar-fill-arousal',
+       'Activation energy: calm/sleepy at 0, highly agitated/excited at 1'],
+      ['dominance', 'Dominance', 'vad-bar-fill-dominance',
+       'Perceived control: submissive/powerless at 0, dominant/in-control at 1'],
+    ];
+
+    $('vad-bars').innerHTML = DIMS.map(([key, label, cls, tip]) => {
+      const mean  = d[`${key}_mean`];
+      const sigma = d[`${key}_sigma`];
+      const pct   = (mean * 100).toFixed(1);
+      return `
+        <div class="vad-bar-row" title="${tip}">
+          <span class="vad-bar-label">${label}</span>
+          <div class="vad-bar-track">
+            <div class="vad-bar-fill ${cls}" style="width:${pct}%"></div>
+          </div>
+          <span class="vad-bar-meta">
+            ${mean.toFixed(3)}<span class="vad-bar-sigma">σ ${sigma.toFixed(3)}</span>
+          </span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Private: coverage metadata strip ─────────────────────────────────
+  function _buildMeta(d) {
+    const pct = d.total_tokens > 0
+      ? ((d.matched_count / d.total_tokens) * 100).toFixed(1)
+      : '0.0';
+    $('vad-meta').innerHTML = `
+      <span>Lexicon matches:<span class="vad-meta-val"> ${d.matched_count}</span></span>
+      <span>Content tokens:<span class="vad-meta-val"> ${d.total_tokens}</span></span>
+      <span>Lexicon coverage:<span class="vad-meta-val"> ${pct}%</span></span>
+      <span>Language:<span class="vad-meta-val"> ${d.language}</span></span>`;
+  }
+
+  // ── Private: Chart.js 2D scatter plot ─────────────────────────────────
+  // X-axis = Valence (0 → 1, Negative to Positive)
+  // Y-axis = Arousal (0 → 1, Calm to Agitated)
+  // Dot colour encodes Dominance via an HSL gradient:
+  //   low D (submissive) → deep blue (hue 220)
+  //   high D (dominant)  → cyan      (hue 185)
+  function _buildScatter(words) {
+    if (_scatterChart) { _scatterChart.destroy(); _scatterChart = null; }
+
+    const ctx = $('vad-scatter').getContext('2d');
+
+    // Map each matched word to a Chart.js scatter point.
+    const points = words.map(w => ({
+      x:     w.v,
+      y:     w.a,
+      d:     w.d,
+      label: w.word,
+    }));
+
+    // Per-point colour encoding for Dominance.
+    const colours = points.map(p => {
+      const hue = 220 - (p.d * 35);            // 220 (blue) → 185 (cyan)
+      return `hsla(${hue.toFixed(0)}, 75%, 60%, 0.80)`;
+    });
+
+    _scatterChart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Words',
+          data:  points,
+          backgroundColor:  colours,
+          borderColor:      'rgba(79,142,247,0.25)',
+          borderWidth:      1,
+          pointRadius:      5,
+          pointHoverRadius: 8,
+        }],
+      },
+      options: {
+        responsive:          true,
+        maintainAspectRatio: false,
+        animation:           { duration: 300 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1e2332',
+            titleColor:      '#4f8ef7',
+            bodyColor:       '#dce3f5',
+            borderColor:     '#2a3050',
+            borderWidth:     1,
+            callbacks: {
+              // Show word + all three VAD scores in the hover tooltip.
+              title: ctx  => ctx[0]?.raw?.label ?? '',
+              label: ctx  => {
+                const p = ctx.raw;
+                return [
+                  `Valence:   ${p.x.toFixed(3)}`,
+                  `Arousal:   ${p.y.toFixed(3)}`,
+                  `Dominance: ${p.d.toFixed(3)}`,
+                ];
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            min:   0,
+            max:   1,
+            title: {
+              display: true,
+              text:    'Valence (Negative ← → Positive)',
+              color:   '#6b7394',
+              font:    { size: 9 },
+            },
+            grid:  { color: '#1a1e2c' },
+            ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 6 },
+          },
+          y: {
+            min:   0,
+            max:   1,
+            title: {
+              display: true,
+              text:    'Arousal (Calm ← → Agitated)',
+              color:   '#6b7394',
+              font:    { size: 9 },
+            },
+            grid:  { color: '#1a1e2c' },
+            ticks: { color: '#6b7394', font: { size: 8 }, maxTicksLimit: 6 },
+          },
+        },
+      },
+    });
+  }
+
+  // ── Public: psychological state classifier ────────────────────────────
+  // Accepts the three mean scores (all in [0, 1]) and returns a plain-
+  // language {state, desc, color} assessment for analysts unfamiliar with
+  // dimensional emotion models.
+  //
+  // Rule order matters: more specific conditions are tested first.
+  // Thresholds are drawn from Russell's Circumplex Model and
+  // Mehrabian & Russell (1974) PAD space empirical data.
+  function evaluateVADState(valence, arousal, dominance) {
+    const v = valence, a = arousal, d = dominance;
+
+    // ── High-confidence clinical-adjacent states ──────────────────────
+    if (a > 0.65 && d < 0.40) {
+      return {
+        state: 'High Anxiety / Panic',
+        desc:  'Target is highly activated but perceives themselves as out of control. '
+             + 'Indicators: urgency, fragmented syntax, topic repetition. Decision-making '
+             + 'is likely impaired; subject is reactive rather than deliberate.',
+        color: 'var(--danger)',
+      };
+    }
+
+    if (v < 0.35 && a > 0.60 && d > 0.60) {
+      return {
+        state: 'Contempt / Controlled Aggression',
+        desc:  'Negative emotional register combined with high activation and strong '
+             + 'self-perceived dominance. Subject is hostile but calculated — directing '
+             + 'aggression intentionally. Consistent with coercive or threatening language.',
+        color: 'var(--warn)',
+      };
+    }
+
+    if (v > 0.65 && a > 0.65 && d > 0.55) {
+      return {
+        state: 'Euphoria / High Operational Confidence',
+        desc:  'Positive valence, elevated arousal, and dominant self-perception. Subject '
+             + 'is highly motivated and energised. Possible overconfidence, excitement '
+             + 'around an imminent objective, or manic framing register.',
+        color: 'var(--ok)',
+      };
+    }
+
+    if (v < 0.35 && a < 0.38 && d < 0.38) {
+      return {
+        state: 'Grief / Despair',
+        desc:  'Low valence, low arousal, low dominance — the classic profile of '
+             + 'helplessness. Subject is emotionally withdrawn, de-energised, and perceives '
+             + 'themselves as unable to influence outcomes. Consistent with trauma or '
+             + 'coerced compliance.',
+        color: '#b96af7',
+      };
+    }
+
+    if (v < 0.38 && a < 0.32) {
+      return {
+        state: 'Depression / Suppressed Emotional State',
+        desc:  'Negative framing with very low activation energy. Language is flat, '
+             + 'disengaged, and devoid of forward projection. Possible exhaustion, '
+             + 'chronic compliance under duress, or learned helplessness pattern.',
+        color: 'var(--muted)',
+      };
+    }
+
+    if (v > 0.60 && a < 0.38 && d > 0.55) {
+      return {
+        state: 'Calm Authority / Composed Confidence',
+        desc:  'Positive framing, low arousal, and high perceived dominance. Subject is '
+             + 'relaxed and in control. Consistent with a trained operative, experienced '
+             + 'negotiator, or individual writing from a position of institutional power.',
+        color: 'var(--cyan)',
+      };
+    }
+
+    if (a > 0.55 && d < 0.42 && v > 0.44) {
+      return {
+        state: 'Submission Under Pressure / Performed Compliance',
+        desc:  'Elevated arousal without dominant framing, despite neutral-to-positive '
+             + 'valence. Subject may be performing cooperation while internally stressed — '
+             + 'a common deception-adjacent state. Cross-reference with Micro dissonance.',
+        color: 'var(--warn)',
+      };
+    }
+
+    if (v > 0.55 && a > 0.45 && d > 0.50) {
+      return {
+        state: 'Motivated Engagement / Persuasion Mode',
+        desc:  'Above-threshold valence and arousal with solid dominance. Subject is '
+             + 'actively pursuing an agenda, persuading, or rallying — emotionally '
+             + 'invested and energised with clear directional intent.',
+        color: 'var(--accent)',
+      };
+    }
+
+    if (v > 0.52 && a < 0.48 && d > 0.48) {
+      return {
+        state: 'Baseline Stable — Neutral-Positive',
+        desc:  'VAD scores within the normal operating range. Emotional payload is '
+             + 'moderate and coherent. No significant stress, deception, or arousal '
+             + 'flags at current threshold settings.',
+        color: 'var(--ok)',
+      };
+    }
+
+    // Fallback — scores don't cluster into a clean archetype.
+    return {
+      state: 'Ambiguous / Mixed Signal',
+      desc:  'VAD scores do not map cleanly to a standard psychological state. The '
+           + 'emotional payload may be intentionally neutralised, the text may mix '
+           + 'multiple registers, or lexicon coverage may be too low for a reliable read. '
+           + 'Increase text volume or cross-reference with Dissonance Events.',
+      color: 'var(--muted)',
+    };
+  }
+
+  // ── Private: render assessment block ─────────────────────────────────
+  function _buildAssessment(v, a, d) {
+    const result = evaluateVADState(v, a, d);
+    $('vad-assessment').innerHTML = `
+      <div class="vad-assessment-state" style="color:${result.color};">
+        ◈ Assessed State: ${result.state}
+      </div>
+      <div class="vad-assessment-desc">${result.desc}</div>`;
+  }
+
+  // Expose public surface.
+  return { fetchAndRender, evaluateVADState };
+
+})(); // VadModule
+
+/* ════════════════════════════════════════════════════════════════════════
+   PDS Module — Ousiometric Payload (Power-Danger-Structure)
+   ════════════════════════════════════════════════════════════════════════
+   Implements all frontend logic for the PDS dashboard card:
+
+     fetchAndRender(text, lang)
+       POST /api/pds → populate the #card-pds panel.
+
+     _buildBars(data)
+       Render three bidirectional [-1 … +1] progress bars for P, D, S.
+       Each bar is split at centre-zero; fill extends left (negative) or
+       right (positive) using absolute positioning.
+
+     _buildMeta(data)
+       Lexicon coverage metadata strip.
+
+     _buildScatter(words)
+       Chart.js scatter on the "Plane of Meaning" (X=Power, Y=Danger).
+       Uses two registered inline plugins:
+         pdsGlow      — canvas shadowBlur for glowing dot effect
+         pdsQuadrants — dashed axis dividers at x=0 and y=0
+
+     evaluatePDSState(power, danger, structure)
+       Public quadrant classifier.  Returns {quadrant, state, desc,
+       structureNote, color} based on which PDS quadrant the text's
+       mean score occupies, with magnitude-aware refinements.
+
+     _buildAssessment(p, d, s)
+       Renders the evaluatePDSState() result into #pds-assessment.
+*/
+const PdsModule = (() => {
+
+  // Chart.js instance — destroyed and re-created on each new analysis.
+  let _scatter = null;
+
+  // ── Lexicon table state ───────────────────────────────────────────────
+  // _tableWords holds the full word array from the last PDS response.
+  // _sortState tracks which column is active and the current sort direction.
+  //   col : 'p' | 'd' | 's' | 'anger' | 'fear'  — which column to sort on
+  //   dir : -1 = descending (highest first, default)
+  //          1 = ascending  (lowest first)
+  let _tableWords = [];
+  let _sortState  = { col: 'p', dir: -1 };
+
+  // ── Inline Chart.js plugin: glow effect ──────────────────────────────
+  // Hooks into beforeDatasetsDraw / afterDatasetsDraw to wrap the canvas
+  // draw calls with a shadowBlur, giving every scatter point a neon glow.
+  const _glowPlugin = {
+    id: 'pdsGlow',
+    beforeDatasetsDraw(chart) {
+      chart.ctx.save();
+      chart.ctx.shadowBlur  = 16;
+      chart.ctx.shadowColor = 'rgba(92, 224, 216, 0.50)';
+    },
+    afterDatasetsDraw(chart) {
+      chart.ctx.restore();
+    },
+  };
+
+  // ── Inline Chart.js plugin: quadrant dividers ─────────────────────────
+  // Draws dashed lines through the origin (Power=0, Danger=0) after the
+  // chart scales have been rendered, so the lines stay within the plot area.
+  const _quadrantPlugin = {
+    id: 'pdsQuadrants',
+    afterDraw(chart) {
+      const ctx    = chart.ctx;
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
+      const x0 = xScale.getPixelForValue(0);   // Power  = 0 vertical line
+      const y0 = yScale.getPixelForValue(0);   // Danger = 0 horizontal line
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(107, 115, 148, 0.38)';
+      ctx.lineWidth   = 1;
+      ctx.setLineDash([5, 5]);
+
+      // Vertical divider at Power = 0
+      ctx.beginPath();
+      ctx.moveTo(x0, yScale.top);
+      ctx.lineTo(x0, yScale.bottom);
+      ctx.stroke();
+
+      // Horizontal divider at Danger = 0
+      ctx.beginPath();
+      ctx.moveTo(xScale.left,  y0);
+      ctx.lineTo(xScale.right, y0);
+      ctx.stroke();
+
+      ctx.restore();
+    },
+  };
+
+  // ── Public: fetch PDS data and populate the card ─────────────────────
+  async function fetchAndRender(text, lang) {
+    $('card-pds').style.display = '';
+    $('pds-bars').innerHTML = '<div class="pds-placeholder"><span class="spinner"></span> Computing ousiometric profile…</div>';
+    $('pds-meta').innerHTML = '';
+    $('pds-assessment').innerHTML = '';
+    if (_scatter) { _scatter.destroy(); _scatter = null; }
+    // Reset table state so a new analysis always starts with a clean slate.
+    _tableWords = [];
+    _sortState  = { col: 'p', dir: -1 };
+    const _lexWrap = $('pds-lexicon-wrap');
+    if (_lexWrap) _lexWrap.style.display = 'none';
+    const _lexTbody = $('pds-lex-tbody');
+    if (_lexTbody) _lexTbody.innerHTML = '';
+    const _lexCount = $('pds-lex-count');
+    if (_lexCount) _lexCount.textContent = '';
+    // Hide all three compound trigger banners at the start of every new
+    // analysis so stale alerts never carry over from a previous result.
+    ['pds-escalation-banner', 'pds-contempt-banner', 'pds-paranoia-banner']
+      .forEach(id => { const el = $(id); if (el) el.style.display = 'none'; });
+
+    try {
+      const res = await fetch('/api/pds', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text, language_code: lang }),
+      });
+      if (!res.ok) throw new Error(`PDS API returned HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      if (data.error) {
+        $('pds-bars').innerHTML =
+          `<div class="pds-placeholder" style="color:var(--warn);">${data.error}</div>`;
+        return;
+      }
+
+      _render(data);
+    } catch (err) {
+      $('pds-bars').innerHTML =
+        `<div class="pds-placeholder" style="color:var(--danger);">PDS error: ${err.message}</div>`;
+    }
+  }
+
+  // ── Private: orchestrate all sub-renders ──────────────────────────────
+  function _render(data) {
+    _buildBars(data);
+    _buildMeta(data);
+    _buildScatter(data.words || []);
+
+    // Collect all 8-axis affect aggregates into a single object so
+    // _buildAssessment can forward them to the three compound trigger checks
+    // without a growing positional argument list.
+    const _emo = {
+      angerMean:  data.anger_mean  || 0,
+      angerSigma: data.anger_sigma || 0,
+      fearMean:   data.fear_mean   || 0,
+      antMean:    data.ant_mean    || 0,
+      truMean:    data.tru_mean    || 0,
+      surMean:    data.sur_mean    || 0,
+      sadMean:    data.sad_mean    || 0,
+      joyMean:    data.joy_mean    || 0,
+      disMean:    data.dis_mean    || 0,
+    };
+    _buildAssessment(data.power_mean, data.danger_mean, data.structure_mean, _emo);
+
+    _buildLexiconTable(data.words || []);   // heatmap telemetry table
+  }
+
+  // ── Private: bidirectional progress bars ─────────────────────────────
+  // Each bar covers the [-1, +1] range.  The fill starts at the 50%
+  // centre mark and extends left (negative) or right (positive).
+  // The .pds-bar-track::after pseudo-element draws the centre hairline.
+  function _buildBars(d) {
+    // Descriptor tuples: [axis key, label, fill CSS class, neg-hint, pos-hint]
+    const AXES = [
+      ['power',     'Power',     'pds-fill-power',
+       '–1 Weak',        '+1 Dominant'],
+      ['danger',    'Danger',    'pds-fill-danger',
+       '–1 Safe',         '+1 Threatening'],
+      ['structure', 'Structure', 'pds-fill-structure',
+       '–1 Chaotic',     '+1 Composed'],
+    ];
+
+    $('pds-bars').innerHTML = AXES.map(([key, label, cls, hintL, hintR]) => {
+      const mean  = d[`${key}_mean`];
+      const sigma = d[`${key}_sigma`];
+      // Convert [-1,+1] score to track geometry:
+      //   positive: fill starts at 50%, extends right by (mean * 50)%
+      //   negative: fill ends at 50%, extends left by (|mean| * 50)%
+      const pct   = Math.abs(mean) * 50;
+      const left  = mean >= 0 ? 50 : (50 - pct);
+      const sign  = mean >= 0 ? '+' : '';
+      return `
+        <div>
+          <div class="pds-bar-row" title="${label}: ${sign}${mean.toFixed(3)}  σ ${sigma.toFixed(3)}">
+            <span class="pds-bar-label">${label}</span>
+            <div class="pds-bar-track">
+              <div class="pds-bar-fill ${cls}"
+                   style="left:${left.toFixed(2)}%; width:${pct.toFixed(2)}%;"></div>
+            </div>
+            <span class="pds-bar-meta">
+              ${sign}${mean.toFixed(3)}<span class="pds-bar-sigma">σ ${sigma.toFixed(3)}</span>
+            </span>
+          </div>
+          <div class="pds-bar-row" style="grid-template-columns:82px 1fr 96px;">
+            <span></span>
+            <div class="pds-bar-hints"><span>${hintL}</span><span>${hintR}</span></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Private: coverage metadata strip ─────────────────────────────────
+  function _buildMeta(d) {
+    const pct = d.total_tokens > 0
+      ? ((d.matched_count / d.total_tokens) * 100).toFixed(1)
+      : '0.0';
+    $('pds-meta').innerHTML = `
+      <span>Lexicon matches:<span class="pds-meta-val"> ${d.matched_count}</span></span>
+      <span>Content tokens:<span class="pds-meta-val"> ${d.total_tokens}</span></span>
+      <span>Coverage:<span class="pds-meta-val"> ${pct}%</span></span>
+      <span>Language:<span class="pds-meta-val"> ${d.language}</span></span>`;
+  }
+
+  // ── Private: Chart.js scatter — The Plane of Meaning ─────────────────
+  // X-axis = Power   (-1 … +1)
+  // Y-axis = Danger  (-1 … +1)
+  // Dot colour encodes Structure via an amber→green HSL gradient:
+  //   Structure = -1 (chaotic) → hsl(32,  85%, 55%) amber
+  //   Structure =  0 (neutral) → hsl(100, 75%, 50%) yellow-green
+  //   Structure = +1 (composed)→ hsl(160, 70%, 50%) cyan-green
+  function _buildScatter(words) {
+    if (_scatter) { _scatter.destroy(); _scatter = null; }
+
+    const ctx = $('pds-scatter').getContext('2d');
+
+    // Map each word to a Chart.js scatter point.
+    const points = words.map(w => ({
+      x:     w.p,
+      y:     w.d,
+      s:     w.s,
+      word:  w.word,
+      v:     w.v,
+      a:     w.a,
+      d_vad: w.d_vad,
+    }));
+
+    // Colour-encode Structure with an amber-to-cyan-green HSL arc.
+    const colours = points.map(pt => {
+      const t   = (pt.s + 1) / 2;            // normalise [-1,+1] → [0,1]
+      const hue = 32 + t * 128;              // 32 (amber) → 160 (cyan-green)
+      return `hsla(${hue.toFixed(0)}, 78%, 55%, 0.85)`;
+    });
+
+    _scatter = new Chart(ctx, {
+      type: 'scatter',
+      plugins: [_glowPlugin, _quadrantPlugin],
+      data: {
+        datasets: [{
+          label:           'Words (P × D)',
+          data:            points,
+          backgroundColor: colours,
+          borderColor:     'rgba(92,224,216,0.20)',
+          borderWidth:     1,
+          pointRadius:     5,
+          pointHoverRadius: 8,
+        }],
+      },
+      options: {
+        responsive:          true,
+        maintainAspectRatio: false,
+        animation:           { duration: 350 },
+        plugins: {
+          legend: { display: false },
+          // Custom plugins are already registered above; exclude them from
+          // the options.plugins object so Chart.js doesn't try to look them up
+          // in its global registry (they are passed via the top-level plugins[]).
+          tooltip: {
+            backgroundColor: '#1e2332',
+            titleColor:      '#5ce0d8',
+            bodyColor:       '#dce3f5',
+            borderColor:     '#2a3050',
+            borderWidth:     1,
+            padding:         10,
+            callbacks: {
+              title: ctx => ctx[0]?.raw?.word ?? '',
+              label: ctx => {
+                const p = ctx.raw;
+                return [
+                  `Power:     ${p.x >= 0 ? '+' : ''}${p.x.toFixed(3)}`,
+                  `Danger:    ${p.y >= 0 ? '+' : ''}${p.y.toFixed(3)}`,
+                  `Structure: ${p.s >= 0 ? '+' : ''}${p.s.toFixed(3)}`,
+                  `── raw VAD ──`,
+                  `Valence:   ${p.v.toFixed(3)}`,
+                  `Arousal:   ${p.a.toFixed(3)}`,
+                  `Dominance: ${p.d_vad.toFixed(3)}`,
+                ];
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            min: -1, max: 1,
+            title: {
+              display: true,
+              text:    'Power  (← Weak · Dominant →)',
+              color:   '#6b7394',
+              font:    { size: 9 },
+            },
+            grid:  { color: '#161a26' },
+            ticks: {
+              color: '#6b7394',
+              font:  { size: 8 },
+              maxTicksLimit: 5,
+              callback: v => (v === 0 ? '0' : (v > 0 ? `+${v}` : `${v}`)),
+            },
+          },
+          y: {
+            min: -1, max: 1,
+            title: {
+              display: true,
+              text:    'Danger  (← Safe · Threatening →)',
+              color:   '#6b7394',
+              font:    { size: 9 },
+            },
+            grid:  { color: '#161a26' },
+            ticks: {
+              color: '#6b7394',
+              font:  { size: 8 },
+              maxTicksLimit: 5,
+              callback: v => (v === 0 ? '0' : (v > 0 ? `+${v}` : `${v}`)),
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // ── Public: quadrant classifier ───────────────────────────────────────
+  // Accepts the three PDS mean scores (all in [-1, +1]).
+  // Returns {quadrant, state, desc, structureNote, color} for the
+  // assessment block and can be called independently from external code.
+  //
+  // Quadrant topology (Power × Danger plane):
+  //   Q1  (+P, +D)  Apex Threat          — powerful AND dangerous
+  //   Q2  (+P, –D)  Benevolent Authority — powerful AND safe
+  //   Q3  (–P, +D)  Desperate Panic      — weak AND dangerous
+  //   Q4  (–P, –D)  Submissive/Neutral   — weak AND safe
+  //
+  // Magnitude sub-classifications refine the assessment within each quadrant.
+  function evaluatePDSState(power, danger, structure) {
+    const p = power, d = danger, s = structure;
+    const mag = Math.sqrt(p * p + d * d);     // distance from PDS origin
+
+    // ── Quadrant 1 — Apex Threat (+P, +D) ────────────────────────────
+    if (p > 0 && d > 0) {
+      let state, desc;
+      if (mag > 0.75) {
+        state = 'Apex Threat — High-Magnitude Aggressor';
+        desc  = 'The text occupies the extreme upper-right of the Plane of Meaning. '
+              + 'The author perceives themselves as highly powerful AND projects a '
+              + 'maximally threatening register. Consistent with ultimatums, coercive '
+              + 'demands, or imminent operational declarations. Treat as high priority.';
+      } else if (p > d) {
+        state = 'Dominant Aggressor — Power-Led Threat';
+        desc  = 'Strong self-perceived dominance drives the threat framing. The '
+              + 'danger signal is real but secondary to the display of authority. '
+              + 'Consistent with a superior issuing commands rather than a peer '
+              + 'expressing panic. Look for imperative syntax and hierarchy language.';
+      } else {
+        state = 'Threatened Authority — Danger-Led Aggression';
+        desc  = 'Elevated danger perception drives an assertive response. The author '
+              + 'may feel under attack and is responding with counter-force framing. '
+              + 'Consistent with a defensive aggressive posture — powerful but reactive.';
+      }
+      return { quadrant: 'Q1 · Apex Threat', state, desc, color: 'var(--danger)' };
+    }
+
+    // ── Quadrant 2 — Benevolent Authority (+P, –D) ────────────────────
+    if (p > 0 && d <= 0) {
+      let state, desc;
+      if (mag > 0.65) {
+        state = 'Benevolent Authority — Commanding Confidence';
+        desc  = 'High power with strongly negative danger loading: the author frames '
+              + 'themselves as in command while projecting safety and reassurance. '
+              + 'Consistent with leadership communications, protective framing, or '
+              + 'a trained negotiator de-escalating a situation from a position of strength.';
+      } else {
+        state = 'Composed Authority — Moderate Power, Low Threat';
+        desc  = 'Moderate power combined with low danger produces a measured, '
+              + 'professional register. The author is authoritative but not '
+              + 'aggressive. Consistent with institutional communication or '
+              + 'a subject who believes the situation is under control.';
+      }
+      return { quadrant: 'Q2 · Benevolent Authority', state, desc, color: 'var(--cyan)' };
+    }
+
+    // ── Quadrant 3 — Desperate Panic (–P, +D) ────────────────────────
+    if (p <= 0 && d > 0) {
+      let state, desc;
+      if (mag > 0.70) {
+        state = 'Desperate Panic — High-Magnitude Distress';
+        desc  = 'The text sits in the extreme upper-left: the author feels severely '
+              + 'threatened while perceiving themselves as powerless to resist. This '
+              + 'is the highest-urgency psychological signature — consistent with acute '
+              + 'crisis, coercion, duress, or a target in immediate danger.';
+      } else if (d > Math.abs(p) * 1.3) {
+        state = 'Fearful Submission — Danger-Dominated Panic';
+        desc  = 'Elevated danger perception dominates over power deficit. The author '
+              + 'is highly aroused by a perceived threat but retains some residual '
+              + 'agency. Consistent with a subject who is frightened but not yet '
+              + 'fully incapacitated — look for appeals, requests, or escape framing.';
+      } else {
+        state = 'Anxious Subordination — Weak Under Moderate Threat';
+        desc  = 'Mild power deficit combined with moderate danger loading. The author '
+              + 'perceives themselves as low-status and somewhat threatened. '
+              + 'Consistent with compliance under pressure, deference to a superior, '
+              + 'or passive-aggressive framing beneath surface politeness.';
+      }
+      return { quadrant: 'Q3 · Desperate Panic', state, desc, color: '#e05c5c' };
+    }
+
+    // ── Quadrant 4 — Submissive/Neutral (–P, –D) ─────────────────────
+    {
+      let state, desc;
+      if (mag < 0.20) {
+        state = 'Psychological Baseline — Near-Origin Neutral';
+        desc  = 'The text\'s mean PDS score sits close to the origin: no dominant '
+              + 'power register, no significant threat loading. The emotional payload '
+              + 'is deliberately or naturally neutral. Consistent with administrative '
+              + 'communication, heavily sanitised text, or AI-generated prose.';
+      } else if (Math.abs(p) > Math.abs(d)) {
+        state = 'Compliant Submission — Power-Deficit Dominant';
+        desc  = 'Clear power-deficit framing without a corresponding threat signal. '
+              + 'The author positions themselves as subordinate, deferential, or '
+              + 'helpless. Consistent with coerced compliance, hostage communications, '
+              + 'or subjects who have accepted a subordinate role.';
+      } else {
+        state = 'Passive Safety-Seeking — Low Threat, Low Agency';
+        desc  = 'Negative danger score (safety-seeking) combined with low power '
+              + 'creates a docile register. The author is neither aggressive nor '
+              + 'threatened — seeking calm, routine, or withdrawal. Cross-reference '
+              + 'with Micro Intensity for suppressed arousal signals.';
+      }
+      return { quadrant: 'Q4 · Submissive / Neutral', state, desc, color: 'var(--muted)' };
+    }
+  }
+
+  // ── Private: structure annotation appended below primary assessment ───
+  function _structureNote(s) {
+    if (s >  0.50) return 'Structure signal is strongly positive: language is ordered, composed, and deliberate. The author has rehearsed or is operating from a script.';
+    if (s >  0.15) return 'Moderate positive Structure: measured, controlled register consistent with trained or experienced communication.';
+    if (s > -0.15) return 'Structure is near-neutral: the arousal level neither drives nor suppresses syntactic order.';
+    if (s > -0.50) return 'Negative Structure: elevated arousal is eroding linguistic order. Expect fragmented syntax, topic shifts, or emotional leakage.';
+    return 'Strong negative Structure: text is highly disorganised — consistent with acute stress, stream-of-consciousness authorship, or deliberate obfuscation.';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  RAW LEXICON TELEMETRY TABLE
+  //  Tasks 1 (structure), 2 (heatmap), 3 (sorting)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── Task 1 entry-point: store words and trigger first render ──────────
+  // Called from _render() with the full words array from the API response.
+  // Saves to _tableWords so _renderTableBody() can re-sort without a re-fetch.
+  function _buildLexiconTable(words) {
+    if (!words.length) return;
+    _tableWords = words.slice();         // shallow copy — we sort in-place below
+    _sortState  = { col: 'p', dir: -1 }; // default: Power descending
+    _renderTableBody();
+
+    // Reveal the table container (hidden until data is ready).
+    const wrap = $('pds-lexicon-wrap');
+    if (wrap) wrap.style.display = '';
+  }
+
+  // ── Task 3: re-render tbody with current sort state ───────────────────
+  // Pure DOM write — no fetch involved.  Called by both _buildLexiconTable
+  // and the public sortBy() on every header click.
+  function _renderTableBody() {
+    const tbody = $('pds-lex-tbody');
+    if (!tbody) return;
+
+    const col = _sortState.col;   // 'p' | 'd' | 's' | 'anger' | 'fear'
+    const dir = _sortState.dir;   // -1 = desc, 1 = asc
+
+    // Sort a copy so _tableWords always stays in original backend order.
+    const sorted = _tableWords.slice().sort((a, b) => {
+      // Words without an affect score (0.0) sort to the bottom in descending mode.
+      const diff = (a[col] || 0) - (b[col] || 0);  // ascending difference
+      return dir === -1 ? -diff : diff;              // flip sign for descending
+    });
+
+    // Build all rows as a single HTML string — one DOM write, zero reflow cost.
+    tbody.innerHTML = sorted.map(w => {
+      // PDS axes use the [-1,+1] quadratic heatmap; affect uses [0,1] heatmap.
+      const bgP     = _heatBg(w.p,            92,  224, 216);  // cyan        — Power
+      const bgD     = _heatBg(w.d,           224,  100,  60);  // red         — Danger
+      const bgS     = _heatBg(w.s,            92,  224, 138);  // green       — Structure
+      // 8-axis affect heatmaps — all use the [0,1] quadratic curve.
+      // Colour palette matches the <th> accent colours in the HTML header.
+      const bgAnger = _heatBgPos(w.anger || 0, 180,  20,  40); // deep crimson — Anger
+      const bgFear  = _heatBgPos(w.fear  || 0, 150,  30, 200); // neon violet  — Fear
+      const bgAnt   = _heatBgPos(w.ant   || 0, 220, 130,  20); // amber/orange — Anticipation
+      const bgTru   = _heatBgPos(w.tru   || 0,  30, 200, 220); // cyan         — Trust
+      const bgSur   = _heatBgPos(w.sur   || 0, 200,  30, 200); // magenta      — Surprise
+      const bgSad   = _heatBgPos(w.sad   || 0,  30,  60, 200); // deep blue    — Sadness
+      const bgJoy   = _heatBgPos(w.joy   || 0, 220, 200,  30); // gold/yellow  — Joy
+      const bgDis   = _heatBgPos(w.dis   || 0,  60, 200,  40); // toxic green  — Disgust
+      return (
+        `<tr>` +
+          `<td class="pds-td-term">${_escHtml(w.word)}</td>` +
+          `<td class="pds-td-score" style="background:${bgP};">${_fmtScore(w.p)}</td>` +
+          `<td class="pds-td-score" style="background:${bgD};">${_fmtScore(w.d)}</td>` +
+          `<td class="pds-td-score" style="background:${bgS};">${_fmtScore(w.s)}</td>` +
+          `<td class="pds-td-score" style="background:${bgAnger};">${_fmtPos(w.anger || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgFear};">${_fmtPos(w.fear  || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgAnt};">${_fmtPos(w.ant   || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgTru};">${_fmtPos(w.tru   || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgSur};">${_fmtPos(w.sur   || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgSad};">${_fmtPos(w.sad   || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgJoy};">${_fmtPos(w.joy   || 0)}</td>` +
+          `<td class="pds-td-score" style="background:${bgDis};">${_fmtPos(w.dis   || 0)}</td>` +
+        `</tr>`
+      );
+    }).join('');
+
+    // Update the word-count badge.
+    const countEl = $('pds-lex-count');
+    if (countEl) countEl.textContent = `${sorted.length} term${sorted.length !== 1 ? 's' : ''}`;
+
+    // Keep header arrows and active-column styling in sync.
+    _updateSortHeaders();
+  }
+
+  // ── Task 3: public sort trigger (wired to onclick on <th> elements) ───
+  // Exported on PdsModule so HTML onclick attrs can call PdsModule.sortBy().
+  // Clicking the active column toggles direction; clicking a new column
+  // resets to descending (highest-first, the most analytically useful view).
+  function sortBy(col) {
+    if (_sortState.col === col) {
+      // Toggle: descending → ascending → descending …
+      _sortState.dir = _sortState.dir === -1 ? 1 : -1;
+    } else {
+      _sortState.col = col;
+      _sortState.dir = -1;   // always start a fresh column at highest-first
+    }
+    _renderTableBody();
+  }
+
+  // ── Task 3 helper: sync header arrow glyphs + active-column highlight ─
+  function _updateSortHeaders() {
+    ['p', 'd', 's', 'anger', 'fear', 'ant', 'tru', 'sur', 'sad', 'joy', 'dis'].forEach(c => {
+      const th    = $(`pds-th-${c}`);
+      if (!th) return;
+      const arrow = th.querySelector('.pds-sort-arrow');
+      const isActive = (c === _sortState.col);
+
+      // Toggle the accent-colour active class.
+      th.classList.toggle('pds-th-active', isActive);
+
+      if (arrow) {
+        if (!isActive) {
+          arrow.textContent = '↕';   // unsorted indicator
+        } else {
+          // Active column: show directional arrow.
+          arrow.textContent = _sortState.dir === -1 ? '↓' : '↑';
+        }
+      }
+    });
+  }
+
+  // ── Task 2: heatmap background colour formula ─────────────────────────
+  // Maps a PDS score in [-1, +1] to an rgba() colour with variable alpha.
+  // The alpha follows a quadratic curve so:
+  //   score = -1.0  →  α ≈ 0.04  (near-transparent — very dark, unobtrusive)
+  //   score =  0.0  →  α ≈ 0.23  (subtle tint at the midpoint)
+  //   score = +1.0  →  α ≈ 0.82  (bright, saturated heatmap colour)
+  // The quadratic gives better visual differentiation in the upper range
+  // (where most threat-relevant words cluster) compared to a linear alpha.
+  // Text colour stays var(--text) in the CSS, so legibility is preserved
+  // regardless of how bright the background becomes.
+  function _heatBg(value, r, g, b) {
+    const t     = (value + 1) / 2;             // normalise [-1,+1] → [0,1]
+    const alpha = (0.04 + t * t * 0.78).toFixed(3); // quadratic α curve
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  // ── Affect Intensity heatmap — [0,1] scale ─────────────────────────
+  // Same quadratic curve as _heatBg but applied directly to the [0,1]
+  // affect score (no recentering needed since 0 is already the neutral pole).
+  //   score = 0.0  →  α ≈ 0.04  (no affect — near-transparent)
+  //   score = 0.5  →  α ≈ 0.24  (moderate intensity — subtle tint)
+  //   score = 1.0  →  α ≈ 0.82  (peak intensity — vivid heatmap colour)
+  function _heatBgPos(value, r, g, b) {
+    const alpha = (0.04 + value * value * 0.78).toFixed(3); // value already in [0,1]
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  // ── Task 2 helper: format a PDS score with explicit sign ─────────────
+  function _fmtScore(v) {
+    return (v >= 0 ? '+' : '') + v.toFixed(3);
+  }
+
+  // ── Affect score formatter — [0,1], no sign prefix ──────────────────
+  // Two decimal places keeps the 11-column table readable without truncation.
+  function _fmtPos(v) {
+    return v.toFixed(2);
+  }
+
+  // ── Safety helper: escape any HTML special chars in word strings ──────
+  // Necessary because word tokens can include ampersands or angle brackets
+  // in some multilingual lexicon entries.
+  function _escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Private: render assessment block into #pds-assessment ─────────────
+  // Accepts an emotion bundle (emo) containing all 8-axis affect means and
+  // sigmas.  After rendering the assessment text, fires all three compound
+  // psychological trigger checks so every analysis refresh re-evaluates
+  // all alert conditions against the new data.
+  function _buildAssessment(p, d, s, emo) {
+    const result = evaluatePDSState(p, d, s);
+    $('pds-assessment').innerHTML = `
+      <div class="pds-assessment-quadrant">${result.quadrant}</div>
+      <div class="pds-assessment-state" style="color:${result.color};">
+        ◈ ${result.state}
+      </div>
+      <div class="pds-assessment-desc">${result.desc}</div>
+      <div class="pds-assessment-struct">
+        <strong>Structure axis:</strong> ${_structureNote(s)}
+      </div>`;
+
+    // Fire all three compound trigger checks in priority order.
+    // Each function independently shows or hides its own banner element.
+    _checkEscalation(p, d, emo.angerMean, emo.angerSigma);
+    _checkContempt(p, d, emo.angerMean, emo.disMean);
+    _checkParanoia(p, d, emo.fearMean, emo.antMean);
+  }
+
+  // ── Private: Weaponized Escalation trigger ─────────────────────────────
+  // Condition: text is in the Apex Threat quadrant (+P, +D) AND anger is
+  // statistically elevated (mean > 0.750) or highly volatile (σ > 0.4).
+  // The banner remains hidden for every other PDS state — including high
+  // danger without anger — to minimise false-positive alert fatigue.
+  function _checkEscalation(p, d, angerMean, angerSigma) {
+    const banner = $('pds-escalation-banner');
+    const detail = $('pds-escalation-detail');
+    if (!banner) return;
+
+    const inApexThreat    = (p > 0 && d > 0);
+    const angerElevated   = (angerMean  > 0.750);
+    const angerVolatile   = (angerSigma > 0.4);
+
+    if (inApexThreat && (angerElevated || angerVolatile)) {
+      // Build a concise diagnostic string for the detail line.
+      const reasons = [];
+      if (angerElevated) reasons.push(`anger μ ${angerMean.toFixed(3)} > 0.750`);
+      if (angerVolatile) reasons.push(`anger σ ${angerSigma.toFixed(3)} > 0.400`);
+      if (detail) {
+        detail.textContent =
+          `Apex Threat quadrant confirmed (P ${p >= 0 ? '+' : ''}${p.toFixed(3)}, ` +
+          `D ${d >= 0 ? '+' : ''}${d.toFixed(3)}) · ${reasons.join(' · ')}`;
+      }
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // ── Private: Weaponized Contempt trigger ──────────────────────────────
+  // Dehumanization precursor: the subject combines high structural power (+P, +D)
+  // with anger AND disgust — the psycholinguistic signature of out-group
+  // contempt that historically precedes dehumanizing rhetoric.
+  // Condition: Apex Threat quadrant AND anger_μ > 0.6 AND disgust_μ > 0.5
+  function _checkContempt(p, d, angerMean, disMean) {
+    const banner = $('pds-contempt-banner');
+    const detail = $('pds-contempt-detail');
+    if (!banner) return;
+
+    const inApexThreat  = (p > 0 && d > 0);
+    const angerHigh     = (angerMean > 0.6);
+    const disgustHigh   = (disMean   > 0.5);
+
+    if (inApexThreat && angerHigh && disgustHigh) {
+      if (detail) {
+        detail.textContent =
+          `Apex Threat confirmed (P ${p >= 0 ? '+' : ''}${p.toFixed(3)}, ` +
+          `D ${d >= 0 ? '+' : ''}${d.toFixed(3)}) · ` +
+          `anger μ ${angerMean.toFixed(3)} > 0.600 · disgust μ ${disMean.toFixed(3)} > 0.500 · ` +
+          `Dehumanization precursor — high structural power combined with anger and disgust.`;
+      }
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // ── Private: Paranoia / Hyper-Vigilance trigger ────────────────────────
+  // The subject is operating in the Desperate Panic quadrant (−P, +D: they feel
+  // weak and threatened) while simultaneously projecting extreme fear AND active
+  // anticipation of a threat event — the signature of a paranoid threat-scan
+  // loop or pre-kinetic hyper-vigilance state.
+  // Condition: Desperate Panic quadrant (power < 0, danger > 0)
+  //            AND fear_μ > 0.6 AND anticipation_μ > 0.6
+  function _checkParanoia(p, d, fearMean, antMean) {
+    const banner = $('pds-paranoia-banner');
+    const detail = $('pds-paranoia-detail');
+    if (!banner) return;
+
+    const inDesperatePanic = (p < 0 && d > 0);
+    const fearHigh         = (fearMean > 0.6);
+    const anticipationHigh = (antMean  > 0.6);
+
+    if (inDesperatePanic && fearHigh && anticipationHigh) {
+      if (detail) {
+        detail.textContent =
+          `Desperate Panic quadrant confirmed (P ${p.toFixed(3)}, ` +
+          `D ${d >= 0 ? '+' : ''}${d.toFixed(3)}) · ` +
+          `fear μ ${fearMean.toFixed(3)} > 0.600 · anticipation μ ${antMean.toFixed(3)} > 0.600 · ` +
+          `Target is projecting desperate danger while actively anticipating kinetic impact.`;
+      }
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // Expose public surface.
+  // sortBy() must be public because the <th> onclick attrs call PdsModule.sortBy().
+  return { fetchAndRender, evaluatePDSState, sortBy };
+
+})(); // PdsModule
+
+/* ════════════════════════════════════════════════════════════════════════ */
+
 function openHelp(sectionId) {
   document.getElementById('help-drawer').classList.add('open');
   if (sectionId) {
@@ -4310,6 +6132,206 @@ loadEntity();
         <span class="help-kv-val">Full-document energy split across dominant frequency bands. Imbalance between low / mid / high BPV bands reveals tonal suppression or register manipulation.</span>
       </div>
     </div>
+
+    <!-- ══ VAD Help Section ══════════════════════════════════════════════ -->
+    <div class="help-section" id="help-vad">
+      <div class="help-section-title">Psychological Payload — VAD Lexicon</div>
+      <span class="help-section-sub">Layer 4 · Emotional Dimension Analysis · NRC-VAD</span>
+
+      <p class="help-p">
+        The <span class="help-term">NRC Valence-Arousal-Dominance (VAD) Lexicon</span>
+        (Saif Mohammad, 2018) assigns every common word three independent scores
+        on a 0–1 scale, representing the three fundamental axes of human emotional
+        experience as defined by Russell's Circumplex Model and Mehrabian &amp;
+        Russell's PAD space.
+      </p>
+
+      <div class="help-kv">
+        <span class="help-kv-key">Valence  (V)</span>
+        <span class="help-kv-val">
+          The <em>pleasantness</em> of the emotional state.
+          <strong>0.0</strong> = maximally negative (grief, rage, terror);
+          <strong>1.0</strong> = maximally positive (joy, love, serenity).
+          Tracks the author's conscious hedonic framing — their world-view
+          in this text slice.
+        </span>
+
+        <span class="help-kv-key">Arousal  (A)</span>
+        <span class="help-kv-val">
+          The <em>activation energy</em> of the emotional state.
+          <strong>0.0</strong> = calm, sleepy, bored;
+          <strong>1.0</strong> = highly agitated, excited, panicked.
+          Arousal above <strong>0.65</strong> is a strong stress indicator
+          — cross-reference with Micro Intensity and Dissonance Events.
+        </span>
+
+        <span class="help-kv-key">Dominance (D)</span>
+        <span class="help-kv-val">
+          The author's <em>perceived control</em> over their situation.
+          <strong>0.0</strong> = submissive, powerless, controlled;
+          <strong>1.0</strong> = dominant, authoritative, in command.
+          Low dominance combined with high arousal is a reliable panic
+          / anxiety signature. High dominance with negative valence indicates
+          controlled aggression rather than despair.
+        </span>
+
+        <span class="help-kv-key">σ (Volatility)</span>
+        <span class="help-kv-val">
+          The population standard deviation across all matched words.
+          A high σ means the text spans a wide emotional range — possible
+          code-switching, mixed authorship, or deliberate register manipulation.
+          A low σ on low-mean Arousal confirms sustained emotional flatness
+          (suppression or AI-generated text).
+        </span>
+
+        <span class="help-kv-key">Coverage %</span>
+        <span class="help-kv-val">
+          The percentage of non-stop content tokens found in the lexicon.
+          Values below <strong>20%</strong> should be treated with caution —
+          either the text is very short, highly technical, or the language
+          lexicon translation is incomplete.
+        </span>
+      </div>
+
+      <p class="help-p">
+        <span class="help-term">How to read the V/A Scatter Plot</span><br>
+        Each dot represents a single matched word plotted at its
+        <em>Valence</em> (X-axis, left = negative) and <em>Arousal</em>
+        (Y-axis, bottom = calm) coordinates. Dot colour encodes
+        <em>Dominance</em>: dark blue = low (submissive), cyan = high (dominant).
+        Hover any dot to see the word and its exact V/A/D scores.
+      </p>
+
+      <div class="help-kv">
+        <span class="help-kv-key">Top-left quadrant</span>
+        <span class="help-kv-val">High arousal + negative valence = <strong>Panic / Distress</strong> zone</span>
+        <span class="help-kv-key">Top-right quadrant</span>
+        <span class="help-kv-val">High arousal + positive valence = <strong>Excitement / Joy</strong> zone</span>
+        <span class="help-kv-key">Bottom-left quadrant</span>
+        <span class="help-kv-val">Low arousal + negative valence = <strong>Depression / Sadness</strong> zone</span>
+        <span class="help-kv-key">Bottom-right quadrant</span>
+        <span class="help-kv-val">Low arousal + positive valence = <strong>Calm / Contentment</strong> zone</span>
+      </div>
+
+      <p class="help-p">
+        <span class="help-term">Assessed State block</span><br>
+        The engine compares the three <em>mean</em> scores against a rule-set
+        derived from empirical PAD research and outputs a plain-language
+        psychological assessment. Key thresholds: Arousal &gt; 0.65 with
+        Dominance &lt; 0.40 flags <em>Panic</em>; negative Valence (&lt; 0.35)
+        with high Arousal and high Dominance flags <em>Controlled Aggression</em>.
+        Always cross-reference the assessed state with the Macro Semantic Radar
+        (conscious framing) and the Dissonance Events (where micro and macro
+        signals diverge) before drawing analytical conclusions.
+      </p>
+    </div>
+    <!-- ══ END VAD Help Section ══════════════════════════════════════════ -->
+
+    <!-- ══ PDS Help Section ══════════════════════════════════════════════ -->
+    <div class="help-section" id="help-pds">
+      <div class="help-section-title">Ousiometric Payload — PDS Framework</div>
+      <span class="help-section-sub">Layer 4b · Power-Danger-Structure · Dodds et al.</span>
+
+      <p class="help-p">
+        The <span class="help-term">Ousiometrics framework</span> (Dodds, Minot,
+        Iniguez, Bhattacharya, Reagan &amp; Danforth) mathematically rotates the
+        three raw NRC-VAD axes into a new coordinate system that is dramatically
+        more useful for <em>tactical intelligence analysis</em> than raw
+        Valence-Arousal-Dominance scores.  The rotation is derived by applying
+        Singular Value Decomposition (SVD) to the full NRC-VAD word cloud,
+        exposing three dominant semantic axes that humans actually use to
+        categorise threat, authority, and risk:
+      </p>
+
+      <div class="help-kv">
+        <span class="help-kv-key">Power  (P)</span>
+        <span class="help-kv-val">
+          Perceived authority, dominance, and influence.  Loads heavily on
+          the NRC <em>Dominance</em> dimension.
+          <br><strong>–1.0</strong> = Weak / Submissive &nbsp;·&nbsp;
+          <strong>+1.0</strong> = Powerful / Dominant.<br>
+          High Power combined with low Danger = <em>benevolent authority</em>.
+          High Power combined with high Danger = <em>apex threat</em>.
+        </span>
+
+        <span class="help-kv-key">Danger  (D)</span>
+        <span class="help-kv-val">
+          Threat level: a function of negative Valence under activation.
+          Computed as <code>–Valence × 0.70 + Arousal × 0.30</code> (all
+          centred to [–1, +1] first).
+          <br><strong>–1.0</strong> = Safe / Benevolent &nbsp;·&nbsp;
+          <strong>+1.0</strong> = Dangerous / Threatening.<br>
+          Danger supersedes raw Valence for threat assessment because it
+          separates <em>passive sadness</em> (low Arousal) from <em>active
+          threat</em> (high Arousal + negative Valence).
+        </span>
+
+        <span class="help-kv-key">Structure  (S)</span>
+        <span class="help-kv-val">
+          Order, composure, and predictability.  Defined as the inverse of
+          Arousal (<code>–Arousal</code>, centred).
+          <br><strong>–1.0</strong> = Unstructured / Chaotic
+          &nbsp;·&nbsp; <strong>+1.0</strong> = Structured / Composed.<br>
+          Low Structure signals arousal-driven linguistic disorganisation:
+          fragmented sentences, topic shifts, emotional leakage.  High
+          Structure indicates deliberate, rehearsed, or templated authorship.
+        </span>
+
+        <span class="help-kv-key">σ  (Volatility)</span>
+        <span class="help-kv-val">
+          Standard deviation across all matched words on each PDS axis.
+          High σ on the Danger axis indicates a text that alternates between
+          safe and threatening vocabulary — possible code-switching, mixed
+          authorship, or deliberate emotional manipulation.
+        </span>
+      </div>
+
+      <p class="help-p">
+        <span class="help-term">Why PDS supersedes VAD for intelligence analysis</span><br>
+        Raw Valence alone cannot distinguish between <em>grief</em> (low V, low A,
+        low D) and <em>rage</em> (low V, high A, high D) — both are "negative" but
+        they represent radically different threat states.  The Danger axis resolves
+        this by combining inverted Valence with Arousal, isolating activated
+        negativity (threat) from passive negativity (sadness).  Similarly, Power
+        separates authoritative communication (high D, high V) from desperate
+        aggression (high D, low V).
+      </p>
+
+      <p class="help-p">
+        <span class="help-term">Reading the Plane of Meaning scatter plot</span><br>
+        Each dot represents one matched word plotted at its (Power, Danger)
+        coordinates.  Dot colour encodes Structure: <strong style="color:#e09040;">amber</strong>
+        = chaotic/aroused, <strong style="color:#5ce08a;">green</strong> = composed/ordered.
+        Hover any dot to see the word, its PDS scores, and the underlying
+        raw VAD values.
+      </p>
+
+      <div class="help-kv">
+        <span class="help-kv-key">Top-Right  (+P, +D)</span>
+        <span class="help-kv-val"><strong style="color:var(--danger);">Apex Threat</strong> — Powerful and threatening.  Maximum operational priority.</span>
+
+        <span class="help-kv-key">Bottom-Right  (+P, –D)</span>
+        <span class="help-kv-val"><strong style="color:var(--cyan);">Benevolent Authority</strong> — Powerful and safe.  Leadership, reassurance, or de-escalation framing.</span>
+
+        <span class="help-kv-key">Top-Left  (–P, +D)</span>
+        <span class="help-kv-val"><strong style="color:#e05c5c;">Desperate Panic</strong> — Weak and threatened.  Subject in acute distress or duress; possible coercion indicator.</span>
+
+        <span class="help-kv-key">Bottom-Left  (–P, –D)</span>
+        <span class="help-kv-val"><strong style="color:var(--muted);">Submissive / Neutral</strong> — Low agency, low threat.  Compliance, withdrawal, or sanitised/AI-generated register.</span>
+      </div>
+
+      <p class="help-p">
+        The <span class="help-term">Tactical Assessment</span> block beneath the
+        scatter applies a magnitude-aware quadrant classifier to the text's mean
+        PDS score.  Magnitude (distance from origin) indicates intensity:
+        scores near the origin suggest a neutral or mixed register, while
+        scores above 0.65 magnitude warrant heightened analytic attention.
+        Always cross-reference against the Dissonance Events (where the
+        subconscious Micro signal diverges from conscious Macro framing) and
+        the VAD Arousal σ (inter-word volatility).
+      </p>
+    </div>
+    <!-- ══ END PDS Help Section ══════════════════════════════════════════ -->
 
     <div class="help-section" id="help-somatic">
       <div class="help-section-title">Layer 3 · Somatic Cipher &amp; FFT</div>

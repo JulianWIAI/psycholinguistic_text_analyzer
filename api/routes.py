@@ -74,6 +74,18 @@ class EntityCreateRequest(BaseModel):
     steganography_risk: str = "High"
 
 
+class VadRequest(BaseModel):
+    """Request schema for the VAD emotional-payload endpoint."""
+    text: str = Field(..., min_length=1, description="Raw intercept text")
+    language_code: str = Field(
+        "EN",
+        description=(
+            "ISO language code for lexicon selection: "
+            "EN, DE, RU, ZH, AR, FA, KO, ES, FR, JA"
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Core pipeline helper
 # ---------------------------------------------------------------------------
@@ -740,6 +752,73 @@ def clear_ledger() -> Dict[str, str]:
     entity["dissonance_ledger"] = []
     db.save_entity(entity, DB_PATH)
     return {"status": "ledger cleared"}
+
+
+@router.post("/vad")
+def analyze_vad_endpoint(req: VadRequest) -> Dict[str, Any]:
+    """
+    POST /api/vad
+    ──────────────────────────────────────────────────────────
+    Run NRC Valence-Arousal-Dominance (VAD) lexicon analysis on the
+    submitted intercept text.
+
+    The function loads the correct language-specific NRC-VAD TSV, tokenizes
+    the text via the project-wide spaCy model, and returns:
+      - Mean and population σ (volatility) for Valence, Arousal, Dominance.
+      - A per-word array [{word, v, a, d}] to feed the frontend scatter plot.
+
+    Lexicon files must exist at:
+        vad_layer/lexicons/{lang_lower}_vad.tsv
+
+    The endpoint returns HTTP 200 even when lexicon files are missing; the
+    ``error`` field in the response body carries the diagnostic message so
+    the frontend can surface it gracefully without raising an HTTP error.
+    """
+    from vad_layer.vad_analyzer import analyze_vad
+
+    # analyze_vad() handles its own exceptions and returns them in ``error``.
+    return analyze_vad(req.text, req.language_code)
+
+
+class PdsRequest(BaseModel):
+    """Request schema for the Ousiometric PDS emotional-payload endpoint."""
+    text: str = Field(..., min_length=1, description="Raw intercept text")
+    language_code: str = Field(
+        "EN",
+        description=(
+            "ISO language code for lexicon selection: "
+            "EN, DE, RU, ZH, AR, FA, KO, ES, FR, JA"
+        ),
+    )
+
+
+@router.post("/pds")
+def analyze_pds_endpoint(req: PdsRequest) -> Dict[str, Any]:
+    """
+    POST /api/pds
+    ──────────────────────────────────────────────────────────
+    Run Ousiometric Power-Danger-Structure (PDS) analysis on the
+    submitted intercept text.
+
+    The endpoint delegates tokenization and lexicon I/O to the existing
+    VAD layer (same NRC-VAD TSV files, same spaCy cache), then applies
+    the VAD → PDS linear rotation:
+
+        Power     =  (Dominance – 0.5) × 2
+        Danger    = –(Valence   – 0.5) × 2 × 0.70
+                  +  (Arousal   – 0.5) × 2 × 0.30
+        Structure = –(Arousal   – 0.5) × 2
+
+    Returns six aggregate floats (mean + σ for P, D, S) plus a
+    ``words`` array of the top-60 matched tokens ranked by PDS extremity
+    (Euclidean distance from origin in the P×D plane).
+
+    The endpoint always returns HTTP 200; errors surface in the
+    ``error`` field so the frontend can degrade gracefully.
+    """
+    from pds_layer.pds_analyzer import analyze_ousiometrics
+
+    return analyze_ousiometrics(req.text, req.language_code)
 
 
 @router.get("/health")
