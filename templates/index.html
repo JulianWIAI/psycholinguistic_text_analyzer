@@ -5753,16 +5753,36 @@ function _renderCyGraph(co) {
   _cy.elements().remove();
   const nodes = co.nodes || [], matrix = co.matrix || [];
   const els = [];
+
+  // Add selected corpus nodes (gold) first
+  const selIds = Array.from(_selCorpora);
+  selIds.forEach(cid => {
+    const meta  = _corpusList.find(c => c.id === cid);
+    const label = meta?.properties?.name || cid.replace('corpus_', '');
+    els.push({ data: { id: cid, label, type: 'Corpus', color: _CY_COLORS['Corpus'], sz: _CY_SIZES['Corpus'] } });
+  });
+
+  // Add feature nodes
   nodes.forEach(id => {
     const type  = _cyNodeType(id);
     const label = id.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/, '').replace(/_/g,' ');
     els.push({ data: { id, label, type, color: _CY_COLORS[type]||'#4f8ef7', sz: _CY_SIZES[type]||34 } });
   });
+
+  // Co-occurrence edges between feature nodes
   const maxW = Math.max(...matrix.flat().filter(v=>v>0), 1);
   nodes.forEach((src,i) => nodes.forEach((tgt,j) => {
     if (i < j && (matrix[i]?.[j]||0) > 0)
       els.push({ data: { id:`e${i}_${j}`, source:src, target:tgt, w:Math.max(1, matrix[i][j]/maxW*7) } });
   }));
+
+  // Thin edges from each corpus node to all its feature nodes
+  selIds.forEach((cid, ci) => {
+    nodes.forEach((fid, fi) => {
+      els.push({ data: { id:`ec${ci}_${fi}`, source:cid, target:fid, w:0.5 } });
+    });
+  });
+
   _cy.add(els);
   _cy.layout({ name:'cose', padding:50, randomize:true, animate:false }).run();
 }
