@@ -33,8 +33,13 @@ import database.schema as db
 from dissonance.engine import DissonanceEngine
 from entropy_engine import compute_entropy_metrics, sanitize_for_entropy
 from language.router import LanguageRouter, SUPPORTED_LANGUAGES
+from literary_layer.analyzer import LiteraryAnalyzer
+from literary_layer.base import LiteraryResult
+from literary_layer.line_index import build_line_index
 from micro_layer.lexical_affinity import LexicalAffinityRadar
 from micro_layer.somatic_engine import SomaticEngine
+from pds_layer.pds_analyzer import analyze_ousiometrics
+from vad_layer.vad_analyzer import analyze_vad
 from tokenizer.rolling_window import RollingWindowTokenizer
 
 router = APIRouter()
@@ -44,9 +49,10 @@ DB_PATH = "entity_db.json"
 # ---------------------------------------------------------------------------
 # Singletons — shared across requests for baseline continuity
 # ---------------------------------------------------------------------------
-_lang_router       = LanguageRouter()
-_dissonance_engine = DissonanceEngine()
-_somatic_engine    = SomaticEngine()
+_lang_router        = LanguageRouter()
+_dissonance_engine  = DissonanceEngine()
+_somatic_engine     = SomaticEngine()
+_literary_analyzer  = LiteraryAnalyzer()   # literary layer — Phase 2
 
 
 # ---------------------------------------------------------------------------
@@ -72,18 +78,6 @@ class EntityCreateRequest(BaseModel):
     known_aliases: List[str] = []
     suspected_agency: str = "Unknown"
     steganography_risk: str = "High"
-
-
-class VadRequest(BaseModel):
-    """Request schema for the VAD emotional-payload endpoint."""
-    text: str = Field(..., min_length=1, description="Raw intercept text")
-    language_code: str = Field(
-        "EN",
-        description=(
-            "ISO language code for lexicon selection: "
-            "EN, DE, RU, ZH, AR, FA, KO, ES, FR, JA"
-        ),
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +445,11 @@ def _run_pipeline(
     windows = tokenizer.tokenize(text)
     window_results: List[Dict[str, Any]] = []
 
+    # Build once per document: maps char offsets to 1-based line numbers.
+    # Passed into every per-window literary analyzer call so findings carry
+    # document-level line numbers, not window-relative ones.
+    line_index = build_line_index(text)
+
     # Compute the global waveform envelope ONCE from the entire document.
     # This 100-bucket compressed signal is returned at document level so the
     # UI can display the macro energy flow regardless of which window is active.
@@ -551,10 +550,22 @@ def _run_pipeline(
                 spacy_doc = macro_analyzer._nlp(win.text)
                 lar = LexicalAffinityRadar(spacy_doc, macro_result.cluster_scores)
                 lexical_affinity = lar.analyze()
+                # Literary layer: reuse the already-parsed spaCy Doc so no second
+                # parse is needed.  Returns empty LiteraryResult for non-EN languages
+                # until Phase 5 adds DE/FR pattern files.
+                literary_result = _literary_analyzer.analyze(
+                    doc        = spacy_doc,
+                    raw_text   = win.text,
+                    start_char = win.start_char,
+                    line_index = line_index,
+                    language   = language_code,
+                )
             except Exception:
                 lexical_affinity = None
+                literary_result  = LiteraryResult()
         else:
             lexical_affinity = None
+            literary_result  = LiteraryResult()
 
         # ── Letter frequencies ────────────────────────────────────────────────
         # RU:     count Cyrillic А–Я directly from window text.
@@ -573,6 +584,21 @@ def _run_pipeline(
         else:
             phonetic = micro_result.raw.get("phonetic_text", "") if language_code in ("JA", "ZH") else ""
             raw_telem["letter_frequencies"] = _compute_letter_freq(phonetic or win.text)
+
+        # ── Psychological Payload: VAD → PDS + 8-axis emotion intensity ─────────
+        try:
+            psych_payload = analyze_ousiometrics(win.text, language_code)
+            vad_result    = analyze_vad(win.text, language_code)
+            # Merge VAD aggregate fields into the payload so the frontend
+            # can render Valence/Arousal/Dominance bars alongside PDS.
+            psych_payload["valence_mean"]    = vad_result.get("valence_mean",    0.0)
+            psych_payload["valence_sigma"]   = vad_result.get("valence_sigma",   0.0)
+            psych_payload["arousal_mean"]    = vad_result.get("arousal_mean",    0.0)
+            psych_payload["arousal_sigma"]   = vad_result.get("arousal_sigma",   0.0)
+            psych_payload["dominance_mean"]  = vad_result.get("dominance_mean",  0.0)
+            psych_payload["dominance_sigma"] = vad_result.get("dominance_sigma", 0.0)
+        except Exception:
+            psych_payload = {"error": "payload unavailable"}
 
         window_results.append({
             "window_index":  win.index,
@@ -618,8 +644,10 @@ def _run_pipeline(
                 }
                 for e in dis.dissonance_events
             ],
-            "raw_telemetry":     raw_telem,
-            "lexical_affinity":  lexical_affinity,
+            "raw_telemetry":        raw_telem,
+            "lexical_affinity":     lexical_affinity,
+            "literary":             literary_result.to_dict(),
+            "psychological_payload": psych_payload,
         })
 
     return {
@@ -752,73 +780,6 @@ def clear_ledger() -> Dict[str, str]:
     entity["dissonance_ledger"] = []
     db.save_entity(entity, DB_PATH)
     return {"status": "ledger cleared"}
-
-
-@router.post("/vad")
-def analyze_vad_endpoint(req: VadRequest) -> Dict[str, Any]:
-    """
-    POST /api/vad
-    ──────────────────────────────────────────────────────────
-    Run NRC Valence-Arousal-Dominance (VAD) lexicon analysis on the
-    submitted intercept text.
-
-    The function loads the correct language-specific NRC-VAD TSV, tokenizes
-    the text via the project-wide spaCy model, and returns:
-      - Mean and population σ (volatility) for Valence, Arousal, Dominance.
-      - A per-word array [{word, v, a, d}] to feed the frontend scatter plot.
-
-    Lexicon files must exist at:
-        vad_layer/lexicons/{lang_lower}_vad.tsv
-
-    The endpoint returns HTTP 200 even when lexicon files are missing; the
-    ``error`` field in the response body carries the diagnostic message so
-    the frontend can surface it gracefully without raising an HTTP error.
-    """
-    from vad_layer.vad_analyzer import analyze_vad
-
-    # analyze_vad() handles its own exceptions and returns them in ``error``.
-    return analyze_vad(req.text, req.language_code)
-
-
-class PdsRequest(BaseModel):
-    """Request schema for the Ousiometric PDS emotional-payload endpoint."""
-    text: str = Field(..., min_length=1, description="Raw intercept text")
-    language_code: str = Field(
-        "EN",
-        description=(
-            "ISO language code for lexicon selection: "
-            "EN, DE, RU, ZH, AR, FA, KO, ES, FR, JA"
-        ),
-    )
-
-
-@router.post("/pds")
-def analyze_pds_endpoint(req: PdsRequest) -> Dict[str, Any]:
-    """
-    POST /api/pds
-    ──────────────────────────────────────────────────────────
-    Run Ousiometric Power-Danger-Structure (PDS) analysis on the
-    submitted intercept text.
-
-    The endpoint delegates tokenization and lexicon I/O to the existing
-    VAD layer (same NRC-VAD TSV files, same spaCy cache), then applies
-    the VAD → PDS linear rotation:
-
-        Power     =  (Dominance – 0.5) × 2
-        Danger    = –(Valence   – 0.5) × 2 × 0.70
-                  +  (Arousal   – 0.5) × 2 × 0.30
-        Structure = –(Arousal   – 0.5) × 2
-
-    Returns six aggregate floats (mean + σ for P, D, S) plus a
-    ``words`` array of the top-60 matched tokens ranked by PDS extremity
-    (Euclidean distance from origin in the P×D plane).
-
-    The endpoint always returns HTTP 200; errors surface in the
-    ``error`` field so the frontend can degrade gracefully.
-    """
-    from pds_layer.pds_analyzer import analyze_ousiometrics
-
-    return analyze_ousiometrics(req.text, req.language_code)
 
 
 @router.get("/health")
