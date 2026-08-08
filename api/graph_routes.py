@@ -140,15 +140,19 @@ def index_document(req: IndexDocumentRequest) -> dict:
                     _graph.add_edge(req.doc_id, node_id, "CO_OCCURS_WITH", weight=density_val)
 
     # 5. Macro cluster scores
+    # macro_scores is {cluster: {pole: score}} — sum pole magnitudes for combined weight
     if req.macro_scores and isinstance(req.macro_scores, dict):
         for cluster, score_data in req.macro_scores.items():
             combined_score = 0.0
             if isinstance(score_data, dict):
-                combined_score = float(score_data.get("combined", score_data.get("score", 0.0)))
+                combined_score = sum(
+                    abs(float(v)) for v in score_data.values()
+                    if isinstance(v, (int, float))
+                )
             elif isinstance(score_data, (int, float)):
-                combined_score = float(score_data)
+                combined_score = abs(float(score_data))
 
-            if combined_score <= 0.1:
+            if combined_score <= 0.05:
                 continue
 
             node_id = f"cluster_{cluster.lower()}"
@@ -159,9 +163,9 @@ def index_document(req: IndexDocumentRequest) -> dict:
             )
             _graph.add_edge(req.doc_id, node_id, "CO_OCCURS_WITH", weight=combined_score)
 
-    # 6. Somatic archetype
+    # 6. Somatic archetype (field is quersumme_archetype in somatic_engine.py)
     if req.somatic and isinstance(req.somatic, dict):
-        archetype = req.somatic.get("archetype")
+        archetype = req.somatic.get("quersumme_archetype") or req.somatic.get("archetype")
         if archetype:
             node_id = f"somatic_{archetype.lower().replace(' ', '_')}"
             _graph.add_node(

@@ -5681,7 +5681,7 @@ async function indexCurrentDocument() {
         language:              _lang,
         literary:              win0?.literary              || null,
         psychological_payload: win0?.psychological_payload || null,
-        macro_scores:          _results.macro_scores       || null,
+        macro_scores:          win0?.macro?.cluster_scores || null,
         somatic:               win0?.somatic               || null,
       }),
     });
@@ -5689,7 +5689,7 @@ async function indexCurrentDocument() {
     document.getElementById('corpus-status').textContent = r.ok
       ? `Indexed ${docId} → ${data.nodes} nodes, ${data.edges} edges`
       : 'Index error: ' + (data.detail || '?');
-    if (r.ok) await loadCorpora();
+    if (r.ok) { await loadCorpora(); await queryGraph(); }
   } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
 }
 
