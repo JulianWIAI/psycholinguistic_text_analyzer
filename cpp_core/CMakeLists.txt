@@ -63,6 +63,7 @@ set(PSYCHO_SOURCES
     src/abjad_analyzer.cpp
     src/ko_analyzer.cpp
     src/thread_pool.cpp
+    src/graph_engine.cpp
     src/bindings.cpp
 )
 

@@ -34,6 +34,7 @@
 #include "compare_engine.h"
 #include "thread_pool.h"
 #include "types.h"
+#include "graph_engine.h"
 
 #include <algorithm>
 #include <string>
@@ -460,4 +461,96 @@ PYBIND11_MODULE(psycho_core, m) {
     m.attr("DEFAULT_WINDOW_SIZE") = 1000;
     m.attr("DEFAULT_STRIDE")      = 500;
     m.attr("VERSION")             = "3.6.0";
+
+    // =========================================================================
+    // GraphEngine bindings
+    // =========================================================================
+    py::class_<psycho::GraphEngine>(m, "GraphEngine")
+        .def(py::init<>())
+        .def("add_node", [](psycho::GraphEngine& g, const std::string& id, const std::string& type_str, py::dict props) {
+            std::unordered_map<std::string,std::string> properties;
+            for (auto& item : props)
+                properties[item.first.cast<std::string>()] = item.second.cast<std::string>();
+            g.add_node(id, type_str, properties);
+        }, py::arg("id"), py::arg("type_str"), py::arg("properties") = py::dict())
+        .def("add_edge", &psycho::GraphEngine::add_edge,
+            py::arg("source"), py::arg("target"), py::arg("relation_str"), py::arg("weight") = 1.0f)
+        .def("has_node", &psycho::GraphEngine::has_node)
+        .def("node_count", &psycho::GraphEngine::node_count)
+        .def("edge_count", &psycho::GraphEngine::edge_count)
+        .def("get_co_occurrence_matrix", [](const psycho::GraphEngine& g, py::list corpus_ids) {
+            std::vector<std::string> ids;
+            for (auto& item : corpus_ids) ids.push_back(item.cast<std::string>());
+            auto co = g.get_co_occurrence_matrix(ids);
+            py::dict result;
+            py::list nodes;
+            for (auto& n : co.nodes) nodes.append(n);
+            result["nodes"] = nodes;
+            py::list matrix;
+            for (auto& row : co.matrix) {
+                py::list r;
+                for (float v : row) r.append(v);
+                matrix.append(r);
+            }
+            result["matrix"] = matrix;
+            return result;
+        })
+        .def("compute_laplacian", [](const psycho::GraphEngine& g, py::list corpus_ids) {
+            std::vector<std::string> ids;
+            for (auto& item : corpus_ids) ids.push_back(item.cast<std::string>());
+            auto lap = g.compute_laplacian(ids);
+            py::dict result;
+            py::list nodes;
+            for (auto& n : lap.nodes) nodes.append(n);
+            result["nodes"] = nodes;
+            py::list data;
+            for (auto& row : lap.data) {
+                py::list r;
+                for (double v : row) r.append(v);
+                data.append(r);
+            }
+            result["data"] = data;
+            return result;
+        })
+        .def("query_traversal", [](const psycho::GraphEngine& g, const std::string& start_id, int max_depth) {
+            auto tr = g.query_traversal(start_id, max_depth);
+            py::dict result;
+            py::list nodes;
+            for (auto& n : tr.nodes) {
+                py::dict nd;
+                nd["id"] = n.id;
+                nd["type"] = n.type_str;
+                py::dict props;
+                for (auto& [k,v] : n.properties) props[k.c_str()] = v;
+                nd["properties"] = props;
+                nodes.append(nd);
+            }
+            result["nodes"] = nodes;
+            py::list edges;
+            for (auto& e : tr.edges) {
+                py::dict ed;
+                ed["source"] = e.source;
+                ed["target"] = e.target;
+                ed["relation"] = e.relation_str;
+                ed["weight"] = e.weight;
+                edges.append(ed);
+            }
+            result["edges"] = edges;
+            return result;
+        }, py::arg("start_id"), py::arg("max_depth") = 3)
+        .def("list_corpora", [](const psycho::GraphEngine& g) {
+            auto corpora = g.list_corpora();
+            py::list result;
+            for (auto& n : corpora) {
+                py::dict d;
+                d["id"] = n.id;
+                py::dict props;
+                for (auto& [k,v] : n.properties) props[k.c_str()] = v;
+                d["properties"] = props;
+                result.append(d);
+            }
+            return result;
+        })
+        .def("save_graph", &psycho::GraphEngine::save_graph)
+        .def("load_graph", &psycho::GraphEngine::load_graph);
 }

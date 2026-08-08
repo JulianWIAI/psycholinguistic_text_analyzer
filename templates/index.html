@@ -6,6 +6,7 @@
   <title>PsychoLinguistic Analysis Engine v2</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.29.2/cytoscape.min.js"></script>
   <style>
     :root {
       --bg:       #0d0f14;
@@ -1170,6 +1171,62 @@
       border: 1px solid rgba(249,115,22,.3); margin-top: .45rem;
     }
 
+    /* ── View Tab Switcher ───────────────────────────────────── */
+    .view-tab-bar { display:flex; gap:.3rem; margin-left:1.2rem; }
+    .view-tab-btn {
+      background:transparent; border:1px solid var(--border); border-radius:5px;
+      color:var(--muted); padding:.26rem .85rem; font-size:.72rem;
+      font-weight:600; letter-spacing:.05em; cursor:pointer; transition:all .15s;
+    }
+    .view-tab-btn:hover { border-color:var(--accent); color:var(--text); }
+    .view-tab-btn.vtab-active { border-color:var(--accent); color:var(--accent); background:rgba(79,142,247,.1); }
+
+    /* ── Corpus Graph Explorer ─────────────────────────────── */
+    .corpus-layout { display:grid; grid-template-columns:290px 1fr; height:calc(100vh - 52px); overflow:hidden; }
+    .corpus-sidebar {
+      background:var(--surface); border-right:1px solid var(--border);
+      padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem;
+    }
+    .corpus-main { padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:.9rem; }
+    .corpus-hdr { font-size:.72rem; font-weight:700; letter-spacing:.1em; color:var(--accent); text-transform:uppercase; padding-bottom:.5rem; border-bottom:1px solid var(--border); }
+    .corpus-section { display:flex; flex-direction:column; gap:.3rem; }
+    .corpus-sect-lbl { font-size:.63rem; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:.12rem; }
+    .corpus-pills-wrap { display:flex; flex-wrap:wrap; gap:.25rem; margin-top:.1rem; }
+    .corpus-pill {
+      display:inline-flex; align-items:center; gap:.2rem; padding:.22rem .65rem;
+      border-radius:20px; border:1px solid var(--border); font-size:.72rem;
+      cursor:pointer; color:var(--muted); transition:all .15s; user-select:none;
+    }
+    .corpus-pill:hover { border-color:var(--accent); color:var(--text); }
+    .corpus-pill.cpill-active { border-color:var(--accent); color:var(--accent); background:rgba(79,142,247,.1); }
+    .btn-corpus {
+      background:var(--accent); color:#fff; border:none; border-radius:5px;
+      padding:.38rem .75rem; font-size:.76rem; font-weight:600; cursor:pointer;
+      width:100%; letter-spacing:.04em; transition:opacity .15s;
+    }
+    .btn-corpus:hover { opacity:.85; }
+    .btn-corpus.btn-corpus-sec { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    #corpus-cy { width:100%; height:480px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+    #cy-inspector { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; display:none; }
+    .cy-insp-type { font-size:.65rem; font-weight:700; letter-spacing:.1em; color:var(--accent); margin-bottom:.2rem; }
+    .cy-insp-label { font-size:.9rem; margin-bottom:.15rem; }
+    .cy-insp-id { font-size:.68rem; color:var(--muted); }
+    .corpus-spectrum-sect, .corpus-matrix-sect {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:.8rem 1rem; display:none;
+    }
+    .corpus-matrix-sect { overflow-x:auto; }
+    .corpus-matrix-tbl { border-collapse:collapse; font-size:.67rem; }
+    .corpus-matrix-tbl th, .corpus-matrix-tbl td { border:1px solid var(--border); padding:.18rem .32rem; text-align:center; white-space:nowrap; }
+    .corpus-matrix-tbl th { background:var(--bg); color:var(--muted); font-weight:600; }
+    .corpus-status { font-size:.72rem; color:var(--muted); }
+
+    /* ── Intra-doc Correlations tab ───────────────────────── */
+    .corr-matrix-wrap { overflow-x:auto; }
+    .corr-matrix-tbl { border-collapse:collapse; font-size:.67rem; }
+    .corr-matrix-tbl th, .corr-matrix-tbl td { border:1px solid var(--border); padding:.18rem .4rem; text-align:center; white-space:nowrap; color:var(--text); }
+    .corr-matrix-tbl th { background:var(--surface); color:var(--muted); font-size:.62rem; }
+
   </style>
 </head>
 <body>
@@ -1181,8 +1238,13 @@
   <span id="hdr-lang-badge" class="badge-lang lang-EN" style="display:none;"></span>
   <button class="btn-legend-toggle" id="btn-legend" onclick="toggleLegend()" title="Archetypal Letter Legend">⊕ Legend</button>
   <span id="entity-name" style="margin-left:auto;font-size:.78rem;color:var(--muted);">entity: —</span>
+  <div class="view-tab-bar">
+    <button class="view-tab-btn vtab-active" id="vtab-intercept" onclick="switchView('intercept')">🔬 Analyzer</button>
+    <button class="view-tab-btn" id="vtab-corpus" onclick="switchView('corpus')">🕸 Corpus</button>
+  </div>
 </header>
 
+<div id="view-intercept">
 <!-- ══════════════════════ LAYOUT ══════════════════════ -->
 <div class="layout">
 
@@ -1643,6 +1705,7 @@
         <button class="lit-tab" onclick="litTab(3)">Argument</button>
         <button class="lit-tab" onclick="litTab(4)">Style</button>
         <button class="lit-tab" onclick="litTab(5)">Lexical</button>
+        <button class="lit-tab" onclick="litTab(6)">Correlations</button>
       </div>
       <div id="literary-body"         class="lit-tab-panel"></div>
       <div id="literary-fields"       class="lit-tab-panel" style="display:none;"></div>
@@ -1650,6 +1713,7 @@
       <div id="literary-argumentation" class="lit-tab-panel" style="display:none;"></div>
       <div id="literary-stylometry"   class="lit-tab-panel" style="display:none;"></div>
       <div id="literary-lexical"      class="lit-tab-panel" style="display:none;"></div>
+      <div id="literary-correlations" class="lit-tab-panel" style="display:none;"></div>
     </div>
 
     <!-- Empty state -->
@@ -1660,6 +1724,73 @@
 
   </main>
 </div>
+</div><!-- #view-intercept -->
+
+<!-- ══════════════════════ CORPUS GRAPH EXPLORER ══════════════════════ -->
+<div id="view-corpus" style="display:none;">
+  <div class="corpus-layout">
+
+    <!-- ─── Sidebar ───────────────────────────────────── -->
+    <aside class="corpus-sidebar">
+      <div class="corpus-hdr">Corpus Graph Explorer</div>
+
+      <div class="corpus-section">
+        <div class="corpus-sect-lbl">Select Corpora</div>
+        <div class="corpus-pills-wrap" id="corpus-pills">
+          <span class="corpus-status">Loading…</span>
+        </div>
+      </div>
+
+      <button class="btn-corpus" onclick="queryGraph()">Query Selected</button>
+      <div id="corpus-status" class="corpus-status"></div>
+
+      <div class="corpus-section">
+        <div class="corpus-sect-lbl">Create New Corpus</div>
+        <input type="text" id="corpus-name-inp" placeholder="Corpus name…" />
+        <input type="text" id="corpus-desc-inp" placeholder="Description (optional)…" style="margin-top:.35rem;" />
+        <button class="btn-corpus btn-corpus-sec" style="margin-top:.35rem;" onclick="createCorpus()">+ Create</button>
+      </div>
+
+      <div id="corpus-index-sect" style="display:none;" class="corpus-section">
+        <div class="corpus-sect-lbl">Index Last Analysis</div>
+        <div class="corpus-status" style="margin-bottom:.35rem;">Indexes the current analyzed text into the selected corpus(a).</div>
+        <button class="btn-corpus btn-corpus-sec" onclick="indexCurrentDocument()">Index into Graph</button>
+      </div>
+    </aside>
+
+    <!-- ─── Main canvas ───────────────────────────────── -->
+    <div class="corpus-main">
+
+      <div>
+        <div style="font-size:.63rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;">
+          Graph &nbsp;·&nbsp;
+          Stylistic Devices <span style="color:#e0a85c">■</span> &nbsp;
+          Word Fields <span style="color:#5ce0d8">■</span> &nbsp;
+          Macro Clusters <span style="color:#b96af7">■</span> &nbsp;
+          Corpora <span style="color:#f7c87e">■</span>
+        </div>
+        <div id="corpus-cy"></div>
+      </div>
+
+      <div id="cy-inspector">
+        <div id="cy-inspector-content" class="corpus-status">Click a node to inspect.</div>
+      </div>
+
+      <div id="corpus-spectrum-sect" class="corpus-spectrum-sect">
+        <div style="font-size:.63rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.45rem;">Spectral Analysis — Laplacian Eigenvalues</div>
+        <div id="fiedler-display" style="font-size:.82rem;margin-bottom:.45rem;"></div>
+        <div id="eigenvalue-bars"></div>
+      </div>
+
+      <div id="corpus-matrix-sect" class="corpus-matrix-sect">
+        <div style="font-size:.63rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.45rem;">Co-Occurrence Matrix</div>
+        <div id="corpus-matrix-inner"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ══════════════════════ END CORPUS EXPLORER ══════════════════════ -->
 
 <script>
 /* ════════════════════════════════════════════════════════════
@@ -3183,10 +3314,11 @@ function toggleLitDevice(hdr) {
 /* Switch between Devices / Fields / Narrative tabs */
 function litTab(idx) {
   const tabs   = document.querySelectorAll('.lit-tab');
-  // All 6 panel IDs in tab order: Devices / Fields / Narrative / Argument / Style / Lexical
+  // All 7 panel IDs in tab order: Devices / Fields / Narrative / Argument / Style / Lexical / Correlations
   const panels = [
     'literary-body', 'literary-fields', 'literary-narrative',
     'literary-argumentation', 'literary-stylometry', 'literary-lexical',
+    'literary-correlations',
   ];
   tabs.forEach((t, i) => t.classList.toggle('lit-tab-active', i === idx));
   panels.forEach((id, i) => { const el = $(id); if (el) el.style.display = i === idx ? '' : 'none'; });
@@ -3665,6 +3797,7 @@ function renderLiterary(win) {
   renderArgumentation(data);
   renderStylometry(data);
   renderLexical(data);
+  renderIntraCorrelations(data);
 
   // Phase 2 — rhetorical devices (Devices tab)
   if (!data || !data.rhetorical_findings || data.rhetorical_findings.length === 0) {
@@ -5456,6 +5589,271 @@ function closeHelp() {
 ════════════════════════════════════════════════════════════ */
 selectLang('EN');
 loadEntity();
+
+/* ════════════════════════════════════════════════════════════
+   View Switcher
+════════════════════════════════════════════════════════════ */
+function switchView(name) {
+  const iv = document.getElementById('view-intercept');
+  const cv = document.getElementById('view-corpus');
+  document.getElementById('vtab-intercept').classList.toggle('vtab-active', name === 'intercept');
+  document.getElementById('vtab-corpus').classList.toggle('vtab-active', name === 'corpus');
+  iv.style.display = name === 'intercept' ? '' : 'none';
+  cv.style.display = name === 'corpus'    ? '' : 'none';
+  if (name === 'corpus') {
+    loadCorpora();
+    if (!_cy && typeof cytoscape !== 'undefined') _initCy();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Corpus Graph Explorer
+════════════════════════════════════════════════════════════ */
+let _cy         = null;
+let _corpusList = [];
+let _selCorpora = new Set();
+
+async function loadCorpora() {
+  try {
+    const data = await fetch('/api/corpora').then(r => r.json());
+    _corpusList = data.corpora || [];
+    _renderPills();
+    document.getElementById('corpus-status').textContent =
+      `Backend: ${data.backend} · ${_corpusList.length} corpus(a)`;
+  } catch(e) {
+    document.getElementById('corpus-status').textContent = 'Error: ' + e.message;
+  }
+}
+
+function _renderPills() {
+  const wrap = document.getElementById('corpus-pills');
+  if (!_corpusList.length) {
+    wrap.innerHTML = '<span class="corpus-status">No corpora yet. Create one below.</span>';
+    return;
+  }
+  wrap.innerHTML = _corpusList.map(c => {
+    const name = c.properties?.name || c.id;
+    const sel  = _selCorpora.has(c.id);
+    return `<span class="corpus-pill ${sel ? 'cpill-active' : ''}"
+      onclick="toggleCorpus('${c.id}',this)">${name}</span>`;
+  }).join('');
+  document.getElementById('corpus-index-sect').style.display =
+    (_results && _selCorpora.size > 0) ? '' : 'none';
+}
+
+function toggleCorpus(id, el) {
+  if (_selCorpora.has(id)) { _selCorpora.delete(id); el.classList.remove('cpill-active'); }
+  else                     { _selCorpora.add(id);    el.classList.add('cpill-active');    }
+  document.getElementById('corpus-index-sect').style.display =
+    (_results && _selCorpora.size > 0) ? '' : 'none';
+}
+
+async function createCorpus() {
+  const name = document.getElementById('corpus-name-inp').value.trim();
+  const desc = document.getElementById('corpus-desc-inp').value.trim();
+  if (!name) return;
+  try {
+    const r = await fetch('/api/corpora/create', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, description: desc}),
+    });
+    const data = await r.json();
+    if (r.ok) {
+      document.getElementById('corpus-name-inp').value = '';
+      document.getElementById('corpus-desc-inp').value = '';
+      await loadCorpora();
+    } else {
+      document.getElementById('corpus-status').textContent = 'Error: ' + (data.detail || 'duplicate?');
+    }
+  } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
+}
+
+async function indexCurrentDocument() {
+  if (!_results || _selCorpora.size === 0) return;
+  const win0  = _results.windows?.[0];
+  const docId = `doc_${_lang}_${Date.now()}`;
+  try {
+    const r = await fetch('/api/graph/index_document', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        doc_id:                docId,
+        corpus_ids:            Array.from(_selCorpora),
+        language:              _lang,
+        literary:              win0?.literary              || null,
+        psychological_payload: win0?.psychological_payload || null,
+        macro_scores:          _results.macro_scores       || null,
+        somatic:               win0?.somatic               || null,
+      }),
+    });
+    const data = await r.json();
+    document.getElementById('corpus-status').textContent = r.ok
+      ? `Indexed ${docId} → ${data.nodes} nodes, ${data.edges} edges`
+      : 'Index error: ' + (data.detail || '?');
+    if (r.ok) await loadCorpora();
+  } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
+}
+
+async function queryGraph() {
+  const ids = Array.from(_selCorpora);
+  if (!ids.length) { document.getElementById('corpus-status').textContent = 'Select at least one corpus.'; return; }
+  document.getElementById('corpus-status').textContent = 'Querying…';
+  try {
+    const r = await fetch('/api/graph/query', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({corpus_ids: ids, include_spectrum: true}),
+    });
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('corpus-status').textContent = 'Query error: ' + (data.detail||'?'); return; }
+    _renderCyGraph(data.co_occurrence);
+    _renderSpectrum(data.spectrum);
+    _renderCoMatrix(data.co_occurrence);
+    document.getElementById('corpus-status').textContent =
+      `${(data.co_occurrence.nodes||[]).length} feature nodes across ${ids.length} corpus(a).`;
+  } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
+}
+
+/* ── Cytoscape ── */
+const _CY_COLORS = {
+  StylisticDevice:'#e0a85c', WordField:'#5ce0d8', MacroCluster:'#b96af7',
+  SomaticArchetype:'#b96af7', Corpus:'#f7c87e', Document:'#6b7394',
+};
+const _CY_SIZES = { Corpus:56, Document:28, StylisticDevice:40, WordField:40, MacroCluster:44, SomaticArchetype:40 };
+function _cyNodeType(id) {
+  if (id.startsWith('device_'))  return 'StylisticDevice';
+  if (id.startsWith('field_'))   return 'WordField';
+  if (id.startsWith('cluster_')) return 'MacroCluster';
+  if (id.startsWith('somatic_')) return 'SomaticArchetype';
+  if (id.startsWith('corpus_'))  return 'Corpus';
+  if (id.startsWith('doc_'))     return 'Document';
+  return 'Unknown';
+}
+
+function _initCy() {
+  _cy = cytoscape({
+    container: document.getElementById('corpus-cy'),
+    style: [
+      { selector: 'node', style: {
+        'background-color':'data(color)', 'label':'data(label)',
+        'color':'#dce3f5', 'font-size':'11px',
+        'text-valign':'center', 'text-halign':'center',
+        'text-outline-width':1, 'text-outline-color':'#0d0f14',
+        'width':'data(sz)', 'height':'data(sz)',
+        'border-width':1, 'border-color':'#2a3050',
+      }},
+      { selector: 'edge', style: { 'width':'data(w)', 'line-color':'#2a3050', 'opacity':0.65, 'curve-style':'bezier' }},
+      { selector: 'node:selected', style: { 'border-width':3, 'border-color':'#4f8ef7' }},
+    ],
+    layout: { name:'cose', padding:50, randomize:true, animate:false },
+  });
+  _cy.on('tap', 'node', evt => _showCyInspector(evt.target.data()));
+}
+
+function _renderCyGraph(co) {
+  if (!_cy) return;
+  _cy.elements().remove();
+  const nodes = co.nodes || [], matrix = co.matrix || [];
+  const els = [];
+  nodes.forEach(id => {
+    const type  = _cyNodeType(id);
+    const label = id.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/, '').replace(/_/g,' ');
+    els.push({ data: { id, label, type, color: _CY_COLORS[type]||'#4f8ef7', sz: _CY_SIZES[type]||34 } });
+  });
+  const maxW = Math.max(...matrix.flat().filter(v=>v>0), 1);
+  nodes.forEach((src,i) => nodes.forEach((tgt,j) => {
+    if (i < j && (matrix[i]?.[j]||0) > 0)
+      els.push({ data: { id:`e${i}_${j}`, source:src, target:tgt, w:Math.max(1, matrix[i][j]/maxW*7) } });
+  }));
+  _cy.add(els);
+  _cy.layout({ name:'cose', padding:50, randomize:true, animate:false }).run();
+}
+
+function _showCyInspector(data) {
+  const el = document.getElementById('cy-inspector');
+  const co = document.getElementById('cy-inspector-content');
+  el.style.display = '';
+  co.innerHTML = `<div class="cy-insp-type">${data.type||'NODE'}</div>
+    <div class="cy-insp-label">${data.label}</div>
+    <div class="cy-insp-id">id: ${data.id}</div>`;
+}
+
+/* ── Spectral panel ── */
+function _renderSpectrum(sp) {
+  if (!sp?.eigenvalues?.length) return;
+  const sect = document.getElementById('corpus-spectrum-sect');
+  sect.style.display = '';
+  const fv   = sp.fiedler_value;
+  const conn = fv == null ? '—' : fv < 0.01 ? 'DISCONNECTED' : fv < 0.1 ? 'WEAKLY CONNECTED' : 'WELL CONNECTED';
+  document.getElementById('fiedler-display').innerHTML =
+    `λ₂ (Fiedler) = <strong style="color:var(--accent)">${fv!=null?fv.toFixed(4):'—'}</strong>`
+    +`<span style="color:var(--muted);margin-left:.7rem;font-size:.78rem;">${conn}</span>`;
+  const maxE = Math.max(...sp.eigenvalues.map(Math.abs), 0.001);
+  document.getElementById('eigenvalue-bars').innerHTML = sp.eigenvalues.map((e,i) => {
+    const pct = Math.min(100, Math.abs(e)/maxE*100);
+    const col = i===0?'var(--muted)':i===1?'var(--accent)':'var(--cyan)';
+    return `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem;">
+      <span style="font-size:.65rem;color:var(--muted);width:1.8rem;text-align:right">λ${i+1}</span>
+      <div style="flex:1;height:5px;background:var(--border);border-radius:3px;">
+        <div style="width:${pct}%;height:100%;background:${col};border-radius:3px;"></div>
+      </div>
+      <span style="font-size:.65rem;color:var(--muted);width:4rem">${e.toFixed(3)}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ── Co-occurrence matrix ── */
+function _renderCoMatrix(co) {
+  const nodes = co.nodes||[], matrix = co.matrix||[];
+  if (!nodes.length) return;
+  document.getElementById('corpus-matrix-sect').style.display = '';
+  const labels = nodes.map(n => n.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/,'').replace(/_/g,' ').substring(0,10));
+  const maxW   = Math.max(...matrix.flat().filter(v=>v>0), 0.001);
+  let html = '<table class="corpus-matrix-tbl"><thead><tr><th></th>';
+  labels.forEach(l => { html += `<th title="${l}">${l.substring(0,7)}</th>`; });
+  html += '</tr></thead><tbody>';
+  matrix.forEach((row,i) => {
+    html += `<tr><th>${labels[i].substring(0,7)}</th>`;
+    row.forEach(v => {
+      const a = v>0 ? Math.max(0.08, v/maxW) : 0;
+      html += `<td style="background:${v>0?`rgba(92,224,216,${a.toFixed(2)})`:'transparent'}">${v>0?v.toFixed(1):''}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('corpus-matrix-inner').innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Intra-document Device↔Field Correlations (literary tab 7)
+════════════════════════════════════════════════════════════ */
+function renderIntraCorrelations(data) {
+  const el = $('literary-correlations');
+  if (!el) return;
+  const devices = [...new Set((data?.rhetorical_findings||[]).map(f=>f.device_type||f.type||'device'))];
+  const fields  = Object.keys(data?.word_fields?.field_density||{});
+  if (!devices.length && !fields.length) {
+    el.innerHTML = '<div class="lit-empty">Analyze a text to see device–field correlations.</div>';
+    return;
+  }
+  if (!devices.length) { el.innerHTML = '<div class="lit-empty">No rhetorical devices detected in this window.</div>'; return; }
+  if (!fields.length)  { el.innerHTML = '<div class="lit-empty">No word fields detected in this window (requires spaCy _md model).</div>'; return; }
+  let html = '<div class="corr-matrix-wrap"><table class="corr-matrix-tbl"><thead><tr><th>Device \\ Field</th>';
+  fields.forEach(f => { html += `<th>${f.replace(/_/g,' ')}</th>`; });
+  html += '</tr></thead><tbody>';
+  devices.forEach(dev => {
+    html += `<tr><th>${dev}</th>`;
+    fields.forEach(f => {
+      const density = data.word_fields.field_density[f]||0;
+      const alpha   = Math.max(0.05, Math.min(1, density*4));
+      html += `<td style="background:rgba(79,142,247,${alpha.toFixed(2)});color:${density>0.15?'#fff':'var(--muted)'}">
+        ${density>0?(density*100).toFixed(0)+'%':'—'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += `<div style="font-size:.67rem;color:var(--muted);margin-top:.5rem;">
+    Devices and fields share this window — cell = field density (hits/content tokens).</div>`;
+  el.innerHTML = html;
+}
 </script>
 
 <!-- ══════════════════════ HELP DRAWER ══════════════════════ -->
