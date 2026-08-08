@@ -3,14 +3,29 @@ api/graph_routes.py
 Graph Layer REST endpoints for the Corpus Explorer.
 
 Endpoints:
-  GET  /api/corpora                          — list all corpora
-  POST /api/corpora/create                   — create a new corpus tag
-  POST /api/graph/index_document             — index an analysis result into the graph
-  POST /api/graph/query                      — query co-occurrences + spectral anomalies
-  GET  /api/graph/document_correlations/{id} — intra-document device↔field correlations
+  GET    /api/corpora                             — list all corpora
+  POST   /api/corpora/create                      — create a new corpus tag
+  DELETE /api/corpora/{corpus_id}                 — remove a corpus node
+  POST   /api/graph/index_document                — index an analysis result into the graph
+  POST   /api/graph/query                         — query co-occurrences + spectral anomalies
+  GET    /api/graph/corpus_documents/{corpus_id}  — list documents in a corpus
+  GET    /api/graph/matrix/document/{doc_id}      — isolated feature matrix for one document
+  POST   /api/graph/matrix/divergence             — divergence D = T̃ − C̃ between two matrices
+  GET    /api/graph/document/{doc_id}             — get document node metadata
+  PUT    /api/graph/document/{doc_id}             — rename a document node
+  DELETE /api/graph/document/{doc_id}             — remove a document node
+  GET    /api/graph/document_correlations/{id}    — intra-document device↔field correlations
 """
+import math
 import os
 from typing import Any, Dict, List, Optional
+
+from graph_layer.feature_extractor import (
+    extract_literary_features,
+    extract_macro_features,
+    extract_somatic_features,
+    extract_affect_features,
+)
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -42,15 +57,26 @@ class IndexDocumentRequest(BaseModel):
     doc_id: str
     corpus_ids: List[str]
     language: str = "EN"
+    title: Optional[str] = None
     literary: Optional[Dict[str, Any]] = None
     psychological_payload: Optional[Dict[str, Any]] = None
     macro_scores: Optional[Dict[str, Any]] = None
     somatic: Optional[Dict[str, Any]] = None
+    windows: Optional[List[Dict[str, Any]]] = None  # all windows (reserved for multi-window indexing)
 
 
 class GraphQueryRequest(BaseModel):
     corpus_ids: List[str]
     include_spectrum: bool = True
+
+
+class DocumentUpdateRequest(BaseModel):
+    title: Optional[str] = None
+
+
+class DivergenceRequest(BaseModel):
+    ephemeral_matrix: Dict[str, Any]   # {nodes: list[str], matrix: list[list[float]]}
+    corpus_id: str
 
 
 # ---------------------------------------------------------------------------
@@ -91,91 +117,45 @@ def index_document(req: IndexDocumentRequest) -> dict:
     """
     Index an analysis result into the graph.
 
-    Extracts stylistic devices, word fields, macro clusters, and somatic
-    archetypes and wires them to the document node and its corpora.
+    Extracts stylistic devices, word fields, macro clusters, somatic
+    archetypes, and PDS/VAD affect feelings and wires them to the
+    document node and its corpora.
     """
-    # 1. Upsert the document node
-    _graph.add_node(req.doc_id, "Document", {"language": req.language})
+    # 1. Upsert the document node (store title if provided)
+    doc_props: Dict[str, Any] = {"language": req.language}
+    if req.title:
+        doc_props["title"] = req.title.strip()
+    _graph.add_node(req.doc_id, "Document", doc_props)
 
     # 2. Attach to corpora
     for corpus_id in req.corpus_ids:
         if not _graph.has_node(corpus_id):
-            # Auto-create a minimal corpus node so the edge is valid
             _graph.add_node(corpus_id, "Corpus", {"name": corpus_id, "description": ""})
         _graph.add_edge(req.doc_id, corpus_id, "BELONGS_TO", weight=1.0)
 
-    # 3. Stylistic devices from literary.rhetorical_findings
-    if req.literary:
-        rhetorical_findings = req.literary.get("rhetorical_findings", [])
-        if isinstance(rhetorical_findings, list):
-            for finding in rhetorical_findings:
-                if not isinstance(finding, dict):
-                    continue
-                device_type = finding.get("device_type")
-                if not device_type:
-                    continue
-                node_id = f"device_{device_type.lower()}"
-                _graph.add_node(
-                    node_id,
-                    "StylisticDevice",
-                    {"device": device_type},
-                )
-                _graph.add_edge(req.doc_id, node_id, "EXHIBITS_DEVICE", weight=1.0)
+    # 3–4. Stylistic devices + word fields (via shared extractor)
+    for feat in extract_literary_features(req.literary):
+        _graph.add_node(feat.node_id, feat.node_type, feat.props)
+        relation = "EXHIBITS_DEVICE" if feat.node_type == "StylisticDevice" else "CO_OCCURS_WITH"
+        _graph.add_edge(req.doc_id, feat.node_id, relation, weight=feat.weight)
 
-        # 4. Word fields from literary.word_fields.field_density
-        word_fields = req.literary.get("word_fields", {})
-        if isinstance(word_fields, dict):
-            field_density = word_fields.get("field_density", {})
-            if isinstance(field_density, dict):
-                for field_name, density in field_density.items():
-                    density_val = float(density) if density is not None else 0.0
-                    if density_val <= 0:
-                        continue
-                    node_id = f"field_{field_name.lower()}"
-                    _graph.add_node(
-                        node_id,
-                        "WordField",
-                        {"field": field_name},
-                    )
-                    _graph.add_edge(req.doc_id, node_id, "CO_OCCURS_WITH", weight=density_val)
+    # 5. Macro cluster scores (via shared extractor)
+    for feat in extract_macro_features(req.macro_scores):
+        _graph.add_node(feat.node_id, feat.node_type, feat.props)
+        _graph.add_edge(req.doc_id, feat.node_id, "CO_OCCURS_WITH", weight=feat.weight)
 
-    # 5. Macro cluster scores
-    # macro_scores is {cluster: {pole: score}} — sum pole magnitudes for combined weight
-    if req.macro_scores and isinstance(req.macro_scores, dict):
-        for cluster, score_data in req.macro_scores.items():
-            combined_score = 0.0
-            if isinstance(score_data, dict):
-                combined_score = sum(
-                    abs(float(v)) for v in score_data.values()
-                    if isinstance(v, (int, float))
-                )
-            elif isinstance(score_data, (int, float)):
-                combined_score = abs(float(score_data))
+    # 6. Somatic archetype (via shared extractor)
+    for feat in extract_somatic_features(req.somatic):
+        _graph.add_node(feat.node_id, feat.node_type, feat.props)
+        _graph.add_edge(req.doc_id, feat.node_id, "HAS_SOMATIC_SIGNATURE", weight=feat.weight)
 
-            if combined_score <= 0.05:
-                continue
+    # 7. PDS / VAD affect feelings — each significant emotion dimension becomes
+    #    an AffectNode so feelings co-occur with word fields in the corpus matrix.
+    for feat in extract_affect_features(req.psychological_payload):
+        _graph.add_node(feat.node_id, feat.node_type, feat.props)
+        _graph.add_edge(req.doc_id, feat.node_id, "HAS_AFFECT", weight=feat.weight)
 
-            node_id = f"cluster_{cluster.lower()}"
-            _graph.add_node(
-                node_id,
-                "MacroCluster",
-                {"cluster": cluster},
-            )
-            _graph.add_edge(req.doc_id, node_id, "CO_OCCURS_WITH", weight=combined_score)
-
-    # 6. Somatic archetype (field is quersumme_archetype in somatic_engine.py)
-    if req.somatic and isinstance(req.somatic, dict):
-        archetype = req.somatic.get("quersumme_archetype") or req.somatic.get("archetype")
-        if archetype:
-            node_id = f"somatic_{archetype.lower().replace(' ', '_')}"
-            _graph.add_node(
-                node_id,
-                "SomaticArchetype",
-                {"archetype": archetype},
-            )
-            _graph.add_edge(req.doc_id, node_id, "HAS_SOMATIC_SIGNATURE", weight=1.0)
-
-    # 7. Persist
+    # 8. Persist
     _graph.save_graph(_GRAPH_PATH)
 
     return {
@@ -214,6 +194,142 @@ def query_graph(req: GraphQueryRequest) -> dict:
         "spectrum": spectrum,
         "corpus_ids": req.corpus_ids,
     }
+
+
+@router.delete("/corpora/{corpus_id}")
+def delete_corpus(corpus_id: str) -> dict:
+    """Remove a corpus node and all its membership edges (documents are kept)."""
+    removed = _graph.remove_corpus(corpus_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"Corpus '{corpus_id}' not found.")
+    _graph.save_graph(_GRAPH_PATH)
+    return {"deleted": True, "corpus_id": corpus_id}
+
+
+@router.get("/graph/corpus_documents/{corpus_id}")
+def list_corpus_documents(corpus_id: str) -> dict:
+    """Return all documents that belong to the given corpus."""
+    if not _graph.has_node(corpus_id):
+        raise HTTPException(status_code=404, detail=f"Corpus '{corpus_id}' not found.")
+    docs = _graph.list_corpus_documents(corpus_id)
+    return {"corpus_id": corpus_id, "documents": docs}
+
+
+@router.get("/graph/matrix/document/{doc_id}")
+def document_matrix(doc_id: str) -> dict:
+    """Return the isolated feature co-occurrence matrix for a single document."""
+    if not _graph.has_node(doc_id):
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    result = _graph.get_document_matrix(doc_id)
+    return result
+
+
+@router.post("/graph/matrix/divergence")
+def matrix_divergence(req: DivergenceRequest) -> dict:
+    """
+    Compute the structural divergence D = T̃ − C̃ between an ephemeral matrix T
+    and the stored corpus baseline C.
+
+    Both matrices are Jaccard-normalised before subtraction.
+    Returns: nodes, diff_matrix, frobenius_norm, t_node_count, c_node_count.
+    """
+    t_nodes: List[str] = req.ephemeral_matrix.get("nodes", [])
+    t_raw:   List[List[float]] = req.ephemeral_matrix.get("matrix", [])
+
+    if not t_nodes or not t_raw:
+        raise HTTPException(status_code=400, detail="ephemeral_matrix must contain nodes and matrix.")
+
+    corpus_co = _graph.get_co_occurrence_matrix([req.corpus_id])
+    c_nodes: List[str] = corpus_co["nodes"]
+    c_raw:   List[List[float]] = corpus_co["matrix"]
+
+    # Union of all feature nodes, sorted for a stable ordering
+    union_nodes = sorted(set(t_nodes) | set(c_nodes))
+    n = len(union_nodes)
+
+    if n == 0:
+        return {
+            "nodes": [], "diff_matrix": [], "frobenius_norm": 0.0,
+            "t_node_count": 0, "c_node_count": 0,
+        }
+
+    t_idx = {nid: i for i, nid in enumerate(t_nodes)}
+    c_idx = {nid: i for i, nid in enumerate(c_nodes)}
+
+    def _align(raw: List[List[float]], idx: Dict[str, int]) -> List[List[float]]:
+        """Embed *raw* (indexed by *idx*) into the union node space."""
+        m = [[0.0] * n for _ in range(n)]
+        for ui, un in enumerate(union_nodes):
+            if un not in idx:
+                continue
+            si = idx[un]
+            for uj, um in enumerate(union_nodes):
+                if um not in idx:
+                    continue
+                sj = idx[um]
+                m[ui][uj] = raw[si][sj]
+        return m
+
+    def _jaccard(m: List[List[float]]) -> List[List[float]]:
+        """Jaccard-normalise: v[i][j] = 2·M[i][j] / (M[i][i] + M[j][j])."""
+        jac = [[0.0] * n for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                denom = m[i][i] + m[j][j]
+                jac[i][j] = 2.0 * m[i][j] / denom if denom > 0 else 0.0
+        return jac
+
+    T_aligned = _align(t_raw, t_idx)
+    C_aligned = _align(c_raw, c_idx)
+
+    T_jac = _jaccard(T_aligned)
+    C_jac = _jaccard(C_aligned)
+
+    D = [[T_jac[i][j] - C_jac[i][j] for j in range(n)] for i in range(n)]
+
+    frob = math.sqrt(sum(D[i][j] ** 2 for i in range(n) for j in range(n)))
+
+    return {
+        "nodes":          union_nodes,
+        "diff_matrix":    D,
+        "frobenius_norm": round(frob, 6),
+        "t_node_count":   len(t_nodes),
+        "c_node_count":   len(c_nodes),
+    }
+
+
+@router.get("/graph/document/{doc_id}")
+def get_document(doc_id: str) -> dict:
+    """Return metadata for a single document node."""
+    if not _graph.has_node(doc_id):
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    # Access internal state via public API — return properties
+    result = _graph.query_traversal(doc_id, max_depth=0)
+    nodes = result.get("nodes", [])
+    if not nodes:
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    return nodes[0]
+
+
+@router.put("/graph/document/{doc_id}")
+def update_document(doc_id: str, req: DocumentUpdateRequest) -> dict:
+    """Update metadata on a document node (currently: title)."""
+    if not _graph.has_node(doc_id):
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    if req.title is not None:
+        _graph.update_node_property(doc_id, "title", req.title.strip())
+    _graph.save_graph(_GRAPH_PATH)
+    return {"updated": True, "doc_id": doc_id}
+
+
+@router.delete("/graph/document/{doc_id}")
+def delete_document(doc_id: str) -> dict:
+    """Remove a document node and all its edges from the graph."""
+    removed = _graph.remove_node(doc_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found.")
+    _graph.save_graph(_GRAPH_PATH)
+    return {"deleted": True, "doc_id": doc_id}
 
 
 @router.get("/graph/document_correlations/{doc_id}")

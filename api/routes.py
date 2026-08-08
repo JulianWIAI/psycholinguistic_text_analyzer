@@ -40,6 +40,7 @@ from micro_layer.lexical_affinity import LexicalAffinityRadar
 from micro_layer.somatic_engine import SomaticEngine
 from pds_layer.pds_analyzer import analyze_ousiometrics
 from vad_layer.vad_analyzer import analyze_vad
+from graph_layer.ephemeral_matrix import build_ephemeral_matrix
 from tokenizer.rolling_window import RollingWindowTokenizer
 
 router = APIRouter()
@@ -650,12 +651,17 @@ def _run_pipeline(
             "psychological_payload": psych_payload,
         })
 
+    # Build the ephemeral co-occurrence matrix from this analysis pass so the
+    # local N×N matrix panel in the Somatic Cipher tab has data to render.
+    ephemeral_matrix = build_ephemeral_matrix(window_results)
+
     return {
         "document_id":             document_id,
         "language":                language_code,
         "total_windows":           len(windows),
         "global_waveform_envelope": global_envelope,  # 100-float document-level envelope
         "windows":                 window_results,
+        "ephemeral_matrix":        ephemeral_matrix,
     }
 
 

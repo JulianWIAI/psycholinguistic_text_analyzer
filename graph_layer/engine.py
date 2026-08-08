@@ -97,7 +97,7 @@ class GraphEngine:
     # Co-occurrence matrix
     # ------------------------------------------------------------------
 
-    _FEATURE_TYPES = {"StylisticDevice", "WordField", "MacroCluster"}
+    _FEATURE_TYPES = {"StylisticDevice", "WordField", "MacroCluster", "AffectNode"}
 
     def get_co_occurrence_matrix(self, corpus_ids: List[str]) -> dict:
         """
@@ -283,6 +283,135 @@ class GraphEngine:
                 "nodes": list(visited_nodes.values()),
                 "edges": visited_edges,
             }
+
+    # ------------------------------------------------------------------
+    # Document / corpus management
+    # ------------------------------------------------------------------
+
+    def list_corpus_documents(self, corpus_id: str) -> List[dict]:
+        """
+        Return a list of document-metadata dicts for every document that
+        belongs to *corpus_id*.  Each dict contains:
+            doc_id, title, language, is_legacy
+        """
+        with self._lock:
+            doc_ids = self._corpus_members.get(corpus_id, set())
+            result: List[dict] = []
+            for doc_id in sorted(doc_ids):
+                if doc_id not in self._nodes:
+                    continue
+                props = self._nodes[doc_id]["properties"]
+                result.append({
+                    "doc_id":    doc_id,
+                    "title":     props.get("title"),
+                    "language":  props.get("language"),
+                    "is_legacy": props.get("is_legacy", False),
+                })
+            return result
+
+    def get_document_matrix(self, doc_id: str) -> dict:
+        """
+        Build the co-occurrence matrix for a *single* document's feature nodes.
+
+        Returns dict with keys: nodes, matrix.
+        """
+        with self._lock:
+            if doc_id not in self._nodes:
+                return {"nodes": [], "matrix": []}
+
+            doc_features: List[Tuple[int, float]] = []
+            feature_ids: List[str] = []
+            seen: Set[str] = set()
+
+            for (tgt, _rel, wt) in self._adj.get(doc_id, []):
+                if tgt in self._nodes and self._nodes[tgt]["type"] in self._FEATURE_TYPES:
+                    if tgt not in seen:
+                        seen.add(tgt)
+                        feature_ids.append(tgt)
+
+            node_list = sorted(feature_ids)
+            n = len(node_list)
+            node_idx = {nid: i for i, nid in enumerate(node_list)}
+
+            matrix = [[0.0] * n for _ in range(n)]
+
+            for (tgt, _rel, wt) in self._adj.get(doc_id, []):
+                if tgt in node_idx:
+                    doc_features.append((node_idx[tgt], wt))
+
+            for (i, wi) in doc_features:
+                for (j, wj) in doc_features:
+                    matrix[i][j] += wi * wj
+
+            return {"nodes": node_list, "matrix": matrix}
+
+    def update_node_property(self, node_id: str, key: str, value) -> bool:
+        """Set a single property on an existing node.  Returns False if node not found."""
+        with self._lock:
+            if node_id not in self._nodes:
+                return False
+            self._nodes[node_id]["properties"][key] = value
+            return True
+
+    def remove_node(self, node_id: str) -> bool:
+        """
+        Remove *node_id* and every edge that touches it.
+        Also removes the node from all corpus membership sets.
+        Returns False if the node does not exist.
+        """
+        with self._lock:
+            if node_id not in self._nodes:
+                return False
+
+            # Remove from every corpus membership set
+            for members in self._corpus_members.values():
+                members.discard(node_id)
+            if node_id in self._corpus_members:
+                del self._corpus_members[node_id]
+
+            # Clean reverse adjacency of all targets this node points to
+            for (tgt, _rel, _wt) in self._adj.get(node_id, []):
+                if tgt in self._radj:
+                    self._radj[tgt] = [
+                        (s, r, w) for (s, r, w) in self._radj[tgt] if s != node_id
+                    ]
+
+            # Clean forward adjacency of all sources that point to this node
+            for (src, _rel, _wt) in self._radj.get(node_id, []):
+                if src in self._adj:
+                    self._adj[src] = [
+                        (t, r, w) for (t, r, w) in self._adj[src] if t != node_id
+                    ]
+
+            self._adj.pop(node_id, None)
+            self._radj.pop(node_id, None)
+            del self._nodes[node_id]
+            return True
+
+    def remove_corpus(self, corpus_id: str) -> bool:
+        """
+        Remove a corpus node and all its BELONGS_TO edges.
+        Document nodes are kept; only their membership links to this corpus
+        are removed.
+        Returns False if the corpus node does not exist.
+        """
+        with self._lock:
+            if corpus_id not in self._nodes:
+                return False
+
+            # Remove BELONGS_TO edges from each member document
+            for (src, _rel, _wt) in self._radj.get(corpus_id, []):
+                if src in self._adj:
+                    self._adj[src] = [
+                        (t, r, w) for (t, r, w) in self._adj[src]
+                        if not (t == corpus_id and r == "BELONGS_TO")
+                    ]
+
+            self._radj.pop(corpus_id, None)
+            self._adj.pop(corpus_id, None)
+            self._corpus_members.pop(corpus_id, None)
+            del self._nodes[corpus_id]
+            return True
 
     # ------------------------------------------------------------------
     # Persistence

@@ -91,9 +91,13 @@ class CppOrthographicAnalyzer(BaseMicroAnalyzer):
                 language=self._lang,
             )
 
-        # window_size > len(text) → C++ engine produces exactly one window
-        # covering the entire input; stride=1 satisfies stride < window_size.
-        n       = len(processed) + 1
+        # The C++ window_size parameter is measured in UTF-8 *bytes*, not
+        # Unicode code points.  Using len() (code-point count) undershoots for
+        # text that contains multi-byte characters (em-dashes, typographic quotes,
+        # etc.), which causes the C++ to split a window mid-character and
+        # pybind11 to raise UnicodeDecodeError when returning the snippet.
+        # Using the byte length guarantees one window covers the whole text.
+        n       = len(processed.encode("utf-8")) + 1
         results = _core.analyze(processed, n, 1)
 
         if not results:
