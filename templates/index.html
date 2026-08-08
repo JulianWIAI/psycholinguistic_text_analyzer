@@ -1207,10 +1207,6 @@
     .btn-corpus:hover { opacity:.85; }
     .btn-corpus.btn-corpus-sec { background:transparent; color:var(--accent); border:1px solid var(--accent); }
     #corpus-cy { width:100%; height:480px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
-    #cy-inspector { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; display:none; }
-    .cy-insp-type { font-size:.65rem; font-weight:700; letter-spacing:.1em; color:var(--accent); margin-bottom:.2rem; }
-    .cy-insp-label { font-size:.9rem; margin-bottom:.15rem; }
-    .cy-insp-id { font-size:.68rem; color:var(--muted); }
     .corpus-spectrum-sect, .corpus-matrix-sect {
       background:var(--surface); border:1px solid var(--border); border-radius:8px;
       padding:.8rem 1rem; display:none;
@@ -1221,11 +1217,205 @@
     .corpus-matrix-tbl th { background:var(--bg); color:var(--muted); font-weight:600; }
     .corpus-status { font-size:.72rem; color:var(--muted); }
 
+    /* ── Graph / Matrix view toggle ───────────────────────── */
+    .view-toggle-bar { display:flex; gap:.35rem; }
+    .btn-view-toggle {
+      background:transparent; border:1px solid var(--border); color:var(--muted);
+      border-radius:4px; padding:.2rem .65rem; font-size:.69rem; cursor:pointer;
+      transition:all .15s; letter-spacing:.04em;
+    }
+    .btn-view-toggle.vt-active { border-color:var(--accent); color:var(--accent); background:rgba(79,142,247,.1); }
+    /* Pearson canvas wrapper */
+    #pearson-wrap { display:none; overflow:auto; }
+    #pearson-canvas { display:block; }
+    #pearson-legend { font-size:.65rem; color:var(--muted); margin-top:.35rem; }
+
+    /* ── Graph Inspector Drawer ───────────────────────────── */
+    /* Slides in from the right edge of the viewport when .insp-open is set. */
+    .graph-inspector {
+      position:fixed; top:52px; right:-390px; width:370px;
+      height:calc(100vh - 52px); background:var(--surface);
+      border-left:1px solid var(--border); z-index:300;
+      transition:right .22s cubic-bezier(.4,0,.2,1);
+      display:flex; flex-direction:column;
+      box-shadow:-6px 0 32px rgba(0,0,0,.6);
+    }
+    .graph-inspector.insp-open { right:0; }
+    .insp-hdr {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem 1rem; border-bottom:1px solid var(--border);
+      background:var(--bg); flex-shrink:0;
+    }
+    .insp-type-badge { font-size:.6rem; font-weight:700; letter-spacing:.12em; color:var(--accent); text-transform:uppercase; }
+    .insp-close { background:none; border:none; color:var(--muted); font-size:.95rem; cursor:pointer; line-height:1; padding:0; }
+    .insp-close:hover { color:var(--danger); }
+    .insp-body { flex:1; overflow-y:auto; padding:.85rem 1rem; display:flex; flex-direction:column; gap:.55rem; }
+    .insp-node-label { font-size:.95rem; font-weight:700; line-height:1.25; }
+    .insp-node-id { font-size:.65rem; color:var(--muted); font-family:monospace; word-break:break-all; }
+    .insp-section-hdr {
+      font-size:.59rem; text-transform:uppercase; letter-spacing:.1em;
+      color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:.22rem;
+      margin-top:.35rem;
+    }
+    .insp-kv { display:flex; justify-content:space-between; align-items:baseline; font-size:.77rem; padding:.08rem 0; }
+    .insp-kv-key { color:var(--muted); flex-shrink:0; padding-right:.5rem; }
+    .insp-kv-val { color:var(--text); font-weight:600; font-family:monospace; text-align:right; }
+    .insp-ev-list { display:flex; flex-direction:column; gap:.15rem; }
+    .insp-ev-item {
+      font-size:.68rem; color:var(--muted); padding:.18rem .45rem;
+      background:var(--bg); border-radius:4px; border:1px solid var(--border);
+      font-family:monospace; display:flex; gap:.5rem;
+    }
+    .insp-ev-item .ev-id { color:var(--accent); }
+    .insp-ev-item .ev-lang { color:var(--muted); }
+
     /* ── Intra-doc Correlations tab ───────────────────────── */
     .corr-matrix-wrap { overflow-x:auto; }
     .corr-matrix-tbl { border-collapse:collapse; font-size:.67rem; }
     .corr-matrix-tbl th, .corr-matrix-tbl td { border:1px solid var(--border); padding:.18rem .4rem; text-align:center; white-space:nowrap; color:var(--text); }
     .corr-matrix-tbl th { background:var(--surface); color:var(--muted); font-size:.62rem; }
+
+    /* ══════════════════════════════════════════════════════════
+       Phase 2 — Analyzer Matrix Toggle & Divergence Heatmap
+    ══════════════════════════════════════════════════════════ */
+
+    /* Toggle bar added to the somatic card header */
+    .analyzer-view-toggle {
+      display:flex; gap:.3rem;
+    }
+    .btn-av-toggle {
+      background:transparent; border:1px solid var(--border); color:var(--muted);
+      border-radius:4px; padding:.2rem .65rem; font-size:.69rem; cursor:pointer;
+      transition:all .15s; letter-spacing:.04em; white-space:nowrap;
+    }
+    .btn-av-toggle:hover { border-color:var(--accent); color:var(--text); }
+    .btn-av-toggle.avt-active {
+      border-color:var(--accent); color:var(--accent);
+      background:rgba(79,142,247,.1);
+    }
+
+    /* Local N×N matrix section (inside card-somatic, hidden by default) */
+    #local-matrix-section { display:none; padding-top:.5rem; }
+    #local-matrix-canvas  { display:block; }
+    #local-matrix-legend  { font-size:.65rem; color:var(--muted); margin-top:.35rem; }
+
+    /* Corpus selector + Compare button bar */
+    .matrix-compare-bar {
+      display:flex; align-items:center; gap:.6rem;
+      margin-top:.85rem; flex-wrap:wrap;
+    }
+    .matrix-compare-bar label { font-size:.69rem; color:var(--muted); white-space:nowrap; margin:0; width:auto; }
+    #matrix-corpus-sel {
+      flex:1; min-width:130px; max-width:220px;
+      background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.3rem .55rem;
+      font-size:.76rem;
+    }
+    .btn-compare-baseline {
+      background:transparent; border:1px solid var(--accent); color:var(--accent);
+      border-radius:5px; padding:.3rem .85rem; font-size:.76rem; font-weight:600;
+      cursor:pointer; transition:all .15s; white-space:nowrap;
+    }
+    .btn-compare-baseline:hover { background:rgba(79,142,247,.15); }
+    .btn-compare-baseline:disabled { opacity:.4; cursor:not-allowed; }
+
+    /* Divergence result zone */
+    #divergence-result-zone { margin-top:.85rem; }
+    .div-score-banner {
+      font-size:.8rem; font-weight:700; padding:.45rem .75rem;
+      border-radius:6px; background:var(--bg); border:1px solid var(--border);
+      margin-bottom:.65rem; display:flex; align-items:center; gap:.6rem;
+    }
+    .div-score-label { color:var(--muted); font-weight:400; }
+    .div-score-value { font-family:monospace; font-size:1.05rem; }
+    .div-score-low    { color:var(--ok); }
+    .div-score-mid    { color:var(--warn); }
+    .div-score-high   { color:var(--danger); }
+    #divergence-canvas { display:block; }
+    #divergence-legend {
+      font-size:.65rem; color:var(--muted); margin-top:.35rem;
+      display:flex; align-items:center; gap:.45rem; flex-wrap:wrap;
+    }
+    .div-legend-swatch {
+      display:inline-block; width:38px; height:8px; border-radius:2px;
+    }
+
+    /* ── Corpus-tab: current view title ──────────────────────── */
+    #current-view-title {
+      font-size: .72rem; font-weight: 600; letter-spacing: .07em;
+      color: var(--muted); text-transform: uppercase;
+      padding: .22rem .5rem; margin-bottom: .35rem;
+      border-left: 2px solid var(--accent);
+    }
+    #current-view-title span { color: var(--accent); font-weight: 700; }
+
+    /* ── Corpus-tab: per-document compare bar & divergence panel ─ */
+    #doc-matrix-compare-bar {
+      display:none; align-items:center; gap:.6rem;
+      margin-top:.6rem; padding:.35rem .6rem;
+      background:var(--card); border:1px solid var(--border); border-radius:6px;
+      font-size:.72rem; color:var(--muted);
+    }
+    .btn-compare-doc {
+      padding:.28rem .7rem; border-radius:5px; font-size:.7rem; cursor:pointer;
+      background:rgba(79,142,247,.1); border:1px solid var(--accent); color:var(--accent);
+      transition:background .12s;
+    }
+    .btn-compare-doc:hover { background:rgba(79,142,247,.22); }
+    #doc-divergence-result { margin-top:.5rem; }
+    .doc-frob-banner {
+      display:inline-block; margin-bottom:.4rem;
+      font-size:.74rem; font-weight:600; letter-spacing:.04em;
+      padding:.22rem .55rem; border-radius:4px; border:1px solid var(--border);
+    }
+    #doc-divergence-legend {
+      font-size:.65rem; color:var(--muted); margin-top:.3rem;
+    }
+
+    /* ── Corpus pill delete button ────────────────────────── */
+    .pill-del {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:13px; height:13px; border-radius:50%; background:transparent;
+      border:none; color:var(--muted); font-size:.65rem; cursor:pointer;
+      padding:0; line-height:1; transition:color .12s, background .12s;
+    }
+    .pill-del:hover { color:var(--danger); background:rgba(224,92,92,.15); }
+
+    /* ── Document Ledger ──────────────────────────────────── */
+    .doc-ledger-wrap {
+      display:flex; flex-direction:column; gap:.2rem;
+      max-height:220px; overflow-y:auto;
+    }
+    .doc-item {
+      display:flex; align-items:center; gap:.3rem;
+      padding:.28rem .45rem; border-radius:5px;
+      border:1px solid var(--border); background:var(--bg);
+      font-size:.71rem; cursor:pointer; transition:border-color .12s;
+    }
+    .doc-item:hover { border-color:var(--accent); }
+    .doc-item.doc-highlighted { border-color:var(--accent); background:rgba(79,142,247,.08); }
+    .doc-title { flex:1; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .doc-title-input {
+      flex:1; background:var(--bg); border:1px solid var(--accent); color:var(--text);
+      border-radius:3px; padding:.1rem .3rem; font-size:.71rem;
+    }
+    .doc-item-actions { display:flex; gap:.2rem; flex-shrink:0; }
+    .btn-doc-action {
+      background:transparent; border:none; color:var(--muted);
+      font-size:.72rem; cursor:pointer; padding:.1rem .2rem;
+      border-radius:3px; line-height:1; transition:color .12s;
+    }
+    .btn-doc-action:hover { color:var(--accent); }
+    .btn-doc-action.btn-doc-del:hover { color:var(--danger); }
+
+    /* Phase 1 — Ledger exclusion checkbox */
+    .doc-exclude-wrap { display:flex; align-items:center; flex-shrink:0; margin-right:.1rem; }
+    .doc-exclude-cb   { accent-color:var(--err,#cc0020); cursor:pointer; width:12px; height:12px; }
+    .doc-item.doc-excluded { opacity:.4; }
+    .doc-item.doc-excluded .doc-title { text-decoration:line-through; }
+
+    /* Phase 3 — Export buttons (reuse view-toggle styling, smaller) */
+    .btn-export { font-size:.6rem; padding:.22rem .5rem; }
 
   </style>
 </head>
@@ -1481,8 +1671,21 @@
     <div class="card" id="card-somatic" style="display:none;">
       <div class="somatic-header">
         <span class="somatic-card-title">Somatic Cipher &amp; Wavelength Physics<button class="help-icon" data-tip="Subconscious letter-energy archetypes mapped to a 5-axis somatic profile." onclick="openHelp('help-somatic')">?</button></span>
+        <!-- Phase 2: Telemetry / Local Matrix view toggle + Phase 3: export -->
+        <div class="analyzer-view-toggle">
+          <button class="btn-av-toggle avt-active" id="btn-av-telemetry"
+                  onclick="_switchAnalyzerView('telemetry')">📊 Telemetry</button>
+          <button class="btn-av-toggle" id="btn-av-matrix"
+                  onclick="_switchAnalyzerView('matrix')">🧮 Local N×N</button>
+          <!-- Phase 3: download the ephemeral matrix as CSV -->
+          <button class="btn-av-toggle btn-export" onclick="exportAnalyzerMatrixCSV()"
+                  title="Download local N×N matrix as CSV">⬇ CSV</button>
+        </div>
         <span class="somatic-layer-badge">LAYER 3</span>
       </div>
+
+      <!-- Somatic cipher body — hidden when Local N×N view is active -->
+      <div id="somatic-cipher-body">
 
       <!-- Diagnostic row: tier badge + quersumme -->
       <div class="somatic-diag">
@@ -1534,7 +1737,8 @@
         </div>
       </div>
 
-      <!-- Oscilloscope Deck: two stacked waveform charts -->
+      <!-- Oscilloscope Deck: two stacked waveform charts (Phase 2: wrapped for view toggle) -->
+      <div id="oscillo-section">
       <div class="oscillo-deck">
 
         <!-- Chart A: Global Waveform Envelope (100-bucket, smooth) -->
@@ -1574,6 +1778,28 @@
         </div>
 
       </div><!-- /oscillo-deck -->
+      </div><!-- /oscillo-section -->
+      </div><!-- /somatic-cipher-body -->
+
+      <!-- Phase 2: Local N×N Matrix & Divergence Heatmap (hidden until toggle) -->
+      <div id="local-matrix-section">
+        <canvas id="local-matrix-canvas"></canvas>
+        <div id="local-matrix-legend"></div>
+
+        <!-- Compare to Baseline bar — populated with corpus options from loadCorpora() -->
+        <div class="matrix-compare-bar">
+          <label>Compare to corpus:</label>
+          <select id="matrix-corpus-sel">
+            <option value="">— no corpora —</option>
+          </select>
+          <button class="btn-compare-baseline" id="btn-compare-baseline"
+                  onclick="compareToBaseline()" disabled>Compare to Baseline</button>
+        </div>
+
+        <!-- Divergence result zone — injected by _renderDivergenceMatrix() -->
+        <div id="divergence-result-zone"></div>
+      </div><!-- /local-matrix-section -->
+
     </div>
 
     <!-- Wavelength Telemetry — full-document envelope, split into panels -->
@@ -1754,7 +1980,15 @@
       <div id="corpus-index-sect" style="display:none;" class="corpus-section">
         <div class="corpus-sect-lbl">Index Last Analysis</div>
         <div class="corpus-status" style="margin-bottom:.35rem;">Indexes the current analyzed text into the selected corpus(a).</div>
+        <input type="text" id="doc-title-inp" placeholder="Document title (optional)…" style="margin-bottom:.35rem;" />
         <button class="btn-corpus btn-corpus-sec" onclick="indexCurrentDocument()">Index into Graph</button>
+      </div>
+
+      <div id="doc-ledger-sect" style="display:none;" class="corpus-section">
+        <div class="corpus-sect-lbl">Documents in Corpus</div>
+        <div class="doc-ledger-wrap" id="doc-ledger-list">
+          <span class="corpus-status">Select a corpus to see its documents.</span>
+        </div>
       </div>
     </aside>
 
@@ -1762,18 +1996,50 @@
     <div class="corpus-main">
 
       <div>
-        <div style="font-size:.63rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;">
-          Graph &nbsp;·&nbsp;
-          Stylistic Devices <span style="color:#e0a85c">■</span> &nbsp;
-          Word Fields <span style="color:#5ce0d8">■</span> &nbsp;
-          Macro Clusters <span style="color:#b96af7">■</span> &nbsp;
-          Corpora <span style="color:#f7c87e">■</span>
+        <!-- Legend + view toggle -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;">
+          <div style="font-size:.63rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;">
+            Stylistic Devices <span style="color:#e0a85c">■</span> &nbsp;
+            Word Fields <span style="color:#5ce0d8">■</span> &nbsp;
+            Macro Clusters <span style="color:#b96af7">■</span> &nbsp;
+            Corpora <span style="color:#f7c87e">■</span>
+          </div>
+          <div class="view-toggle-bar">
+            <button class="btn-view-toggle vt-active" id="btn-graph-view"
+                    onclick="_switchGraphView('graph')">Graph</button>
+            <button class="btn-view-toggle" id="btn-matrix-view"
+                    onclick="_switchGraphView('matrix')">N×N Matrix</button>
+            <!-- Phase 3: export buttons -->
+            <button class="btn-view-toggle btn-export" onclick="exportGraphPNG()"
+                    title="Download Cytoscape graph as PNG">⬇ PNG</button>
+            <button class="btn-view-toggle btn-export" onclick="exportCorpusMatrixCSV()"
+                    title="Download current matrix as CSV">⬇ CSV</button>
+          </div>
         </div>
-        <div id="corpus-cy"></div>
-      </div>
 
-      <div id="cy-inspector">
-        <div id="cy-inspector-content" class="corpus-status">Click a node to inspect.</div>
+        <!-- Active-selection breadcrumb (corpus or document) -->
+        <div id="current-view-title" style="display:none;"></div>
+
+        <!-- Cytoscape canvas -->
+        <div id="corpus-cy"></div>
+
+        <!-- Pearson / cosine-correlation heatmap (hidden by default) -->
+        <div id="pearson-wrap">
+          <canvas id="pearson-canvas"></canvas>
+          <div id="pearson-legend"></div>
+        </div>
+
+        <!-- Per-document divergence: shown when a doc is selected in matrix mode -->
+        <div id="doc-matrix-compare-bar">
+          <span id="doc-matrix-compare-label">Document:</span>
+          <button class="btn-compare-doc" onclick="_compareDocToCorpus()">Compare to Corpus Baseline</button>
+        </div>
+        <div id="doc-divergence-result" style="display:none;">
+          <span id="doc-div-loading" style="display:none;font-size:.73rem;"></span>
+          <span id="doc-frob-banner" class="doc-frob-banner"></span>
+          <canvas id="doc-divergence-canvas" style="display:block;margin-top:.4rem;"></canvas>
+          <div id="doc-divergence-legend"></div>
+        </div>
       </div>
 
       <div id="corpus-spectrum-sect" class="corpus-spectrum-sect">
@@ -1789,6 +2055,20 @@
 
     </div>
   </div>
+
+  <!-- ── Graph Inspector Drawer ────────────────────────────────────────
+       position:fixed, slides in from the right when .insp-open is added.
+       Lives inside #view-corpus so it is only rendered in this view.    -->
+  <div id="graph-inspector" class="graph-inspector">
+    <div class="insp-hdr">
+      <span id="insp-type-badge" class="insp-type-badge">NODE</span>
+      <button class="insp-close" onclick="_closeInspector()" title="Close">✕</button>
+    </div>
+    <div class="insp-body" id="insp-body">
+      <span class="corpus-status" style="color:var(--muted);">Click a node or edge to inspect.</span>
+    </div>
+  </div>
+
 </div>
 <!-- ══════════════════════ END CORPUS EXPLORER ══════════════════════ -->
 
@@ -3492,6 +3772,7 @@ function renderNarrative(data) {
 // ── Psychological Payload render (VAD / PDS / 8-Axis Affect) ─────────────────
 
 let _vadChart = null, _pdsChart = null;
+let _lastWindowPP = null;
 let _lexSortCol = 'p', _lexSortDir = -1;
 
 function _psychVadBar(label, mean, sigma, gradient) {
@@ -3562,6 +3843,60 @@ function _psychPdsAssessment(p, d, s) {
     desc:'Negative danger score (safety-seeking) combined with low power creates a docile register. The author is neither aggressive nor threatened — seeking calm, routine, or withdrawal. Cross-reference with Micro Intensity for suppressed arousal signals.', sDesc };
 }
 
+/* ── Phase 5: scatter highlight helpers (called by literary device row hover) ── */
+
+function _scatterHighlightDevice() {
+  if (_vadChart && _vadChart.data.datasets[0]) {
+    const ds = _vadChart.data.datasets[0];
+    if (!ds._savedColors) ds._savedColors = ds.pointBackgroundColor.slice();
+    ds.pointBackgroundColor = ds._savedColors.map(c =>
+      c.startsWith('rgb(') ? c.replace('rgb(', 'rgba(').replace(')', ', 0.12)') : c
+    );
+    if (_lastWindowPP && _lastWindowPP.valence_mean != null) {
+      _vadChart.data.datasets[1] = {
+        data: [{ x: _lastWindowPP.valence_mean||0, y: _lastWindowPP.arousal_mean||0, label: 'μ' }],
+        pointBackgroundColor: ['#ffffff'],
+        pointBorderColor: ['#f7c87e'],
+        pointBorderWidth: 2,
+        pointRadius: 10, pointHoverRadius: 12,
+      };
+    }
+    _vadChart.update('none');
+  }
+  if (_pdsChart && _pdsChart.data.datasets[0]) {
+    const ds = _pdsChart.data.datasets[0];
+    if (!ds._savedColors) ds._savedColors = ds.pointBackgroundColor.slice();
+    ds.pointBackgroundColor = ds._savedColors.map(c =>
+      c.startsWith('hsl(') ? c.replace('hsl(', 'hsla(').replace(')', ', 0.12)') : c
+    );
+    if (_lastWindowPP && _lastWindowPP.power_mean != null) {
+      _pdsChart.data.datasets[1] = {
+        data: [{ x: _lastWindowPP.power_mean||0, y: _lastWindowPP.danger_mean||0, label: 'μ' }],
+        pointBackgroundColor: ['#ffffff'],
+        pointBorderColor: ['#f7c87e'],
+        pointBorderWidth: 2,
+        pointRadius: 10, pointHoverRadius: 12,
+      };
+    }
+    _pdsChart.update('none');
+  }
+}
+
+function _scatterRestoreDevice() {
+  if (_vadChart && _vadChart.data.datasets[0]) {
+    const ds = _vadChart.data.datasets[0];
+    if (ds._savedColors) { ds.pointBackgroundColor = ds._savedColors; delete ds._savedColors; }
+    if (_vadChart.data.datasets.length > 1) _vadChart.data.datasets.splice(1);
+    _vadChart.update('none');
+  }
+  if (_pdsChart && _pdsChart.data.datasets[0]) {
+    const ds = _pdsChart.data.datasets[0];
+    if (ds._savedColors) { ds.pointBackgroundColor = ds._savedColors; delete ds._savedColors; }
+    if (_pdsChart.data.datasets.length > 1) _pdsChart.data.datasets.splice(1);
+    _pdsChart.update('none');
+  }
+}
+
 function _lexSort(col) {
   if (_lexSortCol === col) _lexSortDir *= -1;
   else { _lexSortCol = col; _lexSortDir = col === 'word' ? 1 : -1; }
@@ -3571,6 +3906,7 @@ function _lexSort(col) {
 
 function renderPsychPayload(win) {
   const pp    = win.psychological_payload;
+  _lastWindowPP = pp || null;
   const empty = !pp || pp.error || !pp.matched_count;
   const matched = (pp && pp.matched_count) || 0;
   const total   = (pp && pp.total_tokens)  || 0;
@@ -3820,7 +4156,9 @@ function renderLiterary(win) {
     const lines = [...new Set(fs.map(f => f.line_number))].sort((a, b) => a - b);
     const lineStr = lines.length > 8 ? lines.slice(0, 8).join(', ') + ' …' : lines.join(', ');
     summaryRows += `
-      <tr onclick="document.getElementById('lit-group-${device}')?.scrollIntoView({behavior:'smooth'})">
+      <tr onclick="document.getElementById('lit-group-${device}')?.scrollIntoView({behavior:'smooth'})"
+          onmouseenter="_scatterHighlightDevice()"
+          onmouseleave="_scatterRestoreDevice()">
         <td class="lit-sum-device">${_litFormatDevice(device)}</td>
         <td class="lit-sum-count">${fs.length}</td>
         <td class="lit-sum-lines">${lineStr}</td>
@@ -4059,6 +4397,8 @@ function renderLexical(data) {
 function renderResults(data) {
   _results   = data;
   _activeWin = 0;
+  _lastEphemeralMatrix = data.ephemeral_matrix || null;
+  _switchAnalyzerView('telemetry');   // reset to telemetry on each new analysis
   _lang      = data.language || _lang;   // sync alphabet before any freq/telemetry renders
 
   $('empty-state').style.display      = 'none';
@@ -5603,6 +5943,9 @@ function switchView(name) {
   if (name === 'corpus') {
     loadCorpora();
     if (!_cy && typeof cytoscape !== 'undefined') _initCy();
+  } else {
+    // Close the inspector drawer when leaving the corpus view
+    _closeInspector();
   }
 }
 
@@ -5612,12 +5955,14 @@ function switchView(name) {
 let _cy         = null;
 let _corpusList = [];
 let _selCorpora = new Set();
+let _lastCoData = null;   // cached co-occurrence result from last queryGraph()
 
 async function loadCorpora() {
   try {
     const data = await fetch('/api/corpora').then(r => r.json());
     _corpusList = data.corpora || [];
     _renderPills();
+    _populateMatrixCorpusSel();
     document.getElementById('corpus-status').textContent =
       `Backend: ${data.backend} · ${_corpusList.length} corpus(a)`;
   } catch(e) {
@@ -5635,17 +5980,25 @@ function _renderPills() {
     const name = c.properties?.name || c.id;
     const sel  = _selCorpora.has(c.id);
     return `<span class="corpus-pill ${sel ? 'cpill-active' : ''}"
-      onclick="toggleCorpus('${c.id}',this)">${name}</span>`;
+      onclick="toggleCorpus('${c.id}',this)">${name
+      }<button class="pill-del" title="Delete corpus"
+        onclick="event.stopPropagation();deleteCorpus('${c.id}')">✕</button></span>`;
   }).join('');
   document.getElementById('corpus-index-sect').style.display =
     (_results && _selCorpora.size > 0) ? '' : 'none';
 }
 
 function toggleCorpus(id, el) {
-  if (_selCorpora.has(id)) { _selCorpora.delete(id); el.classList.remove('cpill-active'); }
-  else                     { _selCorpora.add(id);    el.classList.add('cpill-active');    }
+  // el may be the pill-del button child — walk up to the corpus-pill span
+  const pill = el.closest('.corpus-pill') || el;
+  if (_selCorpora.has(id)) {
+    _selCorpora.delete(id); pill.classList.remove('cpill-active');
+  } else {
+    _selCorpora.add(id);    pill.classList.add('cpill-active');
+  }
   document.getElementById('corpus-index-sect').style.display =
     (_results && _selCorpora.size > 0) ? '' : 'none';
+  _loadDocLedger();
 }
 
 async function createCorpus() {
@@ -5672,6 +6025,7 @@ async function indexCurrentDocument() {
   if (!_results || _selCorpora.size === 0) return;
   const win0  = _results.windows?.[0];
   const docId = `doc_${_lang}_${Date.now()}`;
+  const title = document.getElementById('doc-title-inp')?.value.trim() || null;
   try {
     const r = await fetch('/api/graph/index_document', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -5679,36 +6033,78 @@ async function indexCurrentDocument() {
         doc_id:                docId,
         corpus_ids:            Array.from(_selCorpora),
         language:              _lang,
+        title:                 title,
+        // Phase 4: send all windows for proximity-aware CO_OCCURS_WITH edges.
+        // When windows is present the backend uses window_indexer.py instead
+        // of the win0-only literary/macro_scores fields.
+        windows:               _results.windows || [],
+        // Keep somatic separate — it is a document-level field, not per-window
+        somatic:               win0?.somatic || null,
+        // Legacy fields kept for backward compatibility (ignored when windows present)
         literary:              win0?.literary              || null,
         psychological_payload: win0?.psychological_payload || null,
         macro_scores:          win0?.macro?.cluster_scores || null,
-        somatic:               win0?.somatic               || null,
       }),
     });
     const data = await r.json();
     document.getElementById('corpus-status').textContent = r.ok
       ? `Indexed ${docId} → ${data.nodes} nodes, ${data.edges} edges`
       : 'Index error: ' + (data.detail || '?');
-    if (r.ok) { await loadCorpora(); await queryGraph(); }
+    if (r.ok) {
+      if (document.getElementById('doc-title-inp'))
+        document.getElementById('doc-title-inp').value = '';
+      await loadCorpora();
+      await queryGraph();
+      _loadDocLedger();
+    }
   } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
 }
 
 async function queryGraph() {
   const ids = Array.from(_selCorpora);
   if (!ids.length) { document.getElementById('corpus-status').textContent = 'Select at least one corpus.'; return; }
+
+  // Clear per-document selection so the corpus-wide matrix is restored
+  _selectedDocId     = null;
+  _selectedDocMatrix = null;
+  _setViewTitle(null);   // cleared; will be re-set after query completes
+  document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('doc-highlighted'));
+  const bar = document.getElementById('doc-matrix-compare-bar');
+  if (bar) bar.style.display = 'none';
+  const rz = document.getElementById('doc-divergence-result');
+  if (rz) rz.style.display = 'none';
+
   document.getElementById('corpus-status').textContent = 'Querying…';
   try {
     const r = await fetch('/api/graph/query', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({corpus_ids: ids, include_spectrum: true}),
+      // Phase 1: pass excluded doc IDs so the backend skips them in the matrix
+      body: JSON.stringify({
+        corpus_ids:       ids,
+        include_spectrum: true,
+        excluded_doc_ids: Array.from(_excludedDocs),
+      }),
     });
     const data = await r.json();
     if (!r.ok) { document.getElementById('corpus-status').textContent = 'Query error: ' + (data.detail||'?'); return; }
+    _lastCoData = data.co_occurrence;   // cache for inspector + matrix view
     _renderCyGraph(data.co_occurrence);
     _renderSpectrum(data.spectrum);
     _renderCoMatrix(data.co_occurrence);
     document.getElementById('corpus-status').textContent =
       `${(data.co_occurrence.nodes||[]).length} feature nodes across ${ids.length} corpus(a).`;
+
+    // If matrix view is already open, refresh it with corpus data immediately
+    // (without this, the canvas stays on whatever was last drawn — e.g. a doc matrix)
+    const matEl = document.getElementById('pearson-wrap');
+    if (matEl && matEl.style.display !== 'none') _renderPearsonMatrix(_lastCoData);
+
+    // Set breadcrumb title — use corpus names from _corpusList when available
+    const corpusNames = ids.map(id => {
+      const c = _corpusList.find(x => x.id === id);
+      return c ? (c.properties?.name || c.id) : id;
+    });
+    _setViewTitle('Viewing Corpus', corpusNames.join(', '));
   } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
 }
 
@@ -5716,9 +6112,13 @@ async function queryGraph() {
 const _CY_COLORS = {
   StylisticDevice:'#e0a85c', WordField:'#5ce0d8', MacroCluster:'#b96af7',
   SomaticArchetype:'#b96af7', Corpus:'#f7c87e', Document:'#6b7394',
+  PDS_Quadrant:'#f7c87e', Somatic_Tier:'#5ce08e',
 };
-const _CY_SIZES = { Corpus:56, Document:28, StylisticDevice:40, WordField:40, MacroCluster:44, SomaticArchetype:40 };
+const _CY_SIZES = { Corpus:56, Document:28, StylisticDevice:40, WordField:40, MacroCluster:44, SomaticArchetype:40, PDS_Quadrant:40, Somatic_Tier:40 };
 function _cyNodeType(id) {
+  // Tier IDs are a closed set — check before the generic somatic_ prefix
+  if (id === 'somatic_t1' || id === 'somatic_t2' || id === 'somatic_t3') return 'Somatic_Tier';
+  if (id.startsWith('pds_'))     return 'PDS_Quadrant';
   if (id.startsWith('device_'))  return 'StylisticDevice';
   if (id.startsWith('field_'))   return 'WordField';
   if (id.startsWith('cluster_')) return 'MacroCluster';
@@ -5742,10 +6142,41 @@ function _initCy() {
       }},
       { selector: 'edge', style: { 'width':'data(w)', 'line-color':'#2a3050', 'opacity':0.65, 'curve-style':'bezier' }},
       { selector: 'node:selected', style: { 'border-width':3, 'border-color':'#4f8ef7' }},
+      // Neighbourhood highlighting states
+      { selector: '.cy-dimmed',      style: { opacity: 0.07 } },
+      { selector: 'node.cy-lit',     style: { opacity: 1, 'border-width':2, 'border-color':'#4f8ef7' } },
+      { selector: 'edge.cy-lit',     style: { opacity: 1, 'line-color':'#4f8ef7' } },
     ],
     layout: { name:'cose', padding:50, randomize:true, animate:false },
   });
-  _cy.on('tap', 'node', evt => _showCyInspector(evt.target.data()));
+
+  // Node tap: highlight closed first-degree neighbourhood, open inspector
+  _cy.on('tap', 'node', evt => {
+    const node = evt.target;
+    const hood = node.closedNeighborhood();
+    _cy.elements().removeClass('cy-lit cy-dimmed');
+    _cy.elements().not(hood).addClass('cy-dimmed');
+    hood.addClass('cy-lit');
+    _showNodeInspector(node.data());
+  });
+
+  // Edge tap: highlight the edge + its two endpoints, show evidence
+  _cy.on('tap', 'edge', evt => {
+    const edge  = evt.target;
+    const lit   = edge.union(edge.connectedNodes());
+    _cy.elements().removeClass('cy-lit cy-dimmed');
+    _cy.elements().not(lit).addClass('cy-dimmed');
+    lit.addClass('cy-lit');
+    _showEdgeInspector(edge.data());
+  });
+
+  // Background tap: reset all highlighting and close inspector
+  _cy.on('tap', evt => {
+    if (evt.target === _cy) {
+      _cy.elements().removeClass('cy-lit cy-dimmed');
+      _closeInspector();
+    }
+  });
 }
 
 function _renderCyGraph(co) {
@@ -5787,13 +6218,433 @@ function _renderCyGraph(co) {
   _cy.layout({ name:'cose', padding:50, randomize:true, animate:false }).run();
 }
 
-function _showCyInspector(data) {
-  const el = document.getElementById('cy-inspector');
-  const co = document.getElementById('cy-inspector-content');
-  el.style.display = '';
-  co.innerHTML = `<div class="cy-insp-type">${data.type||'NODE'}</div>
-    <div class="cy-insp-label">${data.label}</div>
-    <div class="cy-insp-id">id: ${data.id}</div>`;
+/* ════════════════════════════════════════════════════════════
+   Graph Inspector Drawer
+════════════════════════════════════════════════════════════ */
+
+function _openInspector() {
+  document.getElementById('graph-inspector').classList.add('insp-open');
+}
+
+function _closeInspector() {
+  document.getElementById('graph-inspector').classList.remove('insp-open');
+}
+
+// Node click: show type-specific information panel
+async function _showNodeInspector(data) {
+  const body  = document.getElementById('insp-body');
+  const badge = document.getElementById('insp-type-badge');
+  badge.textContent = data.type || 'NODE';
+  _openInspector();
+
+  const typeColor = _CY_COLORS[data.type] || 'var(--accent)';
+  const label     = data.label || data.id;
+
+  let html = `
+    <div class="insp-node-label" style="color:${typeColor}">${label}</div>
+    <div class="insp-node-id">${data.id}</div>`;
+
+  if (data.type === 'Corpus') {
+    // ── Top feature connections from the cached co-occurrence matrix ──
+    if (_lastCoData && _lastCoData.nodes.length) {
+      const { nodes, matrix } = _lastCoData;
+      const sums = nodes.map((id, i) => [id, matrix[i].reduce((a, b) => a + b, 0)]);
+      const top5 = sums.sort((a, b) => b[1] - a[1]).slice(0, 5);
+      html += `<div class="insp-section-hdr">Top Feature Connections</div>`;
+      top5.forEach(([fid, w]) => {
+        const fl = fid.replace(/^(device_|field_|cluster_|somatic_)/,'').replace(/_/g,' ');
+        const fc = _CY_COLORS[_cyNodeType(fid)] || 'var(--text)';
+        html += `<div class="insp-kv">
+          <span class="insp-kv-key" style="color:${fc}">${fl}</span>
+          <span class="insp-kv-val">${w.toFixed(3)}</span>
+        </div>`;
+      });
+    }
+
+    // Placeholder row — replaced by async fetch below
+    html += `<div class="insp-section-hdr">Spectral Diagnostics</div>
+      <div id="_insp_spec_zone" class="corpus-status">Computing…</div>`;
+    body.innerHTML = html;
+
+    // Async: fetch Fiedler value + VNGE from the API
+    try {
+      const sd = await fetch(
+        `/api/graph/spectral_diagnostics/${encodeURIComponent(data.id)}`
+      ).then(r => r.json());
+
+      const zone = document.getElementById('_insp_spec_zone');
+      if (!zone) return;
+
+      const fv   = sd.fiedler_value;
+      const vnge = sd.vnge;
+      const connLabel = fv == null      ? '—'
+        : fv < 0.01  ? `<span style="color:var(--danger)">DISCONNECTED</span>`
+        : fv < 0.10  ? `<span style="color:var(--warn)">WEAKLY CONNECTED</span>`
+        : `<span style="color:var(--ok)">WELL CONNECTED</span>`;
+
+      zone.outerHTML = `
+        <div class="insp-kv"><span class="insp-kv-key">Documents</span>
+          <span class="insp-kv-val">${sd.doc_count ?? '—'}</span></div>
+        <div class="insp-kv"><span class="insp-kv-key">Feature Nodes</span>
+          <span class="insp-kv-val">${sd.n_feature_nodes ?? '—'}</span></div>
+        <div class="insp-section-hdr" style="margin-top:.4rem">Spectral</div>
+        <div class="insp-kv"><span class="insp-kv-key">Fiedler λ₂</span>
+          <span class="insp-kv-val" style="color:var(--accent)">${fv != null ? fv.toFixed(5) : '—'}</span></div>
+        <div class="insp-kv"><span class="insp-kv-key">Connectivity</span>
+          <span class="insp-kv-key" style="font-size:.75rem">${connLabel}</span></div>
+        <div class="insp-kv"><span class="insp-kv-key">VNGE</span>
+          <span class="insp-kv-val" style="color:var(--cyan)">${vnge != null ? vnge.toFixed(5) : '—'}</span></div>`;
+    } catch(e) {
+      const zone = document.getElementById('_insp_spec_zone');
+      if (zone) zone.textContent = 'Spectral error: ' + e.message;
+    }
+    return;
+  }
+
+  // ── Feature nodes: degree + top corpora + top peers (async) ──
+  const FEATURE_TYPES = new Set(['StylisticDevice', 'WordField', 'MacroCluster', 'SomaticArchetype', 'PDS_Quadrant', 'Somatic_Tier']);
+  if (FEATURE_TYPES.has(data.type)) {
+    html += `<div class="insp-section-hdr">Feature Diagnostics</div>
+      <div id="_insp_feat_zone" class="corpus-status">Loading…</div>`;
+    body.innerHTML = html;
+
+    try {
+      const fd = await fetch(
+        `/api/graph/feature_diagnostics/${encodeURIComponent(data.id)}`
+      ).then(r => r.json());
+
+      const zone = document.getElementById('_insp_feat_zone');
+      if (!zone) return;
+
+      if (!fd.valid) { zone.textContent = 'No document parents found.'; return; }
+
+      let fhtml = `<div class="insp-kv">
+        <span class="insp-kv-key">Document degree</span>
+        <span class="insp-kv-val">${fd.degree}</span></div>`;
+
+      if (fd.top_corpora?.length) {
+        fhtml += `<div class="insp-section-hdr" style="margin-top:.35rem">Top Corpora</div>`;
+        fd.top_corpora.forEach(({id: cid, weight: w}) => {
+          const cl = _corpusList.find(c => c.id === cid);
+          const lbl = cl?.properties?.name || cid.replace('corpus_','');
+          fhtml += `<div class="insp-kv">
+            <span class="insp-kv-key" style="color:var(--ja)">${lbl}</span>
+            <span class="insp-kv-val">${w.toFixed(3)}</span></div>`;
+        });
+      }
+
+      // Peer features: document-scoped when a document is selected,
+      // corpus-graph-visible otherwise.
+      const _fmtPeers = (peers, header) => {
+        if (!peers.length) return '';
+        const strip = id => id.replace(/^(device_|field_|cluster_|somatic_|pds_)/,'').replace(/_/g,' ');
+        let s = `<div class="insp-section-hdr" style="margin-top:.35rem">${header}</div>`;
+        peers.forEach(({id: pid, weight: w}) => {
+          const pc = _CY_COLORS[_cyNodeType(pid)] || 'var(--text)';
+          s += `<div class="insp-kv">
+            <span class="insp-kv-key" style="color:${pc}">${strip(pid)}</span>
+            <span class="insp-kv-val">${w.toFixed(3)}</span></div>`;
+        });
+        return s;
+      };
+
+      if (_selectedDocMatrix?.nodes?.includes(data.id)) {
+        // Document-scoped peers: compute from this document's N×N matrix row
+        const nodeList = _selectedDocMatrix.nodes;
+        const rowIdx   = nodeList.indexOf(data.id);
+        const row      = _selectedDocMatrix.matrix[rowIdx];
+        const docPeers = nodeList
+          .map((nid, j) => ({ id: nid, weight: row[j] }))
+          .filter(({id: nid, weight: w}) => nid !== data.id && w > 0)
+          .sort((a, b) => b.weight - a.weight)
+          .slice(0, 10);
+        fhtml += _fmtPeers(docPeers, 'Top Peer Features (this document)');
+      } else if (fd.top_peers?.length) {
+        // Corpus-graph peers: global API result filtered to visible nodes
+        const visiblePeers = fd.top_peers.filter(
+          ({id: pid}) => _cy && _cy.getElementById(pid).length > 0
+        );
+        fhtml += _fmtPeers(visiblePeers, 'Top Peer Features (corpus-wide)');
+      }
+
+      zone.outerHTML = fhtml;
+    } catch(e) {
+      const zone = document.getElementById('_insp_feat_zone');
+      if (zone) zone.textContent = 'Error: ' + e.message;
+    }
+    return;
+  }
+
+  // ── Other nodes (Document etc.): just label + id ──
+  body.innerHTML = html;
+}
+
+// Edge click: show source→target + async co-occurrence document evidence
+async function _showEdgeInspector(data) {
+  const body  = document.getElementById('insp-body');
+  document.getElementById('insp-type-badge').textContent = 'EDGE';
+  _openInspector();
+
+  const src      = data.source, tgt = data.target;
+  const srcType  = _cyNodeType(src),  tgtType = _cyNodeType(tgt);
+  const srcLabel = src.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/,'').replace(/_/g,' ');
+  const tgtLabel = tgt.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/,'').replace(/_/g,' ');
+  const srcColor = _CY_COLORS[srcType] || 'var(--text)';
+  const tgtColor = _CY_COLORS[tgtType] || 'var(--text)';
+
+  let html = `
+    <div class="insp-node-label" style="font-size:.82rem;color:var(--muted);">
+      <span style="color:${srcColor}">${srcLabel}</span>
+      <span style="margin:0 .3rem;color:var(--muted)">→</span>
+      <span style="color:${tgtColor}">${tgtLabel}</span>
+    </div>
+    <div class="insp-kv">
+      <span class="insp-kv-key">Weight</span>
+      <span class="insp-kv-val">${((data.w) || 0).toFixed(4)}</span>
+    </div>
+    <div class="insp-section-hdr">Co-occurrence Evidence</div>
+    <div id="_insp_ev_zone" class="corpus-status">Fetching…</div>`;
+  body.innerHTML = html;
+
+  // Corpus→feature or doc edges carry no semantic evidence to retrieve
+  if (srcType === 'Corpus' || tgtType === 'Corpus' ||
+      srcType === 'Document' || tgtType === 'Document') {
+    document.getElementById('_insp_ev_zone').textContent =
+      'No document-level evidence for this edge type.';
+    return;
+  }
+
+  try {
+    const ev = await fetch(
+      `/api/graph/edge_evidence?source_id=${encodeURIComponent(src)}&target_id=${encodeURIComponent(tgt)}`
+    ).then(r => r.json());
+
+    const zone = document.getElementById('_insp_ev_zone');
+    if (!zone) return;
+
+    if (!ev.shared_docs?.length) {
+      zone.textContent = 'No shared documents found.';
+      return;
+    }
+
+    const items = ev.shared_docs.slice(0, 12).map(d =>
+      `<div class="insp-ev-item">
+        <span class="ev-id">${d.doc_id}</span>
+        <span class="ev-lang">${d.language || d.properties?.language || ''}</span>
+      </div>`
+    ).join('');
+    const more = ev.count > 12
+      ? `<div class="insp-ev-item" style="color:var(--muted)">+${ev.count - 12} more…</div>`
+      : '';
+
+    zone.outerHTML = `
+      <div class="corpus-status" style="margin-bottom:.3rem">${ev.count} shared document(s)</div>
+      <div class="insp-ev-list">${items}${more}</div>`;
+  } catch(e) {
+    const zone = document.getElementById('_insp_ev_zone');
+    if (zone) zone.textContent = 'Error: ' + e.message;
+  }
+}
+
+/* ── Graph / Matrix view toggle ── */
+function _switchGraphView(mode) {
+  document.getElementById('btn-graph-view').classList.toggle('vt-active',  mode === 'graph');
+  document.getElementById('btn-matrix-view').classList.toggle('vt-active', mode === 'matrix');
+  const cyEl  = document.getElementById('corpus-cy');
+  const matEl = document.getElementById('pearson-wrap');
+  cyEl.style.display  = mode === 'graph'  ? '' : 'none';
+  matEl.style.display = mode === 'matrix' ? 'block' : 'none';
+
+  if (mode === 'matrix') {
+    // Doc matrix uses max-norm renderer; corpus matrix uses cosine renderer
+    if (_selectedDocMatrix) _renderDocRawMatrix(_selectedDocMatrix);
+    else if (_lastCoData)   _renderPearsonMatrix(_lastCoData);
+  }
+  if (mode === 'graph') {
+    // When switching back to graph: restore doc subgraph or full corpus graph
+    if (_selectedDocMatrix) _renderDocGraph(_selectedDocMatrix);
+    else if (_cy)           _cy.resize();
+  }
+
+  // Show compare bar only in matrix mode when a document is selected
+  const bar = document.getElementById('doc-matrix-compare-bar');
+  if (bar) bar.style.display = (mode === 'matrix' && _selectedDocMatrix) ? 'flex' : 'none';
+}
+
+/* ── Single-document raw co-occurrence heatmap ────────────────────────────
+ *
+ * Used instead of _renderPearsonMatrix when the matrix comes from a single
+ * indexed document.
+ *
+ * Row-max normalisation: v[i][j] = M[i][j] / max_k(M[i][k])
+ * The strongest co-occurrence in each row always registers as 1.0 (full
+ * brightness), so sparse word-field nodes are not washed out by the
+ * larger PDS / somatic weights dominating the global maximum.
+ * ── */
+function _renderDocRawMatrix(co) {
+  const { nodes, matrix } = co;
+  const n = nodes.length;
+  const legend = document.getElementById('pearson-legend');
+  if (n < 2) { if (legend) legend.textContent = 'Need ≥ 2 feature nodes.'; return; }
+
+  // Jaccard normalise: v[i][j] = 2·M[i][j] / (M[i][i] + M[j][j])
+  // Diagonal = 1.0 always; off-diagonal reflects weight-space proximity.
+  // Works correctly for both rank-1 (single doc) and non-rank-1 (corpus) matrices.
+  const v = matrix.map((row, i) =>
+    row.map((x, j) => {
+      const denom = matrix[i][i] + matrix[j][j];
+      return denom > 1e-12 ? (2 * x) / denom : 0;
+    })
+  );
+
+  const canvas = document.getElementById('pearson-canvas');
+  const CELL   = Math.max(18, Math.min(56, Math.floor(520 / n)));
+  const LBL_W  = 82;
+  const total  = LBL_W + n * CELL;
+  canvas.width  = total;
+  canvas.height = total;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, total, total);
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const val = v[i][j];
+      const al  = Math.max(0.04, Math.sqrt(val));   // γ=0.5 so sparse cells stay visible
+      ctx.fillStyle = (i === j)
+        ? `rgba(79,142,247,${al.toFixed(2)})`
+        : `rgba(92,224,216,${al.toFixed(2)})`;
+      ctx.fillRect(LBL_W + j * CELL, LBL_W + i * CELL, CELL, CELL);
+      ctx.strokeStyle = 'rgba(30,35,50,0.85)';
+      ctx.lineWidth   = 0.5;
+      ctx.strokeRect(LBL_W + j * CELL, LBL_W + i * CELL, CELL, CELL);
+      if (CELL >= 28 && val > 0.04) {
+        ctx.fillStyle    = (i === j) ? '#ffffff' : (al > 0.65 ? '#050810' : '#f0f4ff');
+        ctx.font         = `bold ${Math.min(11, Math.floor(CELL / 2.8))}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = 'rgba(0,0,0,0.55)';
+        ctx.shadowBlur   = 2;
+        ctx.fillText(val.toFixed(2), LBL_W + j * CELL + CELL / 2, LBL_W + i * CELL + CELL / 2);
+        ctx.shadowBlur   = 0;
+      }
+    }
+  }
+
+  const lbls = nodes.map(id =>
+    id.replace(/^(device_|field_|cluster_|somatic_|pds_)/, '').replace(/_/g, ' ').substring(0, 10));
+  const _lblColor = id => id.startsWith('pds_') ? '#f7c87e' :
+                          /^somatic_t[123]$/.test(id) ? '#5ce08e' : '#b0c4e0';
+  ctx.font         = '10px Segoe UI, sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = _lblColor(nodes[i]);
+    ctx.fillText(lbls[i], LBL_W - 5, LBL_W + i * CELL + CELL / 2);
+  }
+  for (let j = 0; j < n; j++) {
+    ctx.save();
+    ctx.translate(LBL_W + j * CELL + CELL / 2, LBL_W - 5);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = _lblColor(nodes[j]);
+    ctx.fillText(lbls[j], 0, 0);
+    ctx.restore();
+  }
+
+  if (legend) legend.textContent =
+    `N = ${n} feature nodes  ·  v[i][j] = 2M[i][j] / (M[i][i]+M[j][j])  (Jaccard · brightness γ=½)  ·  single document`;
+}
+
+/* ── Corpus co-occurrence heatmap (HTML Canvas) ── */
+function _renderPearsonMatrix(co) {
+  const { nodes, matrix } = co;
+  const n = nodes.length;
+  const legend = document.getElementById('pearson-legend');
+  if (n < 2) { if (legend) legend.textContent = 'Need ≥ 2 feature nodes.'; return; }
+
+  // Jaccard normalise: v[i][j] = 2·M[i][j] / (M[i][i] + M[j][j])
+  const r = matrix.map((row, i) =>
+    row.map((x, j) => {
+      const denom = matrix[i][i] + matrix[j][j];
+      return denom > 1e-12 ? (2 * x) / denom : 0;
+    })
+  );
+
+  const canvas  = document.getElementById('pearson-canvas');
+  const CELL    = Math.max(18, Math.min(56, Math.floor(520 / n)));
+  const LBL_W   = 82;
+  const total   = LBL_W + n * CELL;
+  canvas.width  = total;
+  canvas.height = total;
+  const ctx     = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, total, total);
+
+  // Draw cells
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v  = r[i][j];
+      const x  = LBL_W + j * CELL;
+      const y  = LBL_W + i * CELL;
+      const al = Math.max(0.04, Math.sqrt(v));   // γ=0.5 so sparse cells stay visible
+
+      // Diagonal = accent blue (self-similarity = 1), off-diagonal = cyan gradient
+      ctx.fillStyle = (i === j)
+        ? `rgba(79,142,247,${al.toFixed(2)})`
+        : `rgba(92,224,216,${al.toFixed(2)})`;
+      ctx.fillRect(x, y, CELL, CELL);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(30,35,50,0.85)';
+      ctx.lineWidth   = 0.5;
+      ctx.strokeRect(x, y, CELL, CELL);
+
+      // Value text when cell is large enough
+      if (CELL >= 28 && v > 0.04) {
+        ctx.fillStyle    = (i === j) ? '#ffffff' : (al > 0.65 ? '#050810' : '#f0f4ff');
+        ctx.font         = `bold ${Math.min(11, Math.floor(CELL / 2.8))}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = 'rgba(0,0,0,0.55)';
+        ctx.shadowBlur   = 2;
+        ctx.fillText(v.toFixed(2), x + CELL / 2, y + CELL / 2);
+        ctx.shadowBlur   = 0;
+      }
+    }
+  }
+
+  // Row labels (left margin, right-aligned)
+  const lbls = nodes.map(id =>
+    id.replace(/^(device_|field_|cluster_|somatic_|pds_)/,'').replace(/_/g,' ').substring(0, 10));
+  const _lblColor2 = id => id.startsWith('pds_') ? '#f7c87e' :
+                           /^somatic_t[123]$/.test(id) ? '#5ce08e' : '#b0c4e0';
+  ctx.font         = '10px Segoe UI, sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = _lblColor2(nodes[i]);
+    ctx.fillText(lbls[i], LBL_W - 5, LBL_W + i * CELL + CELL / 2);
+  }
+
+  // Column labels (rotated -90° in top margin)
+  for (let j = 0; j < n; j++) {
+    ctx.save();
+    ctx.translate(LBL_W + j * CELL + CELL / 2, LBL_W - 5);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = _lblColor2(nodes[j]);
+    ctx.fillText(lbls[j], 0, 0);
+    ctx.restore();
+  }
+
+  if (legend) legend.textContent =
+    `N = ${n} feature nodes  ·  v[i][j] = 2M[i][j] / (M[i][i]+M[j][j])  (Jaccard · brightness γ=½)`;
 }
 
 /* ── Spectral panel ── */
@@ -5840,6 +6691,763 @@ function _renderCoMatrix(co) {
   });
   html += '</tbody></table>';
   document.getElementById('corpus-matrix-inner').innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Phase 2 — Analyzer Matrix View & Divergence Heatmap
+════════════════════════════════════════════════════════════ */
+
+// Ephemeral N×N matrix from the last /api/analyze call.
+// Set in renderResults(); consumed by _renderLocalMatrix() and compareToBaseline().
+let _lastEphemeralMatrix = null;
+
+// ── View toggle (Telemetry | Local N×N Matrix) ──────────────────────────────
+function _switchAnalyzerView(mode) {
+  // Update toggle button states
+  document.getElementById('btn-av-telemetry').classList.toggle('avt-active', mode === 'telemetry');
+  document.getElementById('btn-av-matrix').classList.toggle('avt-active',    mode === 'matrix');
+
+  // Show/hide the full somatic cipher body (diag + balance + charts + FFT + oscilloscope)
+  // vs the local N×N matrix panel
+  const cipherEl = document.getElementById('somatic-cipher-body');
+  const matEl    = document.getElementById('local-matrix-section');
+  if (cipherEl) cipherEl.style.display = mode === 'telemetry' ? '' : 'none';
+  if (matEl)    matEl.style.display    = mode === 'matrix'    ? 'block' : 'none';
+
+  // Render the local matrix when switching into matrix mode
+  if (mode === 'matrix' && _lastEphemeralMatrix) {
+    _renderLocalMatrix(_lastEphemeralMatrix);
+    _populateMatrixCorpusSel();  // refresh corpus dropdown
+  }
+}
+
+// ── Local matrix canvas renderer ────────────────────────────────────────────
+// Renders the cosine-similarity (Pearson-style) heatmap for the live document.
+// Color scheme mirrors the corpus Pearson matrix: diagonal = accent blue,
+// off-diagonal = cyan gradient proportional to similarity.
+function _renderLocalMatrix(em) {
+  const { nodes, matrix } = em;
+  const n      = nodes.length;
+  const canvas = document.getElementById('local-matrix-canvas');
+  const legend = document.getElementById('local-matrix-legend');
+
+  if (n < 2) {
+    if (legend) legend.textContent = 'Need ≥ 2 feature nodes. Run analysis with richer text.';
+    if (canvas) canvas.width = canvas.height = 0;
+    return;
+  }
+
+  // Jaccard normalise: v[i][j] = 2·M[i][j] / (M[i][i] + M[j][j])
+  const r = matrix.map((row, i) =>
+    row.map((x, j) => {
+      const denom = matrix[i][i] + matrix[j][j];
+      return denom > 1e-12 ? (2 * x) / denom : 0;
+    })
+  );
+
+  const CELL  = Math.max(18, Math.min(56, Math.floor(520 / n)));
+  const LBL_W = 82;
+  const total = LBL_W + n * CELL;
+  canvas.width  = total;
+  canvas.height = total;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, total, total);
+
+  // Cells
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = r[i][j];
+      const x = LBL_W + j * CELL;
+      const y = LBL_W + i * CELL;
+      const al = Math.max(0.04, Math.sqrt(v));   // γ=0.5 so sparse cells stay visible
+      ctx.fillStyle = (i === j)
+        ? `rgba(79,142,247,${al.toFixed(2)})`
+        : `rgba(92,224,216,${al.toFixed(2)})`;
+      ctx.fillRect(x, y, CELL, CELL);
+      ctx.strokeStyle = 'rgba(30,35,50,.85)';
+      ctx.lineWidth   = 0.5;
+      ctx.strokeRect(x, y, CELL, CELL);
+      if (CELL >= 28 && v > 0.04) {
+        ctx.fillStyle    = al > 0.55 ? '#0d0f14' : '#dce3f5';
+        ctx.font         = `${Math.min(10, Math.floor(CELL / 3.2))}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(v.toFixed(2), x + CELL / 2, y + CELL / 2);
+      }
+    }
+  }
+
+  // Row labels
+  const lbls = nodes.map(id =>
+    id.replace(/^(device_|field_|cluster_|somatic_|pds_)/, '').replace(/_/g, ' ').substring(0, 10));
+  const _lblColorL = id => id.startsWith('pds_') ? '#f7c87e' :
+                           /^somatic_t[123]$/.test(id) ? '#5ce08e' : '#b0c4e0';
+  ctx.font         = '9px Segoe UI, sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = _lblColorL(nodes[i]);
+    ctx.fillText(lbls[i], LBL_W - 5, LBL_W + i * CELL + CELL / 2);
+  }
+
+  // Column labels (rotated)
+  for (let j = 0; j < n; j++) {
+    ctx.save();
+    ctx.translate(LBL_W + j * CELL + CELL / 2, LBL_W - 5);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = _lblColorL(nodes[j]);
+    ctx.fillText(lbls[j], 0, 0);
+    ctx.restore();
+  }
+
+  if (legend) legend.textContent =
+    `N = ${n} live feature nodes  ·  v[i][j] = 2M[i][j] / (M[i][i]+M[j][j])  (Jaccard · brightness γ=½)`;
+}
+
+// ── Populate corpus dropdown for divergence comparison ──────────────────────
+function _populateMatrixCorpusSel() {
+  const sel = document.getElementById('matrix-corpus-sel');
+  const btn = document.getElementById('btn-compare-baseline');
+  if (!sel) return;
+  sel.innerHTML = _corpusList.length
+    ? _corpusList.map(c => {
+        const name = c.properties?.name || c.id;
+        return `<option value="${c.id}">${name}</option>`;
+      }).join('')
+    : '<option value="">— no corpora indexed yet —</option>';
+  if (btn) btn.disabled = !_corpusList.length || !_lastEphemeralMatrix;
+}
+
+// ── Divergence comparison ────────────────────────────────────────────────────
+async function compareToBaseline() {
+  const sel      = document.getElementById('matrix-corpus-sel');
+  const zone     = document.getElementById('divergence-result-zone');
+  const btn      = document.getElementById('btn-compare-baseline');
+  const corpusId = sel?.value;
+
+  if (!corpusId || !_lastEphemeralMatrix) return;
+
+  if (zone) zone.innerHTML = '<span class="corpus-status">Computing divergence…</span>';
+  if (btn)  btn.disabled = true;
+
+  try {
+    const r = await fetch('/api/graph/matrix/divergence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ephemeral_matrix: _lastEphemeralMatrix,
+        corpus_id:        corpusId,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      if (zone) zone.innerHTML =
+        `<span class="corpus-status" style="color:var(--danger)">Error: ${data.detail || '?'}</span>`;
+      return;
+    }
+    _renderDivergenceMatrix(data);
+  } catch(e) {
+    if (zone) zone.innerHTML =
+      `<span class="corpus-status" style="color:var(--danger)">Error: ${e.message}</span>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ── Divergence heatmap renderer ──────────────────────────────────────────────
+// Diverging color scale:
+//   D[i][j] = -1.0 → deep blue   (corpus has it, live text does not)
+//   D[i][j] =  0.0 → near-black  (text matches corpus baseline)
+//   D[i][j] = +1.0 → bright red  (anomalous spike in live text)
+function _renderDivergenceMatrix(data) {
+  const { nodes, diff_matrix: D, frobenius_norm: frob,
+          t_node_count: tnc, c_node_count: cnc } = data;
+  const n    = nodes.length;
+  const zone = document.getElementById('divergence-result-zone');
+  if (!zone) return;
+
+  // Anomaly score banner
+  const scoreClass =
+    frob < 0.4 ? 'div-score-low' :
+    frob < 0.8 ? 'div-score-mid' : 'div-score-high';
+
+  const scoreLabel =
+    frob < 0.4 ? 'LOW DIVERGENCE' :
+    frob < 0.8 ? 'MODERATE DIVERGENCE' : 'HIGH DIVERGENCE';
+
+  zone.innerHTML = `
+    <div class="div-score-banner">
+      <span class="div-score-label">Structural Divergence Score (‖D‖_F):</span>
+      <span class="div-score-value ${scoreClass}">${frob.toFixed(4)}</span>
+      <span class="div-score-label ${scoreClass}" style="font-size:.7rem">${scoreLabel}</span>
+    </div>
+    <div style="font-size:.67rem;color:var(--muted);margin-bottom:.5rem;">
+      Live text: ${tnc} nodes  ·  Corpus baseline: ${cnc} nodes  ·  Union: ${n} nodes
+    </div>
+    <canvas id="divergence-canvas"></canvas>
+    <div id="divergence-legend"></div>`;
+
+  if (n < 1) return;
+
+  const canvas = document.getElementById('divergence-canvas');
+  const legend = document.getElementById('divergence-legend');
+  const CELL   = Math.max(18, Math.min(56, Math.floor(520 / n)));
+  const LBL_W  = 82;
+  const total  = LBL_W + n * CELL;
+  canvas.width  = total;
+  canvas.height = total;
+  const ctx    = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, total, total);
+
+  // Color mapper: D ∈ [-1, +1] → RGB
+  // D < 0: interpolate black (#0d0f14) → deep blue (#0040ff)
+  // D > 0: interpolate black (#0d0f14) → bright red (#cc0020)
+  function _divColor(v) {
+    const t = Math.min(1, Math.abs(v));
+    if (v < 0) {
+      // blue channel ramps up
+      const b = Math.round(t * 255);
+      const g = Math.round(t * 24);
+      return `rgb(${Math.round(13 + t * 0)},${Math.round(15 + g)},${Math.round(20 + b * 0.87)})`;
+    } else {
+      // red channel ramps up
+      const r = Math.round(13 + t * (204 - 13));
+      return `rgb(${r},${Math.round(15 * (1 - t))},${Math.round(20 * (1 - t))})`;
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = D[i][j];
+      const x = LBL_W + j * CELL;
+      const y = LBL_W + i * CELL;
+      ctx.fillStyle = _divColor(v);
+      ctx.fillRect(x, y, CELL, CELL);
+      ctx.strokeStyle = 'rgba(30,35,50,.5)';
+      ctx.lineWidth   = 0.5;
+      ctx.strokeRect(x, y, CELL, CELL);
+      if (CELL >= 28 && Math.abs(v) > 0.04) {
+        ctx.fillStyle    = Math.abs(v) > 0.45 ? '#ffffff' : '#9090a0';
+        ctx.font         = `${Math.min(10, Math.floor(CELL / 3.2))}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(v.toFixed(2), x + CELL / 2, y + CELL / 2);
+      }
+    }
+  }
+
+  // Row/column labels
+  const lbls = nodes.map(id =>
+    id.replace(/^(device_|field_|cluster_|somatic_)/, '').replace(/_/g, ' ').substring(0, 10));
+  ctx.fillStyle    = '#6b7394';
+  ctx.font         = '9px Segoe UI, sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++)
+    ctx.fillText(lbls[i], LBL_W - 5, LBL_W + i * CELL + CELL / 2);
+  for (let j = 0; j < n; j++) {
+    ctx.save();
+    ctx.translate(LBL_W + j * CELL + CELL / 2, LBL_W - 5);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lbls[j], 0, 0);
+    ctx.restore();
+  }
+
+  // Color scale legend
+  if (legend) legend.innerHTML = `
+    <span style="color:var(--muted)">D[i][j] scale:</span>
+    <span class="div-legend-swatch"
+      style="background:linear-gradient(90deg,#000cff,#0d0f14)"></span>
+    <span>−1.0 feature in corpus only</span>
+    &nbsp;&nbsp;
+    <span class="div-legend-swatch"
+      style="background:linear-gradient(90deg,#0d0f14,#cc0020)"></span>
+    <span>+1.0 anomalous spike in live text</span>`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Database Control — corpus / document management
+════════════════════════════════════════════════════════════ */
+
+async function deleteCorpus(corpusId) {
+  if (!confirm(`Delete corpus "${corpusId}" and all its membership links?`)) return;
+  try {
+    const r = await fetch(`/api/corpora/${encodeURIComponent(corpusId)}`, { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok) {
+      document.getElementById('corpus-status').textContent = 'Delete error: ' + (data.detail || '?');
+      return;
+    }
+    _selCorpora.delete(corpusId);
+    await loadCorpora();
+    _loadDocLedger();
+    if (_selCorpora.size > 0) await queryGraph();
+    else if (_cy) _cy.elements().remove();
+  } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
+}
+
+/* ── Document Ledger ── */
+
+async function _loadDocLedger() {
+  const sect = document.getElementById('doc-ledger-sect');
+  const list = document.getElementById('doc-ledger-list');
+  // Show ledger only when exactly one corpus is selected
+  if (_selCorpora.size !== 1) {
+    sect.style.display = 'none';
+    return;
+  }
+  const corpusId = Array.from(_selCorpora)[0];
+  sect.style.display = '';
+  list.innerHTML = '<span class="corpus-status">Loading…</span>';
+  try {
+    const r = await fetch(`/api/graph/corpus_documents/${encodeURIComponent(corpusId)}`);
+    const data = await r.json();
+    if (!r.ok) { list.innerHTML = '<span class="corpus-status">Error loading documents.</span>'; return; }
+    _renderDocLedger(data.documents || []);
+  } catch(e) { list.innerHTML = `<span class="corpus-status">Error: ${e.message}</span>`; }
+}
+
+function _renderDocLedger(docs) {
+  const list = document.getElementById('doc-ledger-list');
+  if (!docs.length) {
+    list.innerHTML = '<span class="corpus-status">No documents indexed yet.</span>';
+    return;
+  }
+  list.innerHTML = docs.map(d => {
+    const display  = d.title || d.doc_id;
+    const lang     = d.language ? `<span style="color:var(--muted);margin-left:.25rem">[${d.language}]</span>` : '';
+    const legacy   = d.is_legacy
+      ? `<span style="font-size:.54rem;color:#f7c87e;border:1px solid #f7c87e55;border-radius:2px;padding:0 .28em;margin-left:.3rem;opacity:.75;vertical-align:middle;">Legacy</span>`
+      : '';
+    // Phase 1: checked state mirrors the in-memory _excludedDocs set
+    const excluded = _excludedDocs.has(d.doc_id);
+    return `<div class="doc-item${excluded ? ' doc-excluded' : ''}" id="ditem_${CSS.escape(d.doc_id)}"
+               onclick="_highlightDocInGraph('${d.doc_id}')">
+      <!-- Phase 1: exclusion checkbox — stopPropagation prevents row highlight -->
+      <label class="doc-exclude-wrap" onclick="event.stopPropagation()"
+             title="Exclude from corpus matrix calculations">
+        <input type="checkbox" class="doc-exclude-cb"
+               ${excluded ? 'checked' : ''}
+               onchange="_toggleDocExclusion('${d.doc_id}',this.checked)">
+      </label>
+      <span class="doc-title" title="${d.doc_id}">${display}${lang}${legacy}</span>
+      <div class="doc-item-actions">
+        <button class="btn-doc-action" title="Rename"
+          onclick="event.stopPropagation();_startEditDocTitle('${d.doc_id}','${(d.title||d.doc_id).replace(/'/g,"\\'")}')"
+        >✎</button>
+        <button class="btn-doc-action btn-doc-del" title="Delete document"
+          onclick="event.stopPropagation();_deleteDocument('${d.doc_id}')"
+        >🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// State for the per-document matrix selection (corpus tab)
+let _selectedDocId     = null;   // doc currently highlighted in the ledger
+let _selectedDocMatrix = null;   // { nodes, matrix } fetched for that doc
+
+// Phase 1 — Ledger Exclusion: set of doc_ids excluded from corpus matrix.
+// Persists across ledger re-renders so toggling a corpus pill doesn't reset
+// the user's exclusion selections.
+let _excludedDocs = new Set();
+
+/**
+ * Phase 1 — Toggle a document's exclusion from corpus matrix calculations.
+ * Called by the checkbox in each ledger row.  Automatically re-queries the
+ * graph so the matrix and graph update immediately without a manual click.
+ *
+ * @param {string}  docId    - Graph node ID of the document.
+ * @param {boolean} excluded - True when the checkbox is being checked.
+ */
+function _toggleDocExclusion(docId, excluded) {
+  if (excluded) _excludedDocs.add(docId);
+  else          _excludedDocs.delete(docId);
+
+  // Dim/un-dim the ledger row
+  const item = document.getElementById(`ditem_${CSS.escape(docId)}`);
+  if (item) item.classList.toggle('doc-excluded', excluded);
+
+  // Auto re-query so the matrix and graph reflect the new exclusion set
+  if (_selCorpora.size > 0) queryGraph();
+}
+
+// Rebuild Cytoscape with only the feature nodes from a single document.
+// Completely replaces the corpus-wide graph — no dimming, no leftover nodes.
+function _renderDocGraph(docMatrix) {
+  if (!_cy) return;
+  _cy.elements().remove();
+  const nodes  = docMatrix?.nodes  || [];
+  const matrix = docMatrix?.matrix || [];
+  const els    = [];
+
+  // Keep the parent corpus node for structural context (gold node stays)
+  Array.from(_selCorpora).forEach((cid, ci) => {
+    const meta  = _corpusList.find(c => c.id === cid);
+    const label = meta?.properties?.name || cid.replace('corpus_', '');
+    els.push({ data: { id: cid, label, type:'Corpus', color:_CY_COLORS['Corpus'], sz:_CY_SIZES['Corpus'] } });
+
+    // Thin spoke from corpus to each of this document's feature nodes
+    nodes.forEach((fid, fi) =>
+      els.push({ data: { id:`ec${ci}_${fi}`, source:cid, target:fid, w:0.5 } }));
+  });
+
+  // Add only this document's feature nodes
+  nodes.forEach(id => {
+    const type  = _cyNodeType(id);
+    const label = id.replace(/^(device_|field_|cluster_|somatic_|corpus_|doc_)/, '').replace(/_/g,' ');
+    els.push({ data: { id, label, type, color:_CY_COLORS[type]||'#4f8ef7', sz:_CY_SIZES[type]||34 } });
+  });
+
+  // Co-occurrence edges weighted by the document's matrix
+  const maxW = Math.max(...matrix.flat().filter(v => v > 0), 1);
+  nodes.forEach((src, i) => nodes.forEach((tgt, j) => {
+    if (i < j && (matrix[i]?.[j] || 0) > 0)
+      els.push({ data: { id:`e${i}_${j}`, source:src, target:tgt, w:Math.max(1, matrix[i][j]/maxW*7) } });
+  }));
+
+  _cy.add(els);
+  _cy.layout({ name:'cose', padding:50, randomize:true, animate:false }).run();
+}
+
+async function _highlightDocInGraph(docId) {
+  // 1. Update ledger highlight
+  document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('doc-highlighted'));
+  const item = document.getElementById(`ditem_${CSS.escape(docId)}`);
+  if (item) item.classList.add('doc-highlighted');
+
+  // 2. Fetch the document's isolated feature matrix from the backend
+  let docMatrix  = null;
+  let fetchError = false;
+  try {
+    const r = await fetch(`/api/graph/matrix/document/${encodeURIComponent(docId)}`);
+    if (r.ok) {
+      const data = await r.json();
+      docMatrix = { nodes: data.nodes, matrix: data.matrix };
+    } else {
+      fetchError = true;
+    }
+  } catch (_) { fetchError = true; }
+
+  _selectedDocId     = docId;
+  _selectedDocMatrix = docMatrix;
+
+  // 3. Breadcrumb: "Corpus: MYTHIC › Document: <name>"
+  const docItem    = document.getElementById(`ditem_${CSS.escape(docId)}`);
+  const docDisplay = docItem?.querySelector('.doc-title')?.textContent?.trim() || docId;
+  const corpusMeta = _selCorpora.size === 1
+    ? _corpusList.find(c => c.id === Array.from(_selCorpora)[0])
+    : null;
+  const corpusLabel = corpusMeta ? (corpusMeta.properties?.name || '') : '';
+
+  const titleEl = document.getElementById('current-view-title');
+  if (titleEl) {
+    titleEl.style.display = '';
+    titleEl.innerHTML = corpusLabel
+      ? `Corpus: <span>${corpusLabel}</span> &rsaquo; Viewing Document: <span>${docDisplay}</span>`
+      : `Viewing Document: <span>${docDisplay}</span>`;
+  }
+
+  // 4. Graph view: rebuild with only this document's feature subgraph
+  _renderDocGraph(docMatrix);
+
+  // 5. Matrix view: always redraw — show error if fetch failed, doc matrix otherwise
+  const matEl  = document.getElementById('pearson-wrap');
+  const legend = document.getElementById('pearson-legend');
+  if (matEl && matEl.style.display !== 'none') {
+    if (docMatrix) {
+      _renderDocRawMatrix(docMatrix);
+    } else {
+      // Blank the canvas and surface the error so it's not silently stale
+      const canvas = document.getElementById('pearson-canvas');
+      if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+      if (legend) legend.textContent = fetchError
+        ? `Could not load matrix for ${docId} — document may not be indexed yet.`
+        : `No feature nodes found for ${docId}.`;
+    }
+  }
+
+  _updateDocCompareBar(docId, docMatrix);
+}
+
+// Update the breadcrumb title above the graph/matrix canvas
+function _setViewTitle(type, name) {
+  const el = document.getElementById('current-view-title');
+  if (!el) return;
+  if (!type) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = '';
+  el.innerHTML = `${type}: <span>${name}</span>`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Phase 3 — Export Module
+   exportGraphPNG()          — Cytoscape canvas → PNG download
+   exportCorpusMatrixCSV()   — corpus/doc N×N matrix → CSV download
+   exportAnalyzerMatrixCSV() — ephemeral (local) matrix → CSV download
+════════════════════════════════════════════════════════════ */
+
+/**
+ * Download the Cytoscape graph as a full-resolution PNG.
+ * Uses Cytoscape's native .png() export with the dark background colour
+ * matching the app theme.  Falls back silently if _cy is not initialised.
+ */
+function exportGraphPNG() {
+  if (!_cy) return;
+  const uri = _cy.png({ bg: '#0d0f14', full: true, scale: 2 });
+  const a   = document.createElement('a');
+  a.href     = uri;
+  a.download = 'network_graph.png';
+  a.click();
+}
+
+/**
+ * Internal helper: convert a matData object (nodes: string[], matrix: number[][])
+ * to a CSV string and trigger a browser download.
+ *
+ * @param {object} matData   - Object with keys: nodes (string[]), matrix (number[][]).
+ * @param {string} filename  - Suggested download filename.
+ */
+function _downloadMatrixCSV(matData, filename) {
+  if (!matData || !matData.nodes || !matData.nodes.length) return;
+  const { nodes, matrix } = matData;
+
+  // Header row: blank corner cell + one column label per feature node
+  const rows = [['', ...nodes]];
+  nodes.forEach((label, i) =>
+    rows.push([label, ...matrix[i].map(v => v.toFixed(6))])
+  );
+
+  const csv  = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/**
+ * Download the currently displayed corpus or document N×N matrix as CSV.
+ * Uses _selectedDocMatrix when a document is selected, otherwise the full
+ * corpus co-occurrence matrix from _lastCoData.
+ */
+function exportCorpusMatrixCSV() {
+  const src      = _selectedDocMatrix || _lastCoData;
+  const filename = _selectedDocMatrix ? 'document_matrix.csv' : 'corpus_matrix.csv';
+  _downloadMatrixCSV(src, filename);
+}
+
+/**
+ * Download the analyzer tab's ephemeral (local) N×N matrix as CSV.
+ * Available after running analysis with at least one analysis window.
+ */
+function exportAnalyzerMatrixCSV() {
+  _downloadMatrixCSV(_lastEphemeralMatrix, 'ephemeral_matrix.csv');
+}
+
+// Show or hide the "Compare to Corpus Baseline" bar based on current selection
+function _updateDocCompareBar(docId, docMatrix) {
+  const bar = document.getElementById('doc-matrix-compare-bar');
+  const lbl = document.getElementById('doc-matrix-compare-label');
+  const rz  = document.getElementById('doc-divergence-result');
+  if (!bar) return;
+
+  const matEl = document.getElementById('pearson-wrap');
+  const inMatrixView = matEl && matEl.style.display !== 'none';
+
+  if (inMatrixView && docMatrix && docMatrix.nodes.length) {
+    bar.style.display = 'flex';
+    // Strip the doc_ prefix for a compact label
+    if (lbl) lbl.textContent = `Doc: ${docId.replace(/^doc_[A-Z]+_/, '')}`;
+  } else {
+    bar.style.display = 'none';
+  }
+  // Clear any previous divergence result when selection changes
+  if (rz) rz.style.display = 'none';
+}
+
+// POST the selected document's matrix to /api/graph/matrix/divergence against the parent corpus
+async function _compareDocToCorpus() {
+  if (!_selectedDocMatrix || !_selectedDocId) return;
+
+  // Require exactly one corpus selected (ledger is only shown for one corpus)
+  if (_selCorpora.size !== 1) {
+    alert('Select exactly one corpus before comparing.');
+    return;
+  }
+  const corpusId = Array.from(_selCorpora)[0];
+
+  const rz      = document.getElementById('doc-divergence-result');
+  const loading = document.getElementById('doc-div-loading');
+  const banner  = document.getElementById('doc-frob-banner');
+  const canvas  = document.getElementById('doc-divergence-canvas');
+  const legend  = document.getElementById('doc-divergence-legend');
+
+  // Show the container and the loading indicator without destroying child elements
+  if (rz)      rz.style.display    = '';
+  if (banner)  banner.textContent  = '';
+  if (legend)  legend.textContent  = '';
+  if (canvas)  { canvas.width = 0; canvas.height = 0; }
+  if (loading) { loading.style.display = ''; loading.style.color = 'var(--muted)'; loading.textContent = 'Computing divergence…'; }
+
+  try {
+    const r = await fetch('/api/graph/matrix/divergence', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ephemeral_matrix: _selectedDocMatrix,  // doc plays the role of T
+        corpus_id:        corpusId,             // corpus is the baseline C
+      }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      if (loading) { loading.style.color = 'var(--danger)'; loading.textContent = `Error: ${err.detail || r.status}`; }
+      return;
+    }
+    if (loading) loading.style.display = 'none';
+    _renderDocDivergenceMatrix(await r.json());
+  } catch (e) {
+    if (loading) { loading.style.color = 'var(--danger)'; loading.textContent = `Network error: ${e.message}`; }
+  }
+}
+
+// Render the diverging D = T̃ − C̃ heatmap in the corpus-tab divergence panel
+function _renderDocDivergenceMatrix(data) {
+  const rz     = document.getElementById('doc-divergence-result');
+  const banner = document.getElementById('doc-frob-banner');
+  const canvas = document.getElementById('doc-divergence-canvas');
+  const legend = document.getElementById('doc-divergence-legend');
+  if (!rz || !banner || !canvas) return;
+
+  rz.style.display = '';
+
+  // Frobenius score banner
+  const frob  = data.frobenius_norm ?? 0;
+  const level = frob < 0.3 ? 'LOW' : frob < 0.7 ? 'MODERATE' : 'HIGH';
+  const col   = frob < 0.3 ? '#4f8ef7' : frob < 0.7 ? '#f7c87e' : '#e05c5c';
+  banner.textContent   = `Structural Divergence Score: ${frob.toFixed(4)}  [${level}]`;
+  banner.style.color   = col;
+  banner.style.borderColor = col;
+
+  const nodes = data.nodes  || [];
+  const D     = data.diff_matrix || [];
+  const n     = nodes.length;
+
+  if (n < 2) {
+    if (legend) legend.textContent = 'Insufficient feature overlap between document and corpus.';
+    return;
+  }
+
+  // Diverging colour scale: deep blue (−1) → black (0) → crimson (+1)
+  function _dCol(v) {
+    const t = Math.min(1, Math.abs(v));
+    return v < 0
+      ? `rgb(13,${Math.round(15 + t * 24)},${Math.round(20 + t * 0.87 * 255)})`
+      : `rgb(${Math.round(13 + t * (204 - 13))},${Math.round(15 * (1 - t))},${Math.round(20 * (1 - t))})`;
+  }
+
+  const CELL  = Math.max(14, Math.min(48, Math.floor(480 / n)));
+  const LBL_W = 76;
+  const total = LBL_W + n * CELL;
+  canvas.width  = total;
+  canvas.height = total;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, total, total);
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = D[i]?.[j] ?? 0;
+      ctx.fillStyle = _dCol(v);
+      ctx.fillRect(LBL_W + j * CELL, LBL_W + i * CELL, CELL, CELL);
+      ctx.strokeStyle = 'rgba(30,35,50,.7)';
+      ctx.lineWidth   = 0.4;
+      ctx.strokeRect(LBL_W + j * CELL, LBL_W + i * CELL, CELL, CELL);
+      if (CELL >= 26 && Math.abs(v) > 0.02) {
+        ctx.fillStyle    = '#ffffff';
+        ctx.font         = `bold ${Math.min(10, Math.floor(CELL / 3.0))}px monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = 'rgba(0,0,0,0.65)';
+        ctx.shadowBlur   = 2.5;
+        ctx.fillText(v.toFixed(2), LBL_W + j * CELL + CELL / 2, LBL_W + i * CELL + CELL / 2);
+        ctx.shadowBlur   = 0;
+      }
+    }
+  }
+
+  const lbls = nodes.map(id =>
+    id.replace(/^(device_|field_|cluster_|somatic_|pds_)/, '').replace(/_/g, ' ').substring(0, 10));
+  const _dLblColor = id => id.startsWith('pds_') ? '#f7c87e' :
+                           /^somatic_t[123]$/.test(id) ? '#5ce08e' : '#b0c4e0';
+  ctx.font         = '9px Segoe UI, sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = _dLblColor(nodes[i]);
+    ctx.fillText(lbls[i], LBL_W - 4, LBL_W + i * CELL + CELL / 2);
+  }
+  for (let j = 0; j < n; j++) {
+    ctx.save();
+    ctx.translate(LBL_W + j * CELL + CELL / 2, LBL_W - 4);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = _dLblColor(nodes[j]);
+    ctx.fillText(lbls[j], 0, 0);
+    ctx.restore();
+  }
+
+  if (legend) legend.textContent =
+    `D = T̃ − C̃  ·  blue = corpus only  ·  red = doc anomaly  ·  ‖D‖_F = ${frob.toFixed(4)}`
+    + `  ·  T nodes: ${data.t_node_count}  C nodes: ${data.c_node_count}`;
+}
+
+function _startEditDocTitle(docId, currentTitle) {
+  const item = document.getElementById(`ditem_${CSS.escape(docId)}`);
+  if (!item) return;
+  const titleEl = item.querySelector('.doc-title');
+  if (!titleEl) return;
+  titleEl.outerHTML = `<input class="doc-title-input" id="dtinp_${CSS.escape(docId)}"
+    value="${currentTitle.replace(/"/g,'&quot;')}"
+    onblur="_saveDocTitle('${docId}',this.value)"
+    onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value='${currentTitle.replace(/'/g,"\\'")}';this.blur();}"
+  />`;
+  const inp = document.getElementById(`dtinp_${CSS.escape(docId)}`);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+async function _saveDocTitle(docId, newTitle) {
+  const trimmed = newTitle.trim();
+  if (!trimmed) return;
+  try {
+    const r = await fetch(`/api/graph/document/${encodeURIComponent(docId)}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ title: trimmed }),
+    });
+    if (r.ok) _loadDocLedger();
+  } catch(e) { /* silently ignore rename network errors */ }
+}
+
+async function _deleteDocument(docId) {
+  if (!confirm(`Delete document "${docId}" from the graph?`)) return;
+  try {
+    const r = await fetch(`/api/graph/document/${encodeURIComponent(docId)}`, { method: 'DELETE' });
+    if (!r.ok) return;
+    _loadDocLedger();
+    await queryGraph();
+  } catch(e) { document.getElementById('corpus-status').textContent = 'Error: ' + e.message; }
 }
 
 /* ════════════════════════════════════════════════════════════
